@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Team Chat</title>
+  <style>
+    :root {
+      --bg:           #0d0f18;
+      --surface:      #161929;
+      --surface-2:    #1e2235;
+      --border:       #2a2f4a;
+      --text:         #e2e4f0;
+      --text-muted:   #7b82a8;
+      --claude:       #e8a87c;
+      --claude-bg:    rgba(232,168,124,.12);
+      --gpt:          #6ec99a;
+      --gpt-bg:       rgba(110,201,154,.12);
+      --gemini:       #78b8f0;
+      --gemini-bg:    rgba(120,184,240,.12);
+      --accent:       #6c63ff;
+      --accent-bg:    rgba(108,99,255,.15);
+      --danger:       #e07070;
+      --success:      #6ec99a;
+      --radius:       10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: .85rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .header-title {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: -.3px;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .header-title .accent { color: var(--accent); }
+    .header-actions { display: flex; gap: .5rem; }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: .4rem .9rem;
+      border-radius: 6px;
+      font-size: .8rem;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+
+    /* ── Layout ── */
+    .main { max-width: 1440px; margin: 0 auto; padding: 1.5rem; }
+
+    /* ── Input Section ── */
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .prompt-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: .95rem;
+      font-family: inherit;
+      padding: .9rem 1rem;
+      resize: vertical;
+      min-height: 90px;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .prompt-textarea:focus { border-color: var(--accent); }
+    .prompt-textarea::placeholder { color: var(--text-muted); }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: .9rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .model-chips { display: flex; gap: .5rem; flex-wrap: wrap; }
+    .model-chip {
+      display: flex; align-items: center; gap: .4rem;
+      padding: .38rem .8rem;
+      border-radius: 20px;
+      border: 2px solid;
+      font-size: .8rem; font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      user-select: none;
+      opacity: .38;
+    }
+    .model-chip.active { opacity: 1; }
+    .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .chip-claude { border-color: var(--claude); color: var(--claude); }
+    .chip-claude.active { background: var(--claude-bg); }
+    .chip-gpt    { border-color: var(--gpt);    color: var(--gpt); }
+    .chip-gpt.active    { background: var(--gpt-bg); }
+    .chip-gemini { border-color: var(--gemini); color: var(--gemini); }
+    .chip-gemini.active { background: var(--gemini-bg); }
+
+    .chip-dot-claude  { background: var(--claude); }
+    .chip-dot-gpt     { background: var(--gpt); }
+    .chip-dot-gemini  { background: var(--gemini); }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .6rem 1.6rem;
+      font-size: .9rem; font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    /* ── Error Banner ── */
+    .error-banner {
+      background: rgba(224,112,112,.1);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      padding: .75rem 1rem;
+      color: var(--danger);
+      margin-bottom: 1rem;
+      font-size: .88rem;
+    }
+
+    /* ── Stage Section ── */
+    .stage-section {
+      margin-bottom: 1.5rem;
+      animation: slideIn .3s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stage-header {
+      display: flex; align-items: center; gap: .7rem;
+      margin-bottom: .85rem;
+    }
+    .stage-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--accent-bg);
+      border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700; color: var(--accent);
+      flex-shrink: 0;
+    }
+    .stage-badge.done { background: var(--accent); color: #fff; }
+    .stage-title-text { font-size: 1rem; font-weight: 700; }
+    .stage-status {
+      margin-left: auto;
+      font-size: .75rem;
+      color: var(--text-muted);
+      display: flex; align-items: center; gap: .35rem;
+    }
+    .stage-status.complete { color: var(--success); }
+
+    .spinner {
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Model Cards Grid ── */
+    .model-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: .85rem;
+    }
+    .model-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .model-card-head {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .6rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .82rem; font-weight: 700;
+    }
+    .model-indicator { width: 9px; height: 9px; border-radius: 50%; }
+    .ind-claude  { background: var(--claude); }
+    .ind-gpt     { background: var(--gpt); }
+    .ind-gemini  { background: var(--gemini); }
+
+    .model-card-body {
+      padding: .9rem 1rem;
+      font-size: .87rem;
+      line-height: 1.65;
+      flex: 1;
+      max-height: 380px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .model-card-body.streaming::after {
+      content: '▋';
+      animation: blink .6s step-end infinite;
+      color: var(--accent);
+      margin-left: 1px;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Final Answer ── */
+    .final-card {
+      background: var(--surface);
+      border: 1px solid rgba(108,99,255,.35);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .final-card-head {
+      background: var(--accent-bg);
+      border-bottom: 1px solid rgba(108,99,255,.25);
+      padding: .75rem 1.25rem;
+      font-size: .95rem; font-weight: 700;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .final-card-body {
+      padding: 1.25rem;
+      font-size: .92rem;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .final-card-body.streaming::after {
+      content: '▋';
+      animation: blink .6s step-end infinite;
+      color: var(--accent);
+    }
+
+    /* ── Rendered Markdown ── */
+    .rendered h2 { font-size: 1.05rem; margin: .9rem 0 .4rem; color: var(--text); }
+    .rendered h3 { font-size: .95rem; margin: .75rem 0 .3rem; color: var(--text); }
+    .rendered h4 { font-size: .88rem; margin: .6rem 0 .25rem; color: var(--text); }
+    .rendered p  { margin: .45rem 0; }
+    .rendered ul, .rendered ol { padding-left: 1.4rem; margin: .4rem 0; }
+    .rendered li { margin: .2rem 0; }
+    .rendered strong { color: var(--text); font-weight: 700; }
+    .rendered em { font-style: italic; }
+    .rendered code {
+      background: rgba(255,255,255,.08);
+      padding: .1em .35em;
+      border-radius: 4px;
+      font-family: 'Menlo', 'Consolas', monospace;
+      font-size: .85em;
+    }
+    .rendered pre {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: .85rem 1rem;
+      overflow-x: auto;
+      margin: .6rem 0;
+    }
+    .rendered pre code { background: none; padding: 0; font-size: .83em; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.65);
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.4rem;
+      width: 90%; max-width: 580px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-head {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 1rem;
+    }
+    .modal-head h2 { font-size: 1rem; font-weight: 700; }
+    .modal-close {
+      background: none; border: none;
+      color: var(--text-muted); font-size: 1.2rem;
+      cursor: pointer; line-height: 1;
+    }
+    .session-item {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .9rem 1rem;
+      margin-bottom: .5rem;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .session-item:hover { border-color: var(--accent); }
+    .session-item-prompt {
+      font-size: .87rem; font-weight: 500;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      margin-bottom: .3rem;
+    }
+    .session-item-meta {
+      font-size: .73rem; color: var(--text-muted);
+    }
+    .session-badge {
+      display: inline-block;
+      padding: .1em .4em;
+      border-radius: 4px;
+      font-size: .7rem;
+      margin-right: .3rem;
+    }
+    .badge-completed { background: rgba(110,201,154,.2); color: var(--success); }
+    .badge-running   { background: rgba(108,99,255,.2);  color: var(--accent);  }
+    .badge-error     { background: rgba(224,112,112,.2); color: var(--danger);  }
+
+    /* ── Hint ── */
+    .hint { font-size: .75rem; color: var(--text-muted); margin-top: .4rem; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-title">
+    🤝 AI <span class="accent">Team</span> Chat
+  </div>
+  <div class="header-actions">
+    <button class="btn-ghost" onclick="openHistory()">📋 History</button>
+  </div>
+</header>
+
+<main class="main">
+  <!-- Input -->
+  <div class="input-card">
+    <textarea
+      id="promptInput"
+      class="prompt-textarea"
+      placeholder="Enter your question or task for the AI team… (Ctrl+Enter to submit)"
+    ></textarea>
+    <div class="hint">Ctrl+Enter to submit</div>
+    <div class="input-row">
+      <div class="model-chips">
+        <div class="model-chip chip-claude active" data-model="claude" onclick="toggleChip(this)">
+          <span class="chip-dot chip-dot-claude"></span> Claude
+        </div>
+        <div class="model-chip chip-gpt active" data-model="gpt" onclick="toggleChip(this)">
+          <span class="chip-dot chip-dot-gpt"></span> ChatGPT
+        </div>
+        <div class="model-chip chip-gemini active" data-model="gemini" onclick="toggleChip(this)">
+          <span class="chip-dot chip-dot-gemini"></span> Gemini
+        </div>
+      </div>
+      <button class="btn-primary" id="submitBtn" onclick="startSession()">
+        ▶ Start AI Team Discussion
+      </button>
+    </div>
+  </div>
+
+  <div id="errorBanner" style="display:none"></div>
+  <div id="stages"></div>
+</main>
+
+<!-- History Modal -->
+<div class="modal-overlay" id="historyModal" onclick="closeHistoryOnBg(event)">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Session History</h2>
+      <button class="modal-close" onclick="closeHistory()">✕</button>
+    </div>
+    <div id="historyContent">Loading…</div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+const textBuffers = {};   // elemId → accumulated raw text
+const selectedModels = new Set(['claude', 'gpt', 'gemini']);
+let activeReader = null;
+
+const MODEL_META = {
+  claude:  { name: 'Claude',   indClass: 'ind-claude'  },
+  gpt:     { name: 'ChatGPT',  indClass: 'ind-gpt'     },
+  gemini:  { name: 'Gemini',   indClass: 'ind-gemini'  },
+};
+
+const STAGE_META = {
+  initial:    { label: 'Initial Responses',       num: 1 },
+  discussion: { label: 'AI Team Discussion',      num: 2 },
+  refined:    { label: 'Refined Responses',       num: 3 },
+  final:      { label: 'Final Synthesized Answer',num: 4 },
+};
+
+// ── UI Helpers ───────────────────────────────────────────────────────────────
+function toggleChip(el) {
+  const model = el.dataset.model;
+  if (selectedModels.has(model)) {
+    if (selectedModels.size === 1) return; // keep at least one
+    selectedModels.delete(model);
+    el.classList.remove('active');
+  } else {
+    selectedModels.add(model);
+    el.classList.add('active');
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.className = 'error-banner';
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+function clearError() { document.getElementById('errorBanner').style.display = 'none'; }
+
+// ── Markdown Renderer ────────────────────────────────────────────────────────
+function renderMarkdown(raw) {
+  // Escape HTML
+  let s = raw
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
+  // Fenced code blocks
+  s = s.replace(/```([^\n]*)\n([\s\S]*?)```/g, (_, lang, code) =>
+    `<pre><code>${code.trimEnd()}</code></pre>`);
+
+  // Inline code
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+
+  // Bold / italic
+  s = s.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
+  s = s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  s = s.replace(/\*([^*\n]+)\*/g, '<em>$1</em>');
+
+  // Headers
+  s = s.replace(/^#### (.+)$/gm, '<h4>$1</h4>');
+  s = s.replace(/^### (.+)$/gm,  '<h3>$1</h3>');
+  s = s.replace(/^## (.+)$/gm,   '<h2>$1</h2>');
+  s = s.replace(/^# (.+)$/gm,    '<h2>$1</h2>');
+
+  // Unordered lists
+  s = s.replace(/((?:^- .+\n?)+)/gm, m => {
+    const items = m.trim().split('\n').map(l => `<li>${l.replace(/^- /, '')}</li>`).join('');
+    return `<ul>${items}</ul>`;
+  });
+
+  // Ordered lists
+  s = s.replace(/((?:^\d+\. .+\n?)+)/gm, m => {
+    const items = m.trim().split('\n').map(l => `<li>${l.replace(/^\d+\. /, '')}</li>`).join('');
+    return `<ol>${items}</ol>`;
+  });
+
+  // Paragraphs (blank line separated, skip blocks)
+  s = s.split(/\n\n+/).map(para => {
+    if (/^<(?:h[2-4]|ul|ol|pre|li)/.test(para.trim())) return para;
+    return `<p>${para.replace(/\n/g, ' ')}</p>`;
+  }).join('\n');
+
+  return s;
+}
+
+function finalizeElement(elemId) {
+  const el = document.getElementById(elemId);
+  if (!el) return;
+  el.classList.remove('streaming');
+  const raw = textBuffers[elemId] || el.textContent || '';
+  if (raw.trim()) {
+    el.innerHTML = renderMarkdown(raw);
+    el.classList.add('rendered');
+    el.style.whiteSpace = 'normal';
+  }
+}
+
+function appendToElement(elemId, text) {
+  textBuffers[elemId] = (textBuffers[elemId] || '') + text;
+  const el = document.getElementById(elemId);
+  if (!el) return;
+  el.textContent = textBuffers[elemId];
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Stage / Card Builders ────────────────────────────────────────────────────
+function buildModelCard(model, stage) {
+  const m = MODEL_META[model] || { name: model, indClass: '' };
+  return `
+    <div class="model-card">
+      <div class="model-card-head">
+        <span class="model-indicator ${m.indClass}"></span>
+        ${m.name}
+      </div>
+      <div class="model-card-body streaming" id="${stage}-${model}"></div>
+    </div>`;
+}
+
+function createStageSection(stageKey, models) {
+  const meta = STAGE_META[stageKey] || { label: stageKey, num: '?' };
+  const section = document.createElement('div');
+  section.className = 'stage-section';
+  section.id = `stage-${stageKey}`;
+
+  if (stageKey === 'final') {
+    section.innerHTML = `
+      <div class="stage-header">
+        <div class="stage-badge" id="badge-${stageKey}">${meta.num}</div>
+        <div class="stage-title-text">${meta.label}</div>
+        <div class="stage-status" id="status-${stageKey}">
+          <div class="spinner"></div> Synthesizing…
+        </div>
+      </div>
+      <div class="final-card">
+        <div class="final-card-head">✨ AI Team Consensus</div>
+        <div class="final-card-body streaming" id="final-content"></div>
+      </div>`;
+  } else {
+    const cards = models.map(m => buildModelCard(m, stageKey)).join('');
+    section.innerHTML = `
+      <div class="stage-header">
+        <div class="stage-badge" id="badge-${stageKey}">${meta.num}</div>
+        <div class="stage-title-text">${meta.label}</div>
+        <div class="stage-status" id="status-${stageKey}">
+          <div class="spinner"></div> Running…
+        </div>
+      </div>
+      <div class="model-grid">${cards}</div>`;
+  }
+  return section;
+}
+
+function markStageComplete(stageKey) {
+  const badge  = document.getElementById(`badge-${stageKey}`);
+  const status = document.getElementById(`status-${stageKey}`);
+  if (badge)  badge.classList.add('done');
+  if (status) {
+    status.className = 'stage-status complete';
+    status.innerHTML = '✓ Complete';
+  }
+}
+
+// ── SSE Event Handler ────────────────────────────────────────────────────────
+function handleEvent(ev) {
+  const container = document.getElementById('stages');
+
+  switch (ev.type) {
+    case 'session_start':
+      break;
+
+    case 'stage_start': {
+      const section = createStageSection(ev.stage, ev.models || []);
+      container.appendChild(section);
+      // Scroll new stage into view
+      setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+      break;
+    }
+
+    case 'chunk': {
+      const id = ev.stage === 'final' ? 'final-content' : `${ev.stage}-${ev.model}`;
+      appendToElement(id, ev.text);
+      break;
+    }
+
+    case 'model_done': {
+      if (ev.stage !== 'final') {
+        finalizeElement(`${ev.stage}-${ev.model}`);
+      }
+      break;
+    }
+
+    case 'stage_complete': {
+      markStageComplete(ev.stage);
+      if (ev.stage === 'final') finalizeElement('final-content');
+      break;
+    }
+
+    case 'done':
+      document.getElementById('submitBtn').disabled = false;
+      break;
+
+    case 'fatal_error':
+      showError(ev.message || 'An unexpected error occurred.');
+      document.getElementById('submitBtn').disabled = false;
+      break;
+  }
+}
+
+// ── Session Start ─────────────────────────────────────────────────────────────
+async function startSession() {
+  const prompt = document.getElementById('promptInput').value.trim();
+  if (!prompt) { showError('Please enter a prompt.'); return; }
+  if (selectedModels.size === 0) { showError('Select at least one model.'); return; }
+
+  clearError();
+  document.getElementById('stages').innerHTML = '';
+  document.getElementById('submitBtn').disabled = true;
+  Object.keys(textBuffers).forEach(k => delete textBuffers[k]);
+
+  // Cancel previous stream
+  if (activeReader) { try { activeReader.cancel(); } catch (_) {} activeReader = null; }
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, models: [...selectedModels] }),
+    });
+
+    if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
+
+    const reader = res.body.getReader();
+    activeReader = reader;
+    const decoder = new TextDecoder();
+    let buf = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buf += decoder.decode(value, { stream: true });
+      const parts = buf.split('\n');
+      buf = parts.pop() ?? '';
+
+      for (const line of parts) {
+        if (!line.startsWith('data: ')) continue;
+        const payload = line.slice(6).trim();
+        if (!payload || payload === ': keepalive') continue;
+        try { handleEvent(JSON.parse(payload)); } catch (_) {}
+      }
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') showError(`Connection error: ${err.message}`);
+    document.getElementById('submitBtn').disabled = false;
+  } finally {
+    activeReader = null;
+  }
+}
+
+// ── Session History ──────────────────────────────────────────────────────────
+function openHistory() {
+  document.getElementById('historyModal').classList.add('open');
+  loadHistory();
+}
+function closeHistory() {
+  document.getElementById('historyModal').classList.remove('open');
+}
+function closeHistoryOnBg(e) {
+  if (e.target === e.currentTarget) closeHistory();
+}
+
+async function loadHistory() {
+  const el = document.getElementById('historyContent');
+  el.innerHTML = 'Loading…';
+  try {
+    const sessions = await (await fetch('/api/sessions')).json();
+    if (!sessions.length) {
+      el.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:1rem">No sessions yet.</p>';
+      return;
+    }
+    el.innerHTML = sessions.map(s => {
+      const statusClass = s.status === 'completed' ? 'badge-completed'
+                        : s.status === 'running'   ? 'badge-running'
+                        : 'badge-error';
+      const date = new Date(s.created_at + 'Z').toLocaleString();
+      return `<div class="session-item" onclick="loadSession('${s.id}')">
+        <div class="session-item-prompt">${esc(s.prompt)}</div>
+        <div class="session-item-meta">
+          <span class="session-badge ${statusClass}">${s.status}</span>
+          ${esc(s.models.join(', '))} · ${date}
+        </div>
+      </div>`;
+    }).join('');
+  } catch (e) {
+    el.innerHTML = `<p class="error-banner">Failed to load history: ${e.message}</p>`;
+  }
+}
+
+async function loadSession(sid) {
+  closeHistory();
+  clearError();
+  try {
+    const s = await (await fetch(`/api/sessions/${sid}`)).json();
+    document.getElementById('promptInput').value = s.prompt;
+    document.getElementById('stages').innerHTML = '';
+    Object.keys(textBuffers).forEach(k => delete textBuffers[k]);
+
+    const container = document.getElementById('stages');
+    const d = s.session_data;
+    const models = s.models;
+
+    function restoreStage(key, dataObj, modelList) {
+      if (!dataObj || !Object.keys(dataObj).some(k => dataObj[k])) return;
+      const section = createStageSection(key, modelList);
+      container.appendChild(section);
+      for (const [mk, text] of Object.entries(dataObj)) {
+        const id = `${key}-${mk}`;
+        textBuffers[id] = text;
+        const el = document.getElementById(id);
+        if (el && text) {
+          el.innerHTML = renderMarkdown(text);
+          el.classList.add('rendered');
+          el.classList.remove('streaming');
+          el.style.whiteSpace = 'normal';
+        }
+      }
+      markStageComplete(key);
+    }
+
+    if (d.initial)    restoreStage('initial',    d.initial,    models);
+    if (d.discussion) restoreStage('discussion', d.discussion, models);
+    if (d.refined)    restoreStage('refined',    d.refined,    models);
+
+    if (d.final) {
+      const section = createStageSection('final', []);
+      container.appendChild(section);
+      const el = document.getElementById('final-content');
+      if (el) {
+        textBuffers['final-content'] = d.final;
+        el.innerHTML = renderMarkdown(d.final);
+        el.classList.add('rendered');
+        el.classList.remove('streaming');
+        el.style.whiteSpace = 'normal';
+      }
+      markStageComplete('final');
+    }
+  } catch (e) {
+    showError('Failed to load session: ' + e.message);
+  }
+}
+
+// ── Utils ────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Ctrl+Enter shortcut
+document.getElementById('promptInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) startSession();
+});
+</script>
+</body>
+</html>
