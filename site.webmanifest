@@ -1,0 +1,10 @@
+{
+  "name": "Handy Halifax",
+  "short_name": "Handy Halifax",
+  "description": "Local odd-job and easy-DIY help across Halifax.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#0f2a4a",
+  "icons": []
+}
