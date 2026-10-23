@@ -266,7 +266,7 @@ dialog .done { margin-top: 16px; width: 100%; padding: 14px; border-radius: 999p
   <div class="row"><label for="sTr">Show roman spelling (laal, neela…)</label><input type="checkbox" id="sTr"></div>
   <div class="row"><label for="sSfx">Happy sounds</label><input type="checkbox" id="sSfx"></div>
   <div class="row"><label for="sRate">Speaking speed</label><input type="range" id="sRate" min="0.5" max="1.2" step="0.05"></div>
-  <div class="row"><label for="sVoice">Voice</label><select id="sVoice"></select></div>
+  <div class="row" id="voiceRow"><label for="sVoice">Voice</label><select id="sVoice"></select></div>
   <div class="row"><label for="sRec">Record my own voice<br><small style="font-weight:500;color:#8a5a78">Let Nani, Dadi or you say the words. Recordings play instead of the computer voice.</small></label><input type="checkbox" id="sRec"></div>
   <div class="voice" id="voiceNote"></div>
   <button class="done" id="sDone">Done</button>
@@ -275,6 +275,7 @@ dialog .done { margin-top: 16px; width: 100%; padding: 14px; border-radius: 999p
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="audio.js"></script>
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
@@ -433,6 +434,19 @@ PAINTI.forEach(([letter, name, nameTr, word, wordTr, en, e]) => {
   });
 });
 
+// Built-in recordings live in audio.js as NB_AUDIO, one clip per word: "<category>-<set>-<position>".
+CATS.forEach(c => c.sets.forEach((s, si) => s.items.forEach((it, i) => {
+  if (c.id === "painti") {
+    it.wordClip = it.word ? `painti-w-${i}` : null;
+    it.clips = it.word ? [`painti-n-${i}`, it.wordClip] : [`painti-n-${i}`];
+  } else {
+    it.clips = [`${c.id}-${si}-${i}`];
+    it.wordClip = it.clips[0];
+  }
+})));
+const BUILTIN = window.NB_AUDIO || {};
+const hasBuiltin = Object.keys(BUILTIN).length > 0;
+
 /* Today, in Punjabi. Desi months follow the Nanakshahi start dates. */
 const DAY_ORDER = [6, 0, 1, 2, 3, 4, 5]; // JS getDay() (Sun=0) -> index in the days list (Mon first)
 const DESI_STARTS = [[3, 14], [4, 14], [5, 15], [6, 15], [7, 16], [8, 16], [9, 15], [10, 15], [11, 14], [12, 14], [1, 13], [2, 12]];
@@ -555,13 +569,34 @@ function playBlob(blob, done) {
   audioEl.play().catch(end);
 }
 
-/* Say an item: a family recording if there is one, otherwise the voice. */
+/* Play built-in clips one after another. Returns false if any clip is missing. */
+function playClips(ids, done) {
+  if (!ids.length || !ids.every(id => BUILTIN[id])) return false;
+  stopSpeaking();
+  const token = speakToken;
+  let k = 0;
+  const next = () => {
+    if (token !== speakToken) return;
+    if (k >= ids.length) { done && done(); return; }
+    const a = audioEl = new Audio(BUILTIN[ids[k++]]);
+    a.playbackRate = Math.min(1.3, Math.max(0.6, S.rate / 0.8)); // the speed slider's default (0.8) is natural speed
+    a.onended = () => setTimeout(next, 250);
+    a.onerror = () => next();
+    a.play().catch(() => next());
+  };
+  next();
+  return true;
+}
+/* Built-in recording first, then the device's voice. */
+function say(ids, pa, tr, done) { if (!playClips(ids, done)) speak(pa, tr, done); }
+
+/* Say an item: a family recording if there is one, otherwise the built-in voice. */
 const keyOf = (cat, item) => cat.id + ":" + (item.letter || item.pa);
 function sayItem(cat, item, done) {
   const blob = Rec.get(keyOf(cat, item));
   stopSpeaking();
   if (blob) return playBlob(blob, done);
-  speak(item.say || item.pa, item.sayTr || item.tr, done);
+  say(item.clips, item.say || item.pa, item.sayTr || item.tr, done);
 }
 
 /* =========================================================
@@ -637,7 +672,7 @@ function renderHome() {
   const desi = CATS[3].sets[1].items[desiMonthIndex(now)];
   $("today").innerHTML = `<span class="big">ਅੱਜ <b>${day.pa}</b> ਹੈ ${day.e}</span>
     <span class="sub">Today is ${day.en} · ${month.pa} · ${desi.pa}</span>`;
-  $("today").onclick = e => { pop(); burst(e.clientX, e.clientY); speak(`ਅੱਜ ${day.pa} ਹੈ`, `ajj ${day.tr} hai`); };
+  $("today").onclick = e => { pop(); burst(e.clientX, e.clientY); say([`today-${DAY_ORDER[now.getDay()]}`], `ਅੱਜ ${day.pa} ਹੈ`, `ajj ${day.tr} hai`); };
 
   $("tiles").innerHTML = CATS.map((c, i) => `
     <button class="tile" style="--c:${c.c}" data-i="${i}">
@@ -651,7 +686,7 @@ function renderHome() {
     pop(); burst(e.clientX, e.clientY, 18);
     if (t.dataset.game) return openGame();
     const c = CATS[+t.dataset.i];
-    speak(c.pa, c.tr);
+    say([`cat-${c.id}`], c.pa, c.tr);
     openLearn(+t.dataset.i);
   });
 }
@@ -836,7 +871,7 @@ function newRound() {
   const name = c.id === "painti" ? target.word : target.pa;
   const nameTr = c.id === "painti" ? target.wordTr : target.tr;
   $("ask").innerHTML = `<div class="q">${esc(name)} ਕਿੱਥੇ ਹੈ? 🔊</div><div class="qt">${S.tr ? esc(nameTr) + " kitthe hai?" : ""}${S.en ? ` · Where is the ${esc(c.id === "numbers" ? "number " + target.en : target.en)}?` : ""}</div>`;
-  $("ask").onclick = () => speak(`${name} ਕਿੱਥੇ ਹੈ?`, `${nameTr} kitthe hai?`);
+  $("ask").onclick = () => say([target.wordClip, "p-kitthe"], `${name} ਕਿੱਥੇ ਹੈ?`, `${nameTr} kitthe hai?`);
   $("opts").innerHTML = G.opts.map((o, i) => {
     if (c.id === "colours") return `<button class="opt" data-i="${i}" style="--c:${o.hex}" aria-label="${esc(o.en)}">${o.e}</button>`;
     if (c.id === "numbers") return `<button class="opt numeral" data-i="${i}" aria-label="${o.n}"><span>${o.num}<span style="display:block;font-size:.26em;line-height:1.1;max-width:6em;margin:4px auto 0">${o.e.repeat(o.n)}</span></span></button>`;
@@ -853,13 +888,13 @@ function pick(btn, o, e) {
     $("stars").textContent = `⭐ ${G.stars}`;
     btn.classList.add("yes"); yay();
     burst(e.clientX, e.clientY, 60, true);
-    speak("ਸ਼ਾਬਾਸ਼!", "shaabaash!");
+    say(["p-shabaash"], "ਸ਼ਾਬਾਸ਼!", "shaabaash!");
     setTimeout(() => state.view === "game" && newRound(), 2000);
   } else {
     btn.classList.remove("nope"); void btn.offsetWidth; btn.classList.add("nope");
     tone([330, 262], 0.12, "sine", 0.1);
     const c = CATS[G.cat];
-    speak(c.id === "painti" ? o.word : o.pa, c.id === "painti" ? o.wordTr : o.tr); // say what they tapped: still learning
+    say([o.wordClip], c.id === "painti" ? o.word : o.pa, c.id === "painti" ? o.wordTr : o.tr); // say what they tapped: still learning
   }
 }
 $("gback").onclick = () => { stopSpeaking(); pop(); show("home"); };
@@ -876,6 +911,11 @@ $("gback").onclick = () => { stopSpeaking(); pop(); show("home"); };
   b.addEventListener("contextmenu", e => e.preventDefault());
 })();
 function fillVoiceSelect() {
+  if (hasBuiltin) {
+    $("voiceRow").hidden = true;
+    $("voiceNote").innerHTML = `Every word has a Punjabi voice recorded into the app, so it sounds the same on every phone and works offline. Use “Record my own voice” to swap in your family's voices.`;
+    return;
+  }
   const sel = $("sVoice");
   const useful = voices.filter(v => /^(pa|hi|en)/i.test(v.lang));
   sel.innerHTML = `<option value="">Best available</option>` + useful.map(v => `<option value="${esc(v.voiceURI)}">${esc(v.name)} (${esc(v.lang)})</option>`).join("");
@@ -895,8 +935,8 @@ function openSettings() {
 }
 for (const [id, key] of [["sEn", "en"], ["sTr", "tr"], ["sSfx", "sfx"], ["sRec", "rec"]]) $(id).onchange = e => { S[key] = e.target.checked; save(); };
 $("sRate").oninput = e => { S.rate = +e.target.value; save(); };
-$("sRate").onchange = () => speak("ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "sat sri akaal");
-$("sVoice").onchange = e => { S.voice = e.target.value; save(); fillVoiceSelect(); speak("ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "sat sri akaal"); };
+$("sRate").onchange = () => say(["p-hello"], "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "sat sri akaal");
+$("sVoice").onchange = e => { S.voice = e.target.value; save(); fillVoiceSelect(); say(["p-hello"], "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "sat sri akaal"); };
 $("sDone").onclick = () => { $("settings").close ? $("settings").close() : $("settings").removeAttribute("open"); };
 $("settings").addEventListener("close", () => { renderHome(); if (state.view === "learn") { renderSets(); renderCard(); } if (state.view === "game") openGame(); });
 

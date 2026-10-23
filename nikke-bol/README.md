@@ -1,6 +1,6 @@
 # ਨਿੱਕੇ ਬੋਲ · Nikke Bol
 
-First Punjabi words for babies and toddlers. One HTML file, no build step, no tracking, works offline.
+First Punjabi words for babies and toddlers. One HTML file plus a bundled audio file, no build step, no tracking, works offline.
 
 ## What's inside
 
@@ -21,13 +21,15 @@ First Punjabi words for babies and toddlers. One HTML file, no build step, no tr
 
 ## Voices
 
-The app uses the device's built-in text-to-speech:
+Every word has a Punjabi voice **recorded into the app** (`audio.js`, about 170 short clips), so it sounds the same on every phone and tablet, needs no setup, and works offline. The clips were made with an ElevenLabs voice and checked with Whisper speech recognition.
 
-1. A **Punjabi voice** (pa-IN) if the device has one.
-2. Otherwise a **Hindi voice**: the Gurmukhi is converted letter-for-letter into Devanagari (the two scripts share a Unicode layout, and addak ੱ becomes a doubled consonant), so it sounds close.
-3. Otherwise the roman spelling is read in English.
+What plays when a card is tapped, in order:
 
-On Android, install "Speech Services by Google" and add Punjabi for the best result. iPhones have a Hindi voice built in. Recording your own voice beats all of them.
+1. A **family recording**, if a grown-up recorded one for that word ("Record my own voice" in settings).
+2. The **built-in recording**.
+3. The device's own text-to-speech, only if a clip is ever missing (Punjabi voice, then Hindi via Gurmukhi→Devanagari, then roman spelling).
+
+To regenerate the clips, keep the clip names (`colours-0-0`, `painti-n-5`, `today-3`…). They follow the category, set and position of each word in `index.html`.
 
 ## Running it
 
