@@ -27,6 +27,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 > • A profile for each child, with their own path, streak and progress
 > • Daily goals, streaks and a practice calendar for grown-ups
 > • A gentle daily reminder with a Punjabi word of the day, only on days you haven't practised
+> • 22 stickers to collect, from “First word” to a 30-day streak, plus a Sunday summary for grown-ups
 > • Record Nani's or Dadi's voice and share it with the whole family
 > • Baby, Child and Grown-up learner levels
 >
@@ -48,6 +49,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 - **Privacy policy URL:** host `nikke-bol/privacy.html` (for example on GitHub Pages) and paste its address. Fill in the contact email at the bottom first.
 - **Microphone:** used only when the user taps record; explained in the permission prompt.
 - **Notifications:** local reminders scheduled on the device, only if a grown-up switches them on. No push server.
+- **Ratings:** the app asks grown-ups for a rating only behind the grown-ups check, using the system review prompt (Apple guideline 1.3 for the Kids category).
 
 ## Screenshots
 
@@ -59,8 +61,8 @@ In `store/screenshots/`, made from the real app with a sample learner:
 | iPad 13" | `ipad-13-*.png` | 2064 × 2752 |
 | Google Play phone | `android-phone-*.png` | 1080 × 2400 |
 
-Order: welcome, learning path, word card, reading lesson, sentences, calendar, game. Regenerate after design changes with `npm run screenshots` (see the app README).
+Order: welcome, learning path (with word of the day), word card, reading lesson, sentences, calendar, game, sticker book. Regenerate after design changes with `npm run screenshots` (see the app README).
 
 ## Review notes (paste into “Notes for review”)
 
-> Nikke Bol is a Punjabi learning app for children and families. It works fully offline: all audio is bundled. There are no accounts, ads, purchases, analytics or network requests. The grown-ups area (settings, backups, deleting learners) is behind a multiplication question as a parental gate. The microphone is used only when a user taps a record button, and recordings stay on the device.
+> Nikke Bol is a Punjabi learning app for children and families. It works fully offline: all audio is bundled. There are no accounts, ads, purchases, analytics or network requests. The grown-ups area (settings, backups, deleting learners) and the rating request are behind a multiplication question as a parental gate. Reminders are local notifications that a grown-up turns on. The microphone is used only when a user taps a record button, and recordings stay on the device.

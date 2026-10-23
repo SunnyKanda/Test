@@ -8,6 +8,11 @@ Learn Punjabi, from a baby's first words to reading, writing and simple sentence
 - **Learning path** (child and grown-up levels): 38 short units in order, mixing words, reading lessons and sentences (plus tones for grown-ups). Each unit teaches its cards, then quizzes them; first-try answers earn up to three stars and unlock the next unit.
 - **Daily goal and streak:** time counts while someone is using the app. The ring at the top fills towards the goal; the streak counts practised days, with one free rest day a week.
 - **Daily reminders** (phone app): a notification at a time you choose, only on days nobody has met their goal yet, with a word of the day. Set it up on the welcome screen or in the grown-ups area.
+- **Stickers:** 22 stickers for milestones (first word, streaks, all 35 letters, three stars, tracing, recording…), celebrated when earned and collected in a sticker book.
+- **Word of the day:** on the home screen, and in each day's reminder; tapping the reminder opens it.
+- **Weekly summary** (phone app): a Sunday-evening notification with each learner's minutes and words.
+- **Rating card** (phone app): after a 3-day streak or a three-star unit, grown-ups are asked (behind the grown-ups check) whether they'd rate the app. At most three times, months apart.
+- **Haptics:** a light buzz on taps and right or wrong answers in the phone app (switch off with "Happy sounds").
 - **Calendar:** a stitch for each day practised and a gold diamond when the goal was met, plus minutes per day for the last week.
 - **Grown-ups area:** behind a multiplication question. Learners, level, goal, sounds, family voices, backup and restore, privacy policy.
 
@@ -79,6 +84,7 @@ Computer voices are good but not perfect, especially for tones and single syllab
 | `profiles.js` | Welcome, learner switching and editing, grown-ups gate, backup and restore |
 | `path.js` | Learning path, unit runner, daily goal ring, calendar |
 | `reminders.js` | Daily reminder notifications in the phone app |
+| `extras.js` | Stickers, word of the day, rating card |
 | `app.js` | Start-up |
 | `fonts/` | Baloo Paaji 2 (SIL Open Font License), bundled so it works offline |
 | `privacy.html` | Privacy policy for the app stores |

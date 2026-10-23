@@ -22,16 +22,18 @@ function seed() {
   for (const dev of DEVICES) {
     const ctx = await b.newContext({ viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.scale, reducedMotion: "reduce" });
     const p = await ctx.newPage();
-    const shot = async n => { await p.waitForTimeout(600); await p.screenshot({ path: path.join(__dirname, "../store/screenshots", `${dev.name}-${n}.png`) }); };
+    const shot = async n => { await p.waitForTimeout(600); await p.evaluate(() => { if (window.stickerQueue) { stickerQueue.length = 0; $("stickerPop").hidden = true; } }); await p.screenshot({ path: path.join(__dirname, "../store/screenshots", `${dev.name}-${n}.png`) }); };
     // 1 welcome (fresh install)
     await p.goto(url); await p.waitForTimeout(800); await shot("1-welcome");
     await p.evaluate(seed); await p.goto(url); await p.waitForTimeout(800);
+    await p.evaluate(() => { window.checkStickers = () => {}; }); // no sticker pop-ups over the screenshots
     await shot("2-path");
     await p.evaluate(() => { state.tab = "words"; renderHome(); openLearn(0); state.i = 2; renderCard(); }); await shot("3-words");
     await p.evaluate(() => openLesson(MATRAS[1])); await shot("4-reading");
     await p.evaluate(() => { SB.noun = 7; SB.adj = 1; openSentences(); }); await shot("5-sentences");
     await p.evaluate(() => openCalendar()); await shot("6-calendar");
     await p.evaluate(() => { goHome(); openGame(); }); await shot("7-game");
+    await p.evaluate(() => { const t = Date.now(); P.stickers = {}; ["first-word", "words-10", "words-50", "goal-1", "streak-3", "streak-7", "unit-1", "three-stars", "colours", "family", "writer"].forEach((id, i) => P.stickers[id] = t - i * 864e5); openStickers(); }); await shot("8-stickers");
     await ctx.close();
   }
   await b.close();

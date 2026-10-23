@@ -67,7 +67,7 @@ function readPractice(m) {
       if (i >= deck.length) {
         body.innerHTML = `<div class="done"><div class="emo">🌟</div><div class="pa">${UI_SAY.great}</div><p>You read all ${deck.length} words. They will come back in Review.</p>
           <button class="cta" id="again">Again</button> <button class="cta ghost" id="toLessons">All lessons</button></div>`;
-        say([UI_SAY.great]); yay(); burstFrom(body.querySelector(".emo"), 50, true);
+        say([UI_SAY.great]); yay(); burstFrom(body.querySelector(".emo"), 50, true); flushStickers(true);
         $("again").onclick = () => readPractice(m); $("toLessons").onclick = () => openReading();
         return;
       }
@@ -155,7 +155,7 @@ function setupTrace(it) {
     const cover = samples.length ? hit.size / samples.length : 0;
     $("traceBar").style.width = Math.min(100, cover / .7 * 100) + "%";
     if (!done && cover >= .7 && outside < inside * .6) {
-      done = true; yay(); burstFrom(ink, 60, true); say([UI_SAY.well, ...it.say]); grade(it.key, true);
+      done = true; yay(); burstFrom(ink, 60, true); say([UI_SAY.well, ...it.say]); grade(it.key, true); bump("traced");
     }
   };
   ink.onpointerdown = e => { ink.setPointerCapture(e.pointerId); last = at(e); k.beginPath(); k.moveTo(...last); k.lineTo(...last); k.stroke(); mark(last); };
@@ -212,7 +212,7 @@ function sentenceQuiz(round, score, onDone) {
     openPage(UI_SAY.sentences, "Which is right?", body => {
       body.innerHTML = `<div class="done"><div class="emo">${score >= 6 ? "🏆" : "🌱"}</div><div class="pa">${score >= 6 ? UI_SAY.great : UI_SAY.well}</div><p>${score} of 8 right.</p>
         <button class="cta" id="again">Again</button> <button class="cta ghost" id="toBuilder">Back to the builder</button></div>`;
-      say([score >= 6 ? UI_SAY.great : UI_SAY.well]); if (score >= 6) yay();
+      say([score >= 6 ? UI_SAY.great : UI_SAY.well]); if (score >= 6) yay(); flushStickers(true);
       $("again").onclick = () => sentenceQuiz(0, 0); $("toBuilder").onclick = () => openSentences();
     }, () => openSentences());
     return;
@@ -267,7 +267,7 @@ function openSpeak(newWord = true) {
       try {
         const blob = await recordAudio(3500, r => { btn.classList.add("live"); btn.textContent = "■ Stop"; btn.onclick = () => r.stop(); });
         sayItBack.mine = URL.createObjectURL(blob);
-        seen(it.key); markDay(); saveP();
+        seen(it.key); markDay(); bump("spoke");
         openSpeak(false);
         playSrc(sayItBack.mine);
       } catch (e) { toast("The microphone isn't available here. Open the installed app to record."); }
@@ -305,11 +305,12 @@ function openTones(onDone) {
   }, onDone ? () => { state.scrollPath = true; goHome(); } : goHome);
 }
 function toneQuiz(round, score, onDone) {
+  if (round >= 8) bump("tones");
   if (round >= 8 && onDone) return onDone(score);
   if (round >= 8) {
     openPage(UI_SAY.tones, "Which did you hear?", body => {
       body.innerHTML = `<div class="done"><div class="emo">${score >= 6 ? "🏆" : "👂"}</div><p>${score} of 8 right.</p><button class="cta" id="again">Again</button> <button class="cta ghost" id="toTones">Back</button></div>`;
-      $("again").onclick = () => toneQuiz(0, 0); $("toTones").onclick = () => openTones();
+      $("again").onclick = () => toneQuiz(0, 0); $("toTones").onclick = () => openTones(); flushStickers(true);
     }, () => openTones());
     return;
   }
@@ -355,7 +356,7 @@ function openReview() {
         body.innerHTML = `<div class="done"><div class="emo">${score >= deck.length * .8 ? "🏆" : "🌟"}</div><div class="pa">${UI_SAY.well}</div>
           <p>${score} of ${deck.length} right. Wrong ones come back sooner; right ones come back later.</p>
           <button class="cta" id="again">Another round</button> <button class="cta ghost" id="toProg">My progress</button></div>`;
-        say([UI_SAY.well]); yay(); burstFrom(body.querySelector(".emo"), 50, true);
+        say([UI_SAY.well]); yay(); burstFrom(body.querySelector(".emo"), 50, true); flushStickers(true);
         $("again").onclick = () => openReview(); $("toProg").onclick = () => openProgress();
       });
       return;

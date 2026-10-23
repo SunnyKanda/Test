@@ -1,6 +1,6 @@
 // Nikke Bol offline cache: everything the app needs, cached on install.
-const CACHE = "nikke-bol-v5";
-const SHELL = ["./", "index.html", "style.css", "data.js", "audio.js", "core.js", "words.js", "study.js", "profiles.js", "path.js", "reminders.js", "app.js", "privacy.html", "manifest.webmanifest", "icon.svg",
+const CACHE = "nikke-bol-v6";
+const SHELL = ["./", "index.html", "style.css", "data.js", "audio.js", "core.js", "words.js", "study.js", "profiles.js", "path.js", "reminders.js", "extras.js", "app.js", "privacy.html", "manifest.webmanifest", "icon.svg",
   "fonts/baloo-paaji-2-gurmukhi-500-normal.woff2", "fonts/baloo-paaji-2-gurmukhi-600-normal.woff2", "fonts/baloo-paaji-2-gurmukhi-700-normal.woff2", "fonts/baloo-paaji-2-gurmukhi-800-normal.woff2",
   "fonts/baloo-paaji-2-latin-500-normal.woff2", "fonts/baloo-paaji-2-latin-600-normal.woff2", "fonts/baloo-paaji-2-latin-700-normal.woff2", "fonts/baloo-paaji-2-latin-800-normal.woff2"];
 

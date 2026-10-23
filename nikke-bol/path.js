@@ -134,7 +134,8 @@ function finishUnit(u, score) {
   const stars = score >= .9 ? 3 : score >= .6 ? 2 : 1;
   P.path = P.path || {};
   const before = unitStars(u);
-  P.path[u.id] = Math.max(before, stars); saveP();
+  P.path[u.id] = Math.max(before, stars); saveP(); afterProgress();
+  if (stars === 3 && typeof Rate !== "undefined") setTimeout(() => Rate.maybe(), 2500);
   const info = unitInfo(u), units = pathUnits(), idx = units.indexOf(u), nextU = units[idx + 1];
   openPage(info.pa, "Unit complete", body => {
     body.innerHTML = `<div class="done">
@@ -145,6 +146,7 @@ function finishUnit(u, score) {
       <button class="cta ghost" id="fPath">Back to the path</button></div>`;
     yay(); say([stars === 3 ? UI_SAY.great : UI_SAY.well]);
     setTimeout(() => burstFrom(body.querySelector(".bigstars"), 80, true), 300);
+    flushStickers(true);
     if (nextU) $("fNext").onclick = () => { pop(); startUnit(nextU); };
     $("fPath").onclick = () => { pop(); state.scrollPath = true; goHome(); };
   }, () => { state.scrollPath = true; goHome(); });

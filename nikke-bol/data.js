@@ -346,4 +346,4 @@ const PATH = [
   U("numbers4", "੧੬ ਤੋਂ ੨੦", "Numbers 16–20", "🎯", "numbers", ["ਸੋਲ਼ਾਂ", "ਸਤਾਰਾਂ", "ਅਠਾਰਾਂ", "ਉੱਨੀ", "ਵੀਹ"]),
   { id: "tones", kind: "tones", emoji: "🎵", level: "adult" },
 ];
-Object.assign(UI_SAY, { start: "ਚਲੋ ਸ਼ੁਰੂ ਕਰੀਏ!", letsgo: "ਚਲੋ ਸ਼ੁਰੂ ਕਰੀਏ!", welcome: "ਜੀ ਆਇਆਂ ਨੂੰ!", goalDone: "ਅੱਜ ਦਾ ਟੀਚਾ ਪੂਰਾ!", path: "ਰਾਹ", words: "ਸ਼ਬਦ", practice: "ਅਭਿਆਸ", calendar: "ਕੈਲੰਡਰ", learn: "ਸਿੱਖੋ", listen: "ਸੁਣੋ" });
+Object.assign(UI_SAY, { wordOfDay: "ਅੱਜ ਦਾ ਸ਼ਬਦ", stickers: "ਸਟਿੱਕਰ", newSticker: "ਨਵਾਂ ਸਟਿੱਕਰ!", start: "ਚਲੋ ਸ਼ੁਰੂ ਕਰੀਏ!", letsgo: "ਚਲੋ ਸ਼ੁਰੂ ਕਰੀਏ!", welcome: "ਜੀ ਆਇਆਂ ਨੂੰ!", goalDone: "ਅੱਜ ਦਾ ਟੀਚਾ ਪੂਰਾ!", path: "ਰਾਹ", words: "ਸ਼ਬਦ", practice: "ਅਭਿਆਸ", calendar: "ਕੈਲੰਡਰ", learn: "ਸਿੱਖੋ", listen: "ਸੁਣੋ" });

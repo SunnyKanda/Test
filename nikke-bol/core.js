@@ -163,9 +163,18 @@ function tone(freqs, dur = 0.12, type = "triangle", gap = 0.08) {
     });
   } catch (e) {}
 }
-const pop = () => tone([660, 990], 0.1);
-const yay = () => tone([523, 659, 784, 1047], 0.18, "triangle", 0.09);
-const boop = () => tone([330, 262], 0.12, "sine", 0.1);
+/* A little buzz to go with the sounds: native haptics in the phone app, vibration where the browser has it. */
+function buzz(kind) {
+  if (!S.sfx) return;
+  try {
+    const c = window.Capacitor, h = c && c.isNativePlatform && c.isNativePlatform() && c.Plugins.Haptics;
+    if (h) kind === "light" ? h.impact({ style: "LIGHT" }) : h.notification({ type: kind === "success" ? "SUCCESS" : "WARNING" });
+    else if (navigator.vibrate && kind !== "light") navigator.vibrate(kind === "success" ? [12, 40, 18] : 30);
+  } catch (e) {}
+}
+const pop = () => { tone([660, 990], 0.1); buzz("light"); };
+const yay = () => { tone([523, 659, 784, 1047], 0.18, "triangle", 0.09); buzz("success"); };
+const boop = () => { tone([330, 262], 0.12, "sine", 0.1); buzz("warning"); };
 
 /* =========================================================
    Family voices: recordings made on this device (IndexedDB), packs
@@ -283,14 +292,17 @@ const todayStr = () => dayKey(new Date());
 const dayLog = (k = todayStr()) => P.log[k] || (P.log[k] = { secs: 0, n: 0 });
 function markDay() { dayLog().n++; }
 function seen(key) {
-  if (!P.items[key]) { P.items[key] = { box: 0, due: Date.now(), right: 0, wrong: 0 }; markDay(); saveP(); }
+  if (!P.items[key]) { P.items[key] = { box: 0, due: Date.now(), right: 0, wrong: 0 }; markDay(); saveP(); afterProgress(); }
 }
 function grade(key, ok) {
   const it = P.items[key] || (P.items[key] = { box: 0, due: 0, right: 0, wrong: 0 });
   if (ok) { it.box = Math.min(6, it.box + 1); it.right++; } else { it.box = 1; it.wrong++; }
   it.due = Date.now() + (ok ? INTERVALS[it.box] : 10 * 60e3);
-  markDay(); saveP();
+  markDay(); saveP(); afterProgress();
 }
+/* Stickers and the rating card look at progress after every change (they live in extras.js). */
+const afterProgress = () => { if (typeof checkStickers === "function") checkStickers(); };
+const bump = (stat, n = 1) => { P.stats = P.stats || {}; P.stats[stat] = (P.stats[stat] || 0) + n; saveP(); afterProgress(); };
 /* A day counts once you have practised for a minute or met three words. */
 const practised = k => { const l = P.log[k]; return !!l && (l.secs >= 60 || l.n >= 3); };
 const goalMet = k => { const l = P.log[k]; return !!l && l.secs >= S.goal * 60; };
@@ -317,7 +329,7 @@ setInterval(() => {
   const L = dayLog(), before = L.secs, goal = S.goal * 60;
   L.secs += 5;
   if (L.secs % 30 === 0) saveP();
-  if (before < goal && L.secs >= goal) { saveP(); if (typeof Reminders !== "undefined") Reminders.refresh(); setTimeout(() => { yay(); say([UI_SAY.goalDone]); toast(`Today's ${S.goal} minutes done! 🔥 ${streak()} day streak`); }, 400); }
+  if (before < goal && L.secs >= goal) { saveP(); if (typeof Reminders !== "undefined") Reminders.refresh(); setTimeout(() => { yay(); say([UI_SAY.goalDone]); toast(`Today's ${S.goal} minutes done! 🔥 ${streak()} day streak`); afterProgress(); if (typeof Rate !== "undefined") Rate.maybe(); }, 400); }
   if (typeof renderGoal === "function") renderGoal();
 }, 5000);
 addEventListener("visibilitychange", () => { if (document.hidden) { saveP(); if (typeof Reminders !== "undefined") Reminders.refresh(); } });
@@ -368,6 +380,7 @@ function show(view) {
   if (view !== "learn" && typeof stopAuto === "function") stopAuto();
   if (view !== "page") state.pageRender = null;
   scrollTo(0, 0);
+  if (typeof flushStickers === "function") flushStickers();
 }
 /* Open a page: title, Punjabi title spoken when tapped, and a render function that fills #pageBody. */
 function openPage(pa, en, render, back = goHome) {

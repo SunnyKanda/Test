@@ -13,6 +13,7 @@ const STUDY_TILES = [
   { id: "review", pa: UI_SAY.review, en: "Review", emoji: "🔁", c: "#ff3d8b", level: "child", open: () => openReview() },
   { id: "progress", pa: UI_SAY.progress, en: "My progress", emoji: "⭐", c: "#fff4e8", level: "child", open: () => openProgress() },
   { id: "calendar", pa: UI_SAY.calendar, en: "Calendar", emoji: "📅", c: "#16c2b0", level: "child", open: () => openCalendar() },
+  { id: "stickers", pa: UI_SAY.stickers, en: "Sticker book", emoji: "🏅", c: "#ffb627", level: "child", open: () => openStickers() },
 ];
 
 const HOME_TABS = [
@@ -32,7 +33,7 @@ function renderHome() {
   $("today").hidden = tab !== "words";
   $("foot").hidden = tab !== "words";
 
-  if (tab === "path") { renderPath($("tiles")); return; }
+  if (tab === "path") { renderPath($("tiles")); $("tiles").insertAdjacentHTML("afterbegin", wordCardHTML()); wireWordCard(); return; }
   const now = new Date();
   const dIdx = DAY_ORDER[now.getDay()];
   const day = CATS[2].sets[0].items[dIdx];
@@ -47,16 +48,19 @@ function renderHome() {
       <span class="emo">${emoji}</span><span class="pa">${pa}</span><span class="en">${en}</span>${extra}</button>`;
   let html = "";
   if (tab === "words") {
-    html += `<div class="tiles">${levelCats().map(({ c, i }) => tile(`data-i="${i}"`, c.c, c.emoji, c.pa, c.en)).join("")}</div>
+    html += wordCardHTML() + `<div class="tiles">${levelCats().map(({ c, i }) => tile(`data-i="${i}"`, c.c, c.emoji, c.pa, c.en)).join("")}</div>
       <button class="tile wide" style="--c:#fff4e8" data-game="1"><span class="emo">🎈</span><span><span class="pa">ਖੇਡ</span><br><span class="en">Game · find the right one</span></span></button>`;
+    if (!tabbed) html += `<button class="tile wide" style="--c:#ffb627" data-s="stickers"><span class="emo">🏅</span><span><span class="pa">${UI_SAY.stickers}</span><br><span class="en">Sticker book · ${Object.keys(P.stickers || {}).length} collected</span></span></button>`;
   } else {
     const study = STUDY_TILES.filter(t => atLeast(t.level));
     html += `<div class="tiles">${study.map(t => tile(`data-s="${t.id}"`, t.c, t.emoji, t.pa, t.en, t.id === "review" && due ? `<span class="due">${due}</span>` : "")).join("")}</div>`;
   }
   $("tiles").innerHTML = html;
+  wireWordCard();
   $("tiles").querySelectorAll(".tile").forEach(t => t.onclick = e => {
     pop(); burst(e.clientX, e.clientY, 18);
     if (t.dataset.game) return openGame();
+    if (t.dataset.s === "stickers") { say([UI_SAY.stickers]); return openStickers(); }
     if (t.dataset.s) { const s = STUDY_TILES.find(x => x.id === t.dataset.s); say([s.pa]); return s.open(); }
     const c = CATS[+t.dataset.i];
     say([c.pa], { tr: c.tr });
