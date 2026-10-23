@@ -10,9 +10,6 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+Paaji+2:wght@500;600;700;800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,12 +17,16 @@
 <section id="home" class="screen" aria-label="Home">
   <div class="brand">
     <h1>ਨਿੱਕੇ ਬੋਲ<small>Nikke Bol · little words</small></h1>
-    <button class="grownups" id="grownups" aria-label="Grown-ups settings (press and hold)"><i class="fill"></i><span>Hold for grown-ups</span></button>
+    <div class="headbtns">
+      <button class="who" id="who" aria-label="Change learner" hidden></button>
+      <button class="grownups" id="grownups" aria-label="Grown-ups settings">🔒 <span>Grown-ups</span></button>
+    </div>
   </div>
-  <div class="sets levels" id="levels" aria-label="Level"></div>
+  <button class="goal" id="goal" aria-label="Today's goal and streak"></button>
+  <div class="tabs" id="tabs" role="tablist" hidden></div>
   <button class="today" id="today"></button>
   <div id="tiles"></div>
-  <p class="foot">Tap a picture to hear it. Swipe or use the arrows for the next one.</p>
+  <p class="foot" id="foot">Tap a picture to hear it. Swipe or use the arrows for the next one.</p>
 </section>
 
 <section id="learn" class="screen" aria-label="Learn" hidden>
@@ -67,8 +68,10 @@
 
 <dialog id="settings">
   <h3>For grown-ups</h3>
-  <p>Every word has a Punjabi voice built in. Progress and recordings stay on this device.</p>
+  <p>Settings for <b id="sWho"></b>. Everything stays on this device.</p>
+  <button class="pill" id="sLearners">👪 Learners: switch, add, rename</button>
   <div class="row"><label for="sLevel">Level</label><select id="sLevel"></select></div>
+  <div class="row"><label for="sGoal">Daily goal</label><select id="sGoal"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option></select></div>
   <div class="row"><label for="sEn">Show English words</label><input type="checkbox" id="sEn"></div>
   <div class="row"><label for="sTr">Show roman spelling (laal, neela…)</label><input type="checkbox" id="sTr"></div>
   <div class="row"><label for="sSfx">Happy sounds</label><input type="checkbox" id="sSfx"></div>
@@ -81,9 +84,36 @@
     <label class="pill">Add a voice pack<input type="file" id="famImport" accept=".json,application/json"></label>
   </div>
   <p class="small">A voice pack is one file with all your recordings. Send it to family on WhatsApp or email; they open Nikke Bol, hold for grown-ups and add it.</p>
-  <button class="pill warn" id="sReset">Clear all progress</button>
+  <h4>Moving to a new phone</h4>
+  <p class="small">A backup holds every learner, their progress and streaks, and your family recordings.</p>
+  <div class="famrow">
+    <button class="pill" id="bkSave">Save a backup</button>
+    <label class="pill">Restore a backup<input type="file" id="bkLoad" accept=".json,application/json"></label>
+  </div>
+  <h4>About</h4>
+  <p class="small">Nikke Bol 1.0 · No ads, no tracking, no accounts. <a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+  <button class="pill warn" id="sReset">Clear this learner's progress</button>
   <button class="done" id="sDone">Done</button>
 </dialog>
+
+<dialog id="gate" class="gate">
+  <form id="gateForm">
+    <h3>Grown-ups only</h3>
+    <p>Please answer to continue.</p>
+    <div class="gq" id="gateQ"></div>
+    <input id="gateIn" type="number" inputmode="numeric" autocomplete="off" aria-label="Answer">
+    <p class="gmsg" id="gateMsg" role="alert"></p>
+    <div class="famrow"><button type="button" class="pill" id="gateCancel">Cancel</button><button type="submit" class="pill go">Continue</button></div>
+  </form>
+</dialog>
+
+<dialog id="profiles" class="profiles">
+  <h3>Who's learning?</h3>
+  <div id="profList" class="proflist"></div>
+  <div class="famrow"><button class="pill" id="profEdit">✏️ Edit this learner</button><button class="pill" id="profClose">Close</button></div>
+</dialog>
+
+<div id="welcome" class="welcome" hidden></div>
 
 <canvas id="fx" aria-hidden="true"></canvas>
 <div class="toast" id="toast" role="status" hidden></div>
@@ -93,5 +123,8 @@
 <script src="core.js"></script>
 <script src="words.js"></script>
 <script src="study.js"></script>
+<script src="profiles.js"></script>
+<script src="path.js"></script>
+<script src="app.js"></script>
 </body>
 </html>

@@ -1,0 +1,8 @@
+{
+  "appId": "com.nikkebol.app",
+  "appName": "Nikke Bol",
+  "webDir": "www",
+  "backgroundColor": "#3a0d2e",
+  "ios": { "contentInset": "never", "backgroundColor": "#3a0d2e" },
+  "android": { "backgroundColor": "#3a0d2e" }
+}

@@ -26,10 +26,55 @@ const LEVELS = [
   { id: "child", pa: "ਬੱਚੇ", en: "Child" },
   { id: "adult", pa: "ਵੱਡੇ", en: "Grown-up learner" },
 ];
-const DEFAULTS = { en: true, tr: true, sfx: true, rate: 0.8, rec: false, level: "baby" };
-let S = { ...DEFAULTS };
-try { Object.assign(S, JSON.parse(localStorage.getItem("nikke-bol") || "{}")); } catch (e) {}
-const save = () => { try { localStorage.setItem("nikke-bol", JSON.stringify(S)); } catch (e) {} };
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+
+/* Learners. Each has their own settings, progress, streak and path; family recordings are shared. */
+const DEFAULTS = { en: true, tr: true, sfx: true, rate: 0.8, rec: false, level: "baby", goal: 5 };
+const AVATARS = ["🦁", "🐯", "🐼", "🦚", "🐘", "🐰", "🦄", "🐻", "🐥", "🐬", "🦋", "🌻"];
+const blankProgress = () => ({ items: {}, log: {}, path: {} });
+let PROFILES = store.get("nikke-bol:profiles", []);
+let current = null, S = { ...DEFAULTS }, P = blankProgress();
+const save = () => { if (current) store.set(`nikke-bol:${current}:settings`, S); };
+const saveP = () => { if (current) store.set(`nikke-bol:${current}:progress`, P); };
+const profile = () => PROFILES.find(p => p.id === current);
+function loadProfile(id) {
+  current = id; store.set("nikke-bol:current", id);
+  S = { ...DEFAULTS, ...store.get(`nikke-bol:${id}:settings`, {}) };
+  P = { ...blankProgress(), ...store.get(`nikke-bol:${id}:progress`, {}) };
+  // Days from the first version become practised days.
+  if (P.days) { P.days.forEach(d => { P.log[d] = P.log[d] || { secs: 0, n: 3 }; }); delete P.days; saveP(); }
+}
+function addProfile(name, avatar, settings = {}) {
+  const id = "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  PROFILES.push({ id, name, avatar, created: Date.now() });
+  store.set("nikke-bol:profiles", PROFILES);
+  loadProfile(id);
+  Object.assign(S, settings); save(); saveP();
+  return id;
+}
+function updateProfile(id, fields) { Object.assign(PROFILES.find(p => p.id === id), fields); store.set("nikke-bol:profiles", PROFILES); }
+function removeProfile(id) {
+  PROFILES = PROFILES.filter(p => p.id !== id);
+  store.set("nikke-bol:profiles", PROFILES);
+  store.del(`nikke-bol:${id}:settings`); store.del(`nikke-bol:${id}:progress`);
+  if (current === id) { current = null; if (PROFILES.length) loadProfile(PROFILES[0].id); }
+}
+(() => {
+  // The single-learner version kept one set of settings and progress; move them into a first learner.
+  const oldS = store.get("nikke-bol", null), oldP = store.get("nikke-bol-progress", null);
+  if (!PROFILES.length && (oldS || oldP)) {
+    addProfile("Learner", "🦚", oldS || {});
+    if (oldP) { P = { ...blankProgress(), ...oldP }; saveP(); loadProfile(current); }
+    store.del("nikke-bol"); store.del("nikke-bol-progress");
+  }
+  const want = store.get("nikke-bol:current", null);
+  if (PROFILES.some(p => p.id === want)) loadProfile(want);
+  else if (PROFILES.length) loadProfile(PROFILES[0].id);
+})();
 const atLeast = lvl => LEVELS.findIndex(l => l.id === S.level) >= LEVELS.findIndex(l => l.id === lvl);
 
 /* =========================================================
@@ -233,11 +278,10 @@ async function importVoices(file) {
    ========================================================= */
 const DAY = 864e5;
 const INTERVALS = [0, 1, 2, 4, 8, 16, 32].map(d => d * DAY);
-let P = { items: {}, days: [] };
-try { Object.assign(P, JSON.parse(localStorage.getItem("nikke-bol-progress") || "{}")); } catch (e) {}
-const saveP = () => { try { localStorage.setItem("nikke-bol-progress", JSON.stringify(P)); } catch (e) {} };
-const todayStr = () => new Date().toISOString().slice(0, 10);
-function markDay() { const t = todayStr(); if (P.days[P.days.length - 1] !== t) { P.days.push(t); P.days = P.days.slice(-400); } }
+const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const todayStr = () => dayKey(new Date());
+const dayLog = (k = todayStr()) => P.log[k] || (P.log[k] = { secs: 0, n: 0 });
+function markDay() { dayLog().n++; }
 function seen(key) {
   if (!P.items[key]) { P.items[key] = { box: 0, due: Date.now(), right: 0, wrong: 0 }; markDay(); saveP(); }
 }
@@ -247,12 +291,36 @@ function grade(key, ok) {
   it.due = Date.now() + (ok ? INTERVALS[it.box] : 10 * 60e3);
   markDay(); saveP();
 }
+/* A day counts once you have practised for a minute or met three words. */
+const practised = k => { const l = P.log[k]; return !!l && (l.secs >= 60 || l.n >= 3); };
+const goalMet = k => { const l = P.log[k]; return !!l && l.secs >= S.goal * 60; };
+/* Streak of practised days. One missed day a week is a free rest day and doesn't break it. */
 function streak() {
-  const set = new Set(P.days); let n = 0; const d = new Date();
-  if (!set.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
-  while (set.has(d.toISOString().slice(0, 10))) { n++; d.setDate(d.getDate() - 1); }
+  const d = new Date(); let n = 0, lastRest = -99;
+  if (!practised(dayKey(d))) d.setDate(d.getDate() - 1);
+  for (let i = 0; i < 2000; i++) {
+    if (practised(dayKey(d))) n++;
+    else {
+      const before = new Date(d); before.setDate(before.getDate() - 1);
+      if (n > 0 && i - lastRest >= 7 && practised(dayKey(before))) lastRest = i;
+      else break;
+    }
+    d.setDate(d.getDate() - 1);
+  }
   return n;
 }
+/* Time spent: counted in 5-second steps while the app is open and someone touched it in the last minute. */
+let lastAct = 0;
+for (const ev of ["pointerdown", "keydown"]) addEventListener(ev, () => { lastAct = Date.now(); }, true);
+setInterval(() => {
+  if (!current || document.hidden || Date.now() - lastAct > 60e3) return;
+  const L = dayLog(), before = L.secs, goal = S.goal * 60;
+  L.secs += 5;
+  if (L.secs % 30 === 0) saveP();
+  if (before < goal && L.secs >= goal) { saveP(); setTimeout(() => { yay(); say([UI_SAY.goalDone]); toast(`Today's ${S.goal} minutes done! 🔥 ${streak()} day streak`); }, 400); }
+  if (typeof renderGoal === "function") renderGoal();
+}, 5000);
+addEventListener("visibilitychange", () => { if (document.hidden) saveP(); });
 const dueKeys = () => Object.entries(P.items).filter(([k, v]) => v.due <= Date.now()).sort((a, b) => a[1].due - b[1].due).map(([k]) => k);
 
 /* =========================================================
@@ -288,7 +356,7 @@ function tick() {
   raf = parts.length ? requestAnimationFrame(tick) : 0;
   if (!raf) g2.clearRect(0, 0, innerWidth, innerHeight);
 }
-function burstFrom(el, n, big) { const r = el.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, n, big); }
+function burstFrom(el, n, big) { if (!el || !el.isConnected) return; const r = el.getBoundingClientRect(); burst(r.left + r.width / 2, r.top + r.height / 2, n, big); }
 
 /* =========================================================
    Screens. Home, Learn and Game have fixed markup; everything else

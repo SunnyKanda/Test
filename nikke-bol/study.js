@@ -205,8 +205,9 @@ function openSentences() {
     $("sQuiz").onclick = () => { pop(); sentenceQuiz(0, 0); };
   });
 }
-function sentenceQuiz(round, score) {
+function sentenceQuiz(round, score, onDone) {
   const changing = ADJS.filter(a => a.m !== a.f);
+  if (round >= 8 && onDone) return onDone(score);
   if (round >= 8) {
     openPage(UI_SAY.sentences, "Which is right?", body => {
       body.innerHTML = `<div class="done"><div class="emo">${score >= 6 ? "🏆" : "🌱"}</div><div class="pa">${score >= 6 ? UI_SAY.great : UI_SAY.well}</div><p>${score} of 8 right.</p>
@@ -229,9 +230,9 @@ function sentenceQuiz(round, score) {
       b.classList.add(ok ? "yes" : "nope");
       if (ok) { yay(); burst(e.clientX, e.clientY, 30); } else { boop(); body.querySelectorAll(".choice")[opts.indexOf(right)].classList.add("yes"); }
       grade("sent:" + n.pa, ok);
-      say([right], { done: () => setTimeout(() => state.view === "page" && sentenceQuiz(round + 1, score + (ok ? 1 : 0)), 700) });
+      say([right], { done: () => setTimeout(() => state.view === "page" && sentenceQuiz(round + 1, score + (ok ? 1 : 0), onDone), 700) });
     });
-  }, () => openSentences());
+  }, onDone ? () => { state.scrollPath = true; goHome(); } : () => openSentences());
 }
 
 /* =========================================================
@@ -291,7 +292,7 @@ async function drawWave(cv, src) {
 /* =========================================================
    Tones: same letters, different pitch.
    ========================================================= */
-function openTones() {
+function openTones(onDone) {
   openPage(UI_SAY.tones, "Tones", body => {
     body.innerHTML = `<p class="lead">Punjabi uses pitch to tell words apart. Words starting with <b>ਘ ਝ ਢ ਧ ਭ</b> are said with a soft k, ch, t, t or p and a <b>low tone that rises</b>. A <b>ਹ</b> in the middle or at the end makes a tone too. Tap each pair and listen to the difference.</p>
       <div class="pairs">${TONE_PAIRS.map(([a, b]) => `<div class="pair">
@@ -300,10 +301,11 @@ function openTones() {
       <button class="cta" id="toneQuiz">Which did you hear? ▶</button>
       <p class="hint">These are recorded by a computer voice. Ask a native speaker to say them too.</p>`;
     tapToSay(body);
-    $("toneQuiz").onclick = () => { pop(); toneQuiz(0, 0); };
-  });
+    $("toneQuiz").onclick = () => { pop(); toneQuiz(0, 0, onDone); };
+  }, onDone ? () => { state.scrollPath = true; goHome(); } : goHome);
 }
-function toneQuiz(round, score) {
+function toneQuiz(round, score, onDone) {
+  if (round >= 8 && onDone) return onDone(score);
   if (round >= 8) {
     openPage(UI_SAY.tones, "Which did you hear?", body => {
       body.innerHTML = `<div class="done"><div class="emo">${score >= 6 ? "🏆" : "👂"}</div><p>${score} of 8 right.</p><button class="cta" id="again">Again</button> <button class="cta ghost" id="toTones">Back</button></div>`;
@@ -322,9 +324,9 @@ function toneQuiz(round, score) {
       body.querySelectorAll(".choice").forEach(x => x.disabled = true);
       b.classList.add(ok ? "yes" : "nope");
       ok ? (yay(), burst(e.clientX, e.clientY, 30)) : boop();
-      setTimeout(() => state.view === "page" && toneQuiz(round + 1, score + (ok ? 1 : 0)), 1100);
+      setTimeout(() => state.view === "page" && toneQuiz(round + 1, score + (ok ? 1 : 0), onDone), 1100);
     });
-  }, () => openTones());
+  }, () => openTones(onDone));
 }
 
 /* =========================================================
@@ -397,36 +399,31 @@ function openProgress() {
   openPage(UI_SAY.progress, "My progress", body => {
     const vals = Object.values(P.items);
     const met = vals.length, mastered = vals.filter(v => v.box >= 3).length, due = dueKeys().length;
-    const bar = (label, keys) => {
-      const n = keys.length, m = keys.filter(k => P.items[k]).length, g = keys.filter(k => (P.items[k] || {}).box >= 3).length;
+    const bar = (label, keys, isMet = k => P.items[k], isOk = k => (P.items[k] || {}).box >= 3) => {
+      const n = keys.length, m = keys.filter(isMet).length, g = keys.filter(isOk).length;
       return `<div class="pbar"><span class="l">${label}</span><span class="track"><i class="met" style="width:${n ? m / n * 100 : 0}%"></i><i class="ok" style="width:${n ? g / n * 100 : 0}%"></i></span><span class="n">${g}/${n}</span></div>`;
     };
     body.innerHTML = `<div class="stats">
         <div><b>${met}</b><span>words met</span></div><div><b>${mastered}</b><span>learned well</span></div>
         <div><b>${due}</b><span>due for review</span></div><div><b>${streak()}</b><span>day streak 🔥</span></div></div>
-      <button class="cta" id="pReview">Start review ▶</button>
+      <div class="row2"><button class="cta" id="pReview">Start review ▶</button><button class="cta ghost" id="pCal">📅 ${UI_SAY.calendar}</button></div>
+      ${atLeast("child") ? `<h3 class="sect">ਰਾਹ <small>Learning path</small></h3>${bar("Units finished", pathUnits().map(u => u.id), id => (P.path || {})[id], id => (P.path || {})[id] === 3)}<p class="hint">Green bar: units with three stars.</p>` : ""}
       <h3 class="sect">ਸ਼ਬਦ <small>Words · pink = met, green = learned</small></h3>
       ${levelCats().map(({ c }) => bar(`${c.pa} <small>${c.en}</small>`, c.sets.flatMap(s => s.items).map(it => it.key))).join("")}
       ${atLeast("child") ? `<h3 class="sect">ਪੜ੍ਹਨਾ <small>Reading</small></h3>
       ${[...MATRAS, ...MARKS].map(m => bar(`${m.name} <small>${m.sign ? "ਕ" + m.sign : ""}</small>`, m.words.map(w => "read:" + w.pa))).join("")}` : ""}
-      <p class="hint">Progress is kept on this device.</p>`;
+      <p class="hint">Progress is kept on this device, separately for each learner.</p>`;
     $("pReview").onclick = () => { pop(); openReview(); };
+    $("pCal").onclick = () => { pop(); openCalendar(); };
   });
 }
 
-/* =========================================================
-   Grown-ups: press and hold so little fingers don't open it.
-   ========================================================= */
-(() => {
-  const b = $("grownups"); let t = 0;
-  const cancel = () => { clearTimeout(t); b.classList.remove("holding"); };
-  b.addEventListener("pointerdown", () => { b.classList.add("holding"); t = setTimeout(() => { cancel(); openSettings(); }, 1200); });
-  b.addEventListener("pointerup", cancel); b.addEventListener("pointerleave", cancel); b.addEventListener("pointercancel", cancel);
-  b.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openSettings(); } });
-  b.addEventListener("contextmenu", e => e.preventDefault());
-})();
+/* Grown-ups: settings sit behind a sum a young child can't answer. */
+$("grownups").onclick = () => parentGate(openSettings);
 function syncSettings() {
   $("sEn").checked = S.en; $("sTr").checked = S.tr; $("sSfx").checked = S.sfx; $("sRate").value = S.rate; $("sRec").checked = S.rec;
+  $("sWho").textContent = profile() ? `${profile().avatar} ${profile().name}` : "";
+  $("sGoal").value = S.goal;
   $("sLevel").innerHTML = LEVELS.map(l => `<option value="${l.id}"${l.id === S.level ? " selected" : ""}>${l.pa} · ${l.en}</option>`).join("");
   const n = Rec.cache.size;
   $("famNote").textContent = `${n} family recording${n === 1 ? "" : "s"} on this device.` + (Family.store ? ` Recordings you add here are shared with everyone who opens this page (${Family.shared} shared).` : "");
@@ -436,12 +433,16 @@ for (const [id, key] of [["sEn", "en"], ["sTr", "tr"], ["sSfx", "sfx"], ["sRec",
 $("sRate").oninput = e => { S.rate = +e.target.value; save(); };
 $("sRate").onchange = () => say([UI_SAY.hello]);
 $("sLevel").onchange = e => { S.level = e.target.value; save(); };
+$("sGoal").onchange = e => { S.goal = +e.target.value; save(); };
 $("famExport").onclick = () => exportVoices();
-$("famImport").onchange = e => { const f = e.target.files[0]; if (f) importVoices(f).then(syncSettings); e.target.value = ""; };
+$("famImport").onchange = e => { const f = e.target.files[0]; if (f) importFile(f).then(syncSettings); e.target.value = ""; };
+$("bkSave").onclick = () => exportBackup();
+$("bkLoad").onchange = e => { const f = e.target.files[0]; if (f) importFile(f).then(syncSettings); e.target.value = ""; };
+$("sLearners").onclick = () => { $("settings").close(); openProfiles(); };
 $("sReset").onclick = () => {
   const b = $("sReset");
-  if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = "Tap again to clear all progress"; return; }
-  P = { items: {}, days: [] }; saveP(); delete b.dataset.sure; b.textContent = "Progress cleared";
+  if (!b.dataset.sure) { b.dataset.sure = "1"; b.textContent = `Tap again to clear ${profile() ? profile().name + "'s" : "all"} progress`; return; }
+  P = blankProgress(); saveP(); delete b.dataset.sure; b.textContent = "Progress cleared";
 };
 $("sDone").onclick = () => { $("settings").close ? $("settings").close() : $("settings").removeAttribute("open"); };
 $("settings").addEventListener("close", () => {
@@ -451,9 +452,3 @@ $("settings").addEventListener("close", () => {
   if (state.view === "page" && state.pageRender) state.pageRender($("pageBody"));
 });
 $("pback").onclick = () => { pop(); stopSpeaking(); (state.back || goHome)(); };
-
-/* ---- Boot ---- */
-renderHome();
-Rec.loadAll().then(refreshView);
-Family.init();
-if ("serviceWorker" in navigator && location.protocol === "https:" && !window.claude) navigator.serviceWorker.register("sw.js").catch(() => {});

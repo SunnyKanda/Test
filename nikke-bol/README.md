@@ -2,9 +2,17 @@
 
 Learn Punjabi, from a baby's first words to reading, writing and simple sentences. Every word has a Punjabi voice built in. No build step, no tracking, works offline once installed.
 
+## Learners, path, streaks
+
+- **Learners:** on first launch, a short welcome asks for the learner's name, a picture, a level and a daily goal. Add brothers, sisters or a grown-up from the name chip at the top; each learner has their own progress, path, streak and settings. Family recordings are shared.
+- **Learning path** (child and grown-up levels): 38 short units in order, mixing words, reading lessons and sentences (plus tones for grown-ups). Each unit teaches its cards, then quizzes them; first-try answers earn up to three stars and unlock the next unit.
+- **Daily goal and streak:** time counts while someone is using the app. The ring at the top fills towards the goal; the streak counts practised days, with one free rest day a week.
+- **Calendar:** a stitch for each day practised and a gold diamond when the goal was met, plus minutes per day for the last week.
+- **Grown-ups area:** behind a multiplication question. Learners, level, goal, sounds, family voices, backup and restore, privacy policy.
+
 ## Levels
 
-Pick a level on the home screen (or in grown-ups settings):
+Pick a level when adding a learner (or later in grown-ups settings):
 
 | Level | What it shows |
 |---|---|
@@ -42,7 +50,7 @@ Pick a level on the home screen (or in grown-ups settings):
 - **ਦੁਹਰਾਈ Review**: spaced repetition. Ten questions per round; words you get wrong come back sooner.
 - **ਮੇਰੀ ਤਰੱਕੀ Progress**: words met and learned, per section and per reading lesson, and a day streak.
 
-**For grown-ups** (press and hold the button for a second): level, English and roman spelling on or off, speaking speed, sounds, "Record my own voice", family voice packs, and clearing progress.
+**For grown-ups** (🔒 button, answer the sum): learners, level, daily goal, English and roman spelling, speaking speed, sounds, "Record my own voice", family voice packs, backup and restore, and clearing progress.
 
 ## Family voices
 
@@ -64,11 +72,20 @@ Computer voices are good but not perfect, especially for tones and single syllab
 | `style.css` | All styles |
 | `data.js` | Every word, lesson, sentence and tone pair |
 | `audio.js` | Built-in recordings |
-| `core.js` | Settings, sound, family voices, progress (spaced repetition), sparkles, screens |
-| `words.js` | Home, word cards, find-it game |
+| `core.js` | Learners and their storage, sound, family voices, progress (spaced repetition), time and streaks, sparkles, screens |
+| `words.js` | Home (tabs), word cards, find-it game |
 | `study.js` | Reading, chart, writing, sentences, speaking, tones, review, progress, settings |
+| `profiles.js` | Welcome, learner switching and editing, grown-ups gate, backup and restore |
+| `path.js` | Learning path, unit runner, daily goal ring, calendar |
+| `app.js` | Start-up |
+| `fonts/` | Baloo Paaji 2 (SIL Open Font License), bundled so it works offline |
+| `privacy.html` | Privacy policy for the app stores |
 | `sw.js`, `manifest.webmanifest`, `icon.svg` | Install to home screen and offline use |
 | `build-artifact.py` | Bundles everything into one page for sharing as a Claude artifact |
+
+## Phone apps
+
+`../nikke-bol-app` wraps this folder as iOS and Android apps with Capacitor, with icons, splash screens, store screenshots and listing text. See its README.
 
 ## Running it
 

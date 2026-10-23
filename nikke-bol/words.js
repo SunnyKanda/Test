@@ -12,9 +12,27 @@ const STUDY_TILES = [
   { id: "tones", pa: UI_SAY.tones, en: "Tones", emoji: "🎵", c: "#7ccf3c", level: "adult", open: () => openTones() },
   { id: "review", pa: UI_SAY.review, en: "Review", emoji: "🔁", c: "#ff3d8b", level: "child", open: () => openReview() },
   { id: "progress", pa: UI_SAY.progress, en: "My progress", emoji: "⭐", c: "#fff4e8", level: "child", open: () => openProgress() },
+  { id: "calendar", pa: UI_SAY.calendar, en: "Calendar", emoji: "📅", c: "#16c2b0", level: "child", open: () => openCalendar() },
 ];
 
+const HOME_TABS = [
+  { id: "path", pa: UI_SAY.path, en: "Path" },
+  { id: "words", pa: UI_SAY.words, en: "Words" },
+  { id: "practice", pa: UI_SAY.practice, en: "Practice" },
+];
 function renderHome() {
+  renderProfileChip();
+  renderGoal();
+  const tabbed = atLeast("child");
+  if (!state.tab) state.tab = "path";
+  const tab = tabbed ? state.tab : "words";
+  $("tabs").hidden = !tabbed;
+  $("tabs").innerHTML = HOME_TABS.map(t => `<button role="tab" aria-selected="${t.id === tab}" data-t="${t.id}">${t.pa}<small>${t.en}</small></button>`).join("");
+  $("tabs").querySelectorAll("button").forEach(b => b.onclick = () => { state.tab = b.dataset.t; pop(); say([HOME_TABS.find(t => t.id === state.tab).pa]); renderHome(); scrollTo(0, 0); });
+  $("today").hidden = tab !== "words";
+  $("foot").hidden = tab !== "words";
+
+  if (tab === "path") { renderPath($("tiles")); return; }
   const now = new Date();
   const dIdx = DAY_ORDER[now.getDay()];
   const day = CATS[2].sets[0].items[dIdx];
@@ -24,20 +42,16 @@ function renderHome() {
     <span class="sub">Today is ${day.en} · ${month.pa} · ${desi.pa}</span>`;
   $("today").onclick = e => { pop(); burst(e.clientX, e.clientY); say([`ਅੱਜ ${day.pa} ਹੈ`], { tr: `ajj ${day.tr} hai` }); };
 
-  $("levels").innerHTML = LEVELS.map(l => `<button aria-pressed="${l.id === S.level}" data-l="${l.id}">${l.pa} <small>${l.en}</small></button>`).join("");
-  $("levels").querySelectorAll("button").forEach(b => b.onclick = () => { S.level = b.dataset.l; save(); pop(); renderHome(); });
-
   const due = dueKeys().length;
   const tile = (attrs, c, emoji, pa, en, extra = "") => `<button class="tile" style="--c:${c}" ${attrs}>
       <span class="emo">${emoji}</span><span class="pa">${pa}</span><span class="en">${en}</span>${extra}</button>`;
-  let html = `<h3 class="sect">ਸ਼ਬਦ <small>Words</small></h3><div class="tiles">`;
-  html += levelCats().map(({ c, i }) => tile(`data-i="${i}"`, c.c, c.emoji, c.pa, c.en)).join("");
-  html += `</div><button class="tile wide" style="--c:#fff4e8" data-game="1"><span class="emo">🎈</span><span><span class="pa">ਖੇਡ</span><br><span class="en">Game · find the right one</span></span></button>`;
-  const study = STUDY_TILES.filter(t => atLeast(t.level));
-  if (study.length) {
-    html += `<h3 class="sect">ਪੜ੍ਹੋ, ਲਿਖੋ, ਬੋਲੋ <small>Read, write, speak</small></h3><div class="tiles">`;
-    html += study.map(t => tile(`data-s="${t.id}"`, t.c, t.emoji, t.pa, t.en, t.id === "review" && due ? `<span class="due">${due}</span>` : "")).join("");
-    html += `</div>`;
+  let html = "";
+  if (tab === "words") {
+    html += `<div class="tiles">${levelCats().map(({ c, i }) => tile(`data-i="${i}"`, c.c, c.emoji, c.pa, c.en)).join("")}</div>
+      <button class="tile wide" style="--c:#fff4e8" data-game="1"><span class="emo">🎈</span><span><span class="pa">ਖੇਡ</span><br><span class="en">Game · find the right one</span></span></button>`;
+  } else {
+    const study = STUDY_TILES.filter(t => atLeast(t.level));
+    html += `<div class="tiles">${study.map(t => tile(`data-s="${t.id}"`, t.c, t.emoji, t.pa, t.en, t.id === "review" && due ? `<span class="due">${due}</span>` : "")).join("")}</div>`;
   }
   $("tiles").innerHTML = html;
   $("tiles").querySelectorAll(".tile").forEach(t => t.onclick = e => {

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Nikke Bol</string>
+    <string name="title_activity_main">Nikke Bol</string>
+    <string name="package_name">com.nikkebol.app</string>
+    <string name="custom_url_scheme">com.nikkebol.app</string>
+</resources>
