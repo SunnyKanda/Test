@@ -1,42 +1,81 @@
 # ਨਿੱਕੇ ਬੋਲ · Nikke Bol
 
-First Punjabi words for babies and toddlers. One HTML file plus a bundled audio file, no build step, no tracking, works offline.
+Learn Punjabi, from a baby's first words to reading, writing and simple sentences. Every word has a Punjabi voice built in. No build step, no tracking, works offline once installed.
+
+## Levels
+
+Pick a level on the home screen (or in grown-ups settings):
+
+| Level | What it shows |
+|---|---|
+| ਨਿੱਕੇ · Baby | Word cards and the find-it game |
+| ਬੱਚੇ · Child | Adds reading, writing, sentences, listen & say it, review and progress |
+| ਵੱਡੇ · Grown-up learner | Adds tones, grammar notes (gender, tone hints) on cards, and harder quizzes with four options |
 
 ## What's inside
 
-| Section | Punjabi | Words |
+**Words** (tap to hear, swipe for the next one, ▶ plays them all)
+
+| Section | Punjabi | |
 |---|---|---|
-| Colours | ਰੰਗ | 12 colours. The whole card turns that colour |
-| Numbers | ਗਿਣਤੀ | 1–20 in Gurmukhi numerals (੧ ੨ ੩…), with things to count |
-| Days | ਦਿਨ | Monday–Sunday. Opens on today |
-| Months | ਮਹੀਨੇ | January–December **and** the desi months (ਚੇਤ, ਵਿਸਾਖ… with Vaisakhi, Lohri, Maghi) |
-| Fruit & veg | ਫਲ ਤੇ ਸਬਜ਼ੀਆਂ | 12 fruit + 12 veg |
-| Alphabet | ਪੈਂਤੀ | All 35 letters, ੳ to ੜ, each with a first word (ੳ ਉੱਲੂ, ਕ ਕਬੂਤਰ…) |
-| Game | ਖੇਡ | "ਲਾਲ ਕਿੱਥੇ ਹੈ?" (where is red?). Tap the right one for stars and "ਸ਼ਾਬਾਸ਼!" |
+| Colours | ਰੰਗ | 12 |
+| Numbers | ਗਿਣਤੀ | 1–20 with Gurmukhi numerals |
+| Days | ਦਿਨ | Opens on today |
+| Months | ਮਹੀਨੇ | January–December and the desi months |
+| Fruit & veg | ਫਲ ਤੇ ਸਬਜ਼ੀਆਂ | 24 |
+| Alphabet | ਪੈਂਤੀ | All 35 letters with a first word |
+| Family | ਪਰਿਵਾਰ | Mum's side and dad's side: ਨਾਨੀ, ਦਾਦੀ, ਮਾਸੀ, ਭੂਆ, ਚਾਚਾ, ਤਾਇਆ… |
+| Body | ਸਰੀਰ | 13 |
+| Animals | ਜਾਨਵਰ | Home & farm, wild |
+| Food & drink | ਖਾਣਾ-ਪੀਣਾ | ਰੋਟੀ, ਦਾਲ, ਲੱਸੀ… |
+| Saying things | ਗੱਲਾਂ | Hello, thank you, I'm hungry… (child level) |
+| Every day | ਰੋਜ਼ ਦੇ ਕੰਮ | Eat, wash your hands, go to sleep… (child level) |
 
-- **Tap** a card to hear it (with sparkles). **Swipe** or use the arrows to move. **▶** plays through every card on its own.
-- **Today card** on the home screen says what day it is in Punjabi, plus the English and desi month.
-- **Hold for grown-ups** (press for about a second so babies can't open it): show or hide English and roman spelling, speaking speed, voice, sounds.
-- **Record my own voice**: switch it on in grown-ups settings and Nani, Dadi or you can record each word. Recordings play instead of the computer voice and stay on the device.
+**Read, write, speak**
 
-## Voices
+- **ਪੜ੍ਹਨਾ Reading**: the vowel letters, then one lesson per vowel sign (ਲਗਾਂ ਮਾਤਰਾਂ: ਮੁਕਤਾ to ਕਨੌੜਾ) and ਬਿੰਦੀ, ਟਿੱਪੀ, ਅੱਧਕ. Each lesson has a tap-to-hear syllable grid, example words, and a "read it, then check" practice.
+- **ਬਾਰਾਂਖੜੀ Sound chart**: every consonant with every vowel sign, 290 recorded syllables.
+- **ਲਿਖਣਾ Writing**: trace any of the 35 letters with a finger; the app checks how much of the letter you covered.
+- **ਵਾਕ Sentences**: build "ਇਹ ਨੀਲੀ ਗੱਡੀ ਹੈ" from a thing and a describing word, and see why ਨੀਲਾ becomes ਨੀਲੀ for feminine words. Includes a "which is right?" quiz.
+- **ਸੁਣੋ ਤੇ ਬੋਲੋ Listen & say it**: hear a word, record yourself, compare the two (with waveforms).
+- **ਸੁਰ Tones** (grown-up level): minimal pairs like ਕੋੜਾ / ਘੋੜਾ, and a "which did you hear?" quiz.
+- **ਦੁਹਰਾਈ Review**: spaced repetition. Ten questions per round; words you get wrong come back sooner.
+- **ਮੇਰੀ ਤਰੱਕੀ Progress**: words met and learned, per section and per reading lesson, and a day streak.
 
-Every word has a Punjabi voice **recorded into the app** (`audio.js`, about 170 short clips), so it sounds the same on every phone and tablet, needs no setup, and works offline. The clips were made with an ElevenLabs voice and checked with Whisper speech recognition.
+**For grown-ups** (press and hold the button for a second): level, English and roman spelling on or off, speaking speed, sounds, "Record my own voice", family voice packs, and clearing progress.
 
-What plays when a card is tapped, in order:
+## Family voices
 
-1. A **family recording**, if a grown-up recorded one for that word ("Record my own voice" in settings).
-2. The **built-in recording**.
-3. The device's own text-to-speech, only if a clip is ever missing (Punjabi voice, then Hindi via Gurmukhi→Devanagari, then roman spelling).
+- Switch on **Record my own voice**. Each word card gets a record button and a "use a voice note" option. Family recordings play instead of the built-in voice.
+- **Save a voice pack** puts every recording into one `.json` file. Send it to family; they **Add a voice pack** on their phone.
+- In the shared Claude page, recordings added by the owner or editors go to a family store, so everyone with the link hears them.
 
-To regenerate the clips, keep the clip names (`colours-0-0`, `painti-n-5`, `today-3`…). They follow the category, set and position of each word in `index.html`.
+## Voices and audio
+
+`audio.js` holds about 730 short MP3 clips (every word, letter name, syllable, sentence and app phrase), keyed by their Gurmukhi text in `NB_TEXT`. They were made with an ElevenLabs voice through Higgsfield. The device's text-to-speech is only used if a clip is missing.
+
+Computer voices are good but not perfect, especially for tones and single syllables. A native speaker should listen through, and family recordings can replace any word.
+
+## Files
+
+| File | |
+|---|---|
+| `index.html` | Page markup |
+| `style.css` | All styles |
+| `data.js` | Every word, lesson, sentence and tone pair |
+| `audio.js` | Built-in recordings |
+| `core.js` | Settings, sound, family voices, progress (spaced repetition), sparkles, screens |
+| `words.js` | Home, word cards, find-it game |
+| `study.js` | Reading, chart, writing, sentences, speaking, tones, review, progress, settings |
+| `sw.js`, `manifest.webmanifest`, `icon.svg` | Install to home screen and offline use |
+| `build-artifact.py` | Bundles everything into one page for sharing as a Claude artifact |
 
 ## Running it
 
-Open `index.html` in a browser. To install it on a phone home screen (and use it offline), serve the folder over HTTPS, e.g. GitHub Pages, Netlify, or locally:
+Open `index.html` in a browser. To install it on a phone and use it offline, serve the folder over HTTPS (GitHub Pages, Netlify) or locally:
 
 ```sh
 cd nikke-bol && python3 -m http.server 8000
 ```
 
-Then "Add to Home Screen" from the browser menu.
+Then "Add to Home Screen". Recording needs the microphone, which works on HTTPS or localhost.

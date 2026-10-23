@@ -1,6 +1,6 @@
 // Nikke Bol offline cache: app shell first, fonts as they load.
-const CACHE = "nikke-bol-v2";
-const SHELL = ["./", "index.html", "manifest.webmanifest", "icon.svg", "audio.js"];
+const CACHE = "nikke-bol-v3";
+const SHELL = ["./", "index.html", "style.css", "data.js", "audio.js", "core.js", "words.js", "study.js", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
