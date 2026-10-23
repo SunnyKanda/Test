@@ -424,6 +424,7 @@ function syncSettings() {
   $("sEn").checked = S.en; $("sTr").checked = S.tr; $("sSfx").checked = S.sfx; $("sRate").value = S.rate; $("sRec").checked = S.rec;
   $("sWho").textContent = profile() ? `${profile().avatar} ${profile().name}` : "";
   $("sGoal").value = S.goal;
+  renderReminderRow();
   $("sLevel").innerHTML = LEVELS.map(l => `<option value="${l.id}"${l.id === S.level ? " selected" : ""}>${l.pa} · ${l.en}</option>`).join("");
   const n = Rec.cache.size;
   $("famNote").textContent = `${n} family recording${n === 1 ? "" : "s"} on this device.` + (Family.store ? ` Recordings you add here are shared with everyone who opens this page (${Family.shared} shared).` : "");

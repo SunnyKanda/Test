@@ -7,6 +7,7 @@ Learn Punjabi, from a baby's first words to reading, writing and simple sentence
 - **Learners:** on first launch, a short welcome asks for the learner's name, a picture, a level and a daily goal. Add brothers, sisters or a grown-up from the name chip at the top; each learner has their own progress, path, streak and settings. Family recordings are shared.
 - **Learning path** (child and grown-up levels): 38 short units in order, mixing words, reading lessons and sentences (plus tones for grown-ups). Each unit teaches its cards, then quizzes them; first-try answers earn up to three stars and unlock the next unit.
 - **Daily goal and streak:** time counts while someone is using the app. The ring at the top fills towards the goal; the streak counts practised days, with one free rest day a week.
+- **Daily reminders** (phone app): a notification at a time you choose, only on days nobody has met their goal yet, with a word of the day. Set it up on the welcome screen or in the grown-ups area.
 - **Calendar:** a stitch for each day practised and a gold diamond when the goal was met, plus minutes per day for the last week.
 - **Grown-ups area:** behind a multiplication question. Learners, level, goal, sounds, family voices, backup and restore, privacy policy.
 
@@ -77,6 +78,7 @@ Computer voices are good but not perfect, especially for tones and single syllab
 | `study.js` | Reading, chart, writing, sentences, speaking, tones, review, progress, settings |
 | `profiles.js` | Welcome, learner switching and editing, grown-ups gate, backup and restore |
 | `path.js` | Learning path, unit runner, daily goal ring, calendar |
+| `reminders.js` | Daily reminder notifications in the phone app |
 | `app.js` | Start-up |
 | `fonts/` | Baloo Paaji 2 (SIL Open Font License), bundled so it works offline |
 | `privacy.html` | Privacy policy for the app stores |

@@ -42,6 +42,7 @@ After changing anything in `../nikke-bol`, run `npm run sync` (or the `ios` / `a
 - [ ] Put your contact email in `../nikke-bol/privacy.html`, host it, and use that address as the privacy policy URL.
 - [ ] Decide the bundle ID (`com.nikkebol.app` is a placeholder you can keep or change).
 - [ ] Test recording on a real iPhone and Android phone (the microphone permission text is in `ios/App/App/Info.plist`).
+- [ ] Test the daily reminder: switch it on, set the time a couple of minutes ahead, close the app and wait.
 - [ ] Bump `version` in `package.json`, the iOS *Version*/*Build* in Xcode, and `versionCode`/`versionName` in `android/app/build.gradle` for each release.
 
 ## Regenerating assets

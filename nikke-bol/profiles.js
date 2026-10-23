@@ -65,7 +65,7 @@ function openEditProfile() {
 
 /* ---- Welcome: name, picture, level and daily goal ---- */
 function openWelcome(adding = false) {
-  const draft = { name: "", avatar: pickOne(AVATARS), level: "baby", goal: 5 };
+  const draft = { name: "", avatar: pickOne(AVATARS), level: "baby", goal: 5, remind: true, remindAt: "17:30" };
   const w = $("welcome");
   let step = adding ? 1 : 0;
   const steps = [
@@ -85,6 +85,7 @@ function openWelcome(adding = false) {
       <div class="row2"><button class="cta ghost" id="wBack">‹ Back</button><button class="cta" id="wNext">Next ›</button></div>`,
     () => `<h2>A little every day</h2><p class="sub">Pick a daily goal. Short and often works best.</p>
       <div class="levelpick goals">${[5, 10, 15, 20].map(m => `<button aria-pressed="${m === draft.goal}" data-g="${m}"><b>${m} min</b><span>${{ 5: "Easy", 10: "Steady", 15: "Keen", 20: "Super keen" }[m]}</span></button>`).join("")}</div>
+      ${Reminders.available() && !Reminders.settings.on ? `<label class="remask"><input type="checkbox" id="wRem" ${draft.remind ? "checked" : ""}> Remind me each day at <input type="time" id="wRemT" value="${draft.remindAt}"></label>` : ""}
       <div class="row2"><button class="cta ghost" id="wBack">‹ Back</button><button class="cta" id="wNext">Start learning 🎉</button></div>`,
   ];
   const render = () => {
@@ -94,6 +95,7 @@ function openWelcome(adding = false) {
     w.querySelectorAll("[data-g]").forEach(b => b.onclick = () => { draft.goal = +b.dataset.g; pop(); render(); });
     const name = $("wName");
     if (name) { name.oninput = () => { draft.name = name.value; }; setTimeout(() => name.focus(), 50); }
+    if ($("wRem")) { $("wRem").onchange = e => { draft.remind = e.target.checked; }; $("wRemT").onchange = e => { draft.remindAt = e.target.value || draft.remindAt; }; }
     if ($("wRestore")) $("wRestore").onchange = e => { const f = e.target.files[0]; if (f) importFile(f); };
     if ($("wBack")) $("wBack").onclick = () => { if (step <= 1 && (adding || PROFILES.length)) { w.hidden = true; return; } step--; render(); };
     $("wNext").onclick = e => {
@@ -102,6 +104,7 @@ function openWelcome(adding = false) {
       if (step === 1 && !draft.name.trim()) { name.focus(); name.classList.add("nope"); setTimeout(() => name.classList.remove("nope"), 500); return; }
       if (step < steps.length - 1) { step++; render(); return; }
       addProfile(draft.name.trim(), draft.avatar, { level: draft.level, goal: draft.goal });
+      if ($("wRem") && draft.remind) Reminders.enable(draft.remindAt);
       w.hidden = true; state.tab = null; yay(); burst(e.clientX, e.clientY, 60, true); say([UI_SAY.letsgo]);
       goHome();
     };

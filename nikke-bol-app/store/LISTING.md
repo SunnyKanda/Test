@@ -26,6 +26,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 > **Made for families.**
 > • A profile for each child, with their own path, streak and progress
 > • Daily goals, streaks and a practice calendar for grown-ups
+> • A gentle daily reminder with a Punjabi word of the day, only on days you haven't practised
 > • Record Nani's or Dadi's voice and share it with the whole family
 > • Baby, Child and Grown-up learner levels
 >
@@ -46,6 +47,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 - **Google Play Data safety:** No data collected. No data shared. Data is not encrypted in transit because none is sent. Users can delete data by deleting a learner or the app.
 - **Privacy policy URL:** host `nikke-bol/privacy.html` (for example on GitHub Pages) and paste its address. Fill in the contact email at the bottom first.
 - **Microphone:** used only when the user taps record; explained in the permission prompt.
+- **Notifications:** local reminders scheduled on the device, only if a grown-up switches them on. No push server.
 
 ## Screenshots
 

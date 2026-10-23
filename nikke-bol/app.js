@@ -6,4 +6,5 @@ renderHome();
 if (!PROFILES.length) openWelcome();
 Rec.loadAll().then(refreshView);
 Family.init();
+Reminders.refresh();
 if ("serviceWorker" in navigator && location.protocol === "https:" && !window.claude && !window.Capacitor) navigator.serviceWorker.register("sw.js").catch(() => {});

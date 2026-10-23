@@ -317,10 +317,10 @@ setInterval(() => {
   const L = dayLog(), before = L.secs, goal = S.goal * 60;
   L.secs += 5;
   if (L.secs % 30 === 0) saveP();
-  if (before < goal && L.secs >= goal) { saveP(); setTimeout(() => { yay(); say([UI_SAY.goalDone]); toast(`Today's ${S.goal} minutes done! 🔥 ${streak()} day streak`); }, 400); }
+  if (before < goal && L.secs >= goal) { saveP(); if (typeof Reminders !== "undefined") Reminders.refresh(); setTimeout(() => { yay(); say([UI_SAY.goalDone]); toast(`Today's ${S.goal} minutes done! 🔥 ${streak()} day streak`); }, 400); }
   if (typeof renderGoal === "function") renderGoal();
 }, 5000);
-addEventListener("visibilitychange", () => { if (document.hidden) saveP(); });
+addEventListener("visibilitychange", () => { if (document.hidden) { saveP(); if (typeof Reminders !== "undefined") Reminders.refresh(); } });
 const dueKeys = () => Object.entries(P.items).filter(([k, v]) => v.due <= Date.now()).sort((a, b) => a[1].due - b[1].due).map(([k]) => k);
 
 /* =========================================================
