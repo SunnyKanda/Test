@@ -1,0 +1,15 @@
+{
+  "name": "Nikke Bol · ਨਿੱਕੇ ਬੋਲ",
+  "short_name": "Nikke Bol",
+  "description": "First Punjabi words for babies: colours, numbers, days, months, fruit & veg and the Gurmukhi alphabet.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#3a0d2e",
+  "theme_color": "#3a0d2e",
+  "lang": "pa",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
