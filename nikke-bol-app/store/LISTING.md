@@ -31,7 +31,22 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 > • Record Nani's or Dadi's voice and share it with the whole family
 > • Baby, Child and Grown-up learner levels
 >
-> **Safe for kids.** No ads. No in-app purchases. No accounts. Nothing is collected or tracked; everything stays on your device. Settings are behind a grown-ups check.
+> **Free to start.** Word cards, the find-it game, the first 7 units of the path, stickers and the calendar are free. One purchase unlocks everything else, for every learner on the device: no subscription. On iPhone and iPad it can be shared with your family through Family Sharing.
+>
+> **Safe for kids.** No ads. No accounts. Nothing is collected or tracked; everything stays on your device. Settings and the purchase are behind a grown-ups check.
+
+## In-app purchase
+
+| Field | Text | Limit |
+|---|---|---|
+| Product ID | `nikkebol.unlock` | |
+| Reference name (Apple, internal) | Unlock everything | 64 |
+| Display name | Unlock everything | Apple 30, Google 55 |
+| Description (Apple) | Whole path, reading, writing and more | 45 |
+| Description (Google) | Unlock the whole learning path, every reading lesson, the sound chart, writing, sentences, review and more learners. One payment, no subscription. | 200 |
+| Price | £3.99 (or £2.99 for launch) | |
+| Family Sharing (Apple) | On | |
+| Review screenshot (Apple) | `store/iap-review-screenshot.png` | |
 
 ## Keywords (iOS, 100 characters)
 
@@ -50,6 +65,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 - **Microphone:** used only when the user taps record; explained in the permission prompt.
 - **Notifications:** local reminders scheduled on the device, only if a grown-up switches them on. No push server.
 - **Ratings:** the app asks grown-ups for a rating only behind the grown-ups check, using the system review prompt (Apple guideline 1.3 for the Kids category).
+- **Purchases:** the payment is handled by Apple or Google. The app only asks the store what the account owns and keeps the answer on the device, so the answers above stay "Data Not Collected" and "No data collected". Re-check these if you ever add a server or a purchases service.
 
 ## Screenshots
 
@@ -65,4 +81,6 @@ Order: welcome, learning path (with word of the day), word card, reading lesson,
 
 ## Review notes (paste into “Notes for review”)
 
-> Nikke Bol is a Punjabi learning app for children and families. It works fully offline: all audio is bundled. There are no accounts, ads, purchases, analytics or network requests. The grown-ups area (settings, backups, deleting learners) and the rating request are behind a multiplication question as a parental gate. Reminders are local notifications that a grown-up turns on. The microphone is used only when a user taps a record button, and recordings stay on the device.
+> Nikke Bol is a Punjabi learning app for children and families. It works fully offline: all audio is bundled. There are no accounts, ads, analytics or network requests of our own. The grown-ups area (settings, backups, deleting learners) and the rating request are behind a multiplication question as a parental gate. Reminders are local notifications that a grown-up turns on. The microphone is used only when a user taps a record button, and recordings stay on the device.
+>
+> One non-consumable in-app purchase (nikkebol.unlock) unlocks the rest of the learning path, reading, writing and more learners. To see it: on the home screen tap Practice, then any tile with a padlock (for example Writing), answer the multiplication question, and the purchase screen opens. It is also under the 🔒 Grown-ups button → Full app, which has Restore purchase.

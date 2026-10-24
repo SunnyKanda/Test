@@ -10,7 +10,8 @@
     "ios": "npm run sync && npx cap open ios",
     "android": "npm run sync && npx cap open android",
     "screenshots": "node scripts/screenshots.cjs",
-    "icons": "node scripts/render-assets.cjs && npm run assets"
+    "icons": "node scripts/render-assets.cjs && npm run assets",
+    "test:unlock": "node scripts/test-unlock.cjs"
   },
   "dependencies": {
     "@capacitor-community/in-app-review": "^7.1.0",
@@ -20,7 +21,8 @@
     "@capacitor/haptics": "^7.0.5",
     "@capacitor/ios": "^7.6.9",
     "@capacitor/local-notifications": "^7.0.7",
-    "@capacitor/share": "^7.0.4"
+    "@capacitor/share": "^7.0.4",
+    "@capgo/native-purchases": "^7.19.3"
   },
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",

@@ -26,14 +26,14 @@ function openReading() {
     body.innerHTML = `<p class="lead">Punjabi letters change their sound with small signs called <b>ਲਗਾਂ ਮਾਤਰਾਂ</b>. Learn one sign at a time: tap to hear, then read the words.</p>
       <div class="lessons">
         <button class="lesson" data-l="vowels"><span class="big">ਅ ਆ ਇ</span><span><b>ਸਵਰ</b> Vowel letters</span></button>
-        ${MATRAS.map((m, i) => `<button class="lesson" data-l="${i}"><span class="big">ਕ${m.sign}</span><span><b>${m.name}</b> ${m.sound}<small>${lessonScore(m)} read</small></span></button>`).join("")}
-        ${MARKS.map((m, i) => `<button class="lesson" data-k="${i}"><span class="big">${m.words[0].pa}</span><span><b>${m.name}</b> ${m.id === "addak" ? "double" : "nasal"}<small>${lessonScore(m)} read</small></span></button>`).join("")}
+        ${MATRAS.map((m, i) => `<button class="lesson${Unlock.lessonOpen(m) ? "" : " paid"}" data-l="${i}"><span class="big">ਕ${m.sign}</span><span><b>${m.name}</b> ${m.sound}<small>${Unlock.lessonOpen(m) ? lessonScore(m) + " read" : "🔒 Full app"}</small></span></button>`).join("")}
+        ${MARKS.map((m, i) => `<button class="lesson${Unlock.lessonOpen(m) ? "" : " paid"}" data-k="${i}"><span class="big">${m.words[0].pa}</span><span><b>${m.name}</b> ${m.id === "addak" ? "double" : "nasal"}<small>${Unlock.lessonOpen(m) ? lessonScore(m) + " read" : "🔒 Full app"}</small></span></button>`).join("")}
       </div>`;
     body.querySelectorAll(".lesson").forEach(b => b.onclick = () => {
       pop();
       if (b.dataset.l === "vowels") return openVowels();
-      if (b.dataset.l) return openLesson(MATRAS[+b.dataset.l]);
-      openLesson(MARKS[+b.dataset.k]);
+      const m = b.dataset.l ? MATRAS[+b.dataset.l] : MARKS[+b.dataset.k];
+      Unlock.lessonOpen(m) ? openLesson(m) : Unlock.need(() => openLesson(m), openReading);
     });
   });
 }
@@ -414,7 +414,7 @@ function openProgress() {
       ${atLeast("child") ? `<h3 class="sect">ਪੜ੍ਹਨਾ <small>Reading</small></h3>
       ${[...MATRAS, ...MARKS].map(m => bar(`${m.name} <small>${m.sign ? "ਕ" + m.sign : ""}</small>`, m.words.map(w => "read:" + w.pa))).join("")}` : ""}
       <p class="hint">Progress is kept on this device, separately for each learner.</p>`;
-    $("pReview").onclick = () => { pop(); openReview(); };
+    $("pReview").onclick = () => { pop(); Unlock.need(openReview, openProgress); };
     $("pCal").onclick = () => { pop(); openCalendar(); };
   });
 }
@@ -426,6 +426,7 @@ function syncSettings() {
   $("sWho").textContent = profile() ? `${profile().avatar} ${profile().name}` : "";
   $("sGoal").value = S.goal;
   renderReminderRow();
+  renderUnlockRow();
   $("sLevel").innerHTML = LEVELS.map(l => `<option value="${l.id}"${l.id === S.level ? " selected" : ""}>${l.pa} · ${l.en}</option>`).join("");
   const n = Rec.cache.size;
   $("famNote").textContent = `${n} family recording${n === 1 ? "" : "s"} on this device.` + (Family.store ? ` Recordings you add here are shared with everyone who opens this page (${Family.shared} shared).` : "");

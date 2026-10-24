@@ -30,9 +30,9 @@ function openProfiles() {
     $("profList").innerHTML = PROFILES.map(p => {
       const s = store.get(`nikke-bol:${p.id}:settings`, {}), lvl = LEVELS.find(l => l.id === (s.level || "baby"));
       return `<button class="prof${p.id === current ? " on" : ""}" data-id="${p.id}"><span class="av">${p.avatar}</span><span><b>${esc(p.name)}</b><small>${lvl.pa} · ${lvl.en}</small></span></button>`;
-    }).join("") + `<button class="prof add" id="profAdd"><span class="av">＋</span><span><b>Add a learner</b><small>Brother, sister, cousin, you</small></span></button>`;
+    }).join("") + `<button class="prof add" id="profAdd"><span class="av">＋</span><span><b>Add a learner</b><small>${Unlock.has() || !PROFILES.length ? "Brother, sister, cousin, you" : "🔒 More learners are in the full app"}</small></span></button>`;
     dlg.querySelectorAll(".prof[data-id]").forEach(b => b.onclick = () => { pop(); loadProfile(b.dataset.id); state.tab = null; dlg.close(); goHome(); });
-    $("profAdd").onclick = () => { dlg.close(); openWelcome(true); };
+    $("profAdd").onclick = () => { dlg.close(); PROFILES.length ? Unlock.need(() => openWelcome(true)) : openWelcome(true); };
     $("profEdit").onclick = () => parentGate(() => { dlg.close(); openEditProfile(); });
   };
   render();

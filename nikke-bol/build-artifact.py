@@ -16,5 +16,7 @@ css = (here / "style.css").read_text()
 css = re.sub(r'url\("(fonts/[^"]+\.woff2)"\)', lambda m: 'url("data:font/woff2;base64,' + base64.b64encode((here / m.group(1)).read_bytes()).decode() + '")', css)
 html = html.replace('<link rel="stylesheet" href="style.css">', "<style>\n" + css + "</style>")
 html = re.sub(r'<script src="([\w-]+\.js)"></script>', lambda m: "<script>\n" + (here / m.group(1)).read_text() + "</script>", html)
+# The artifact is the owner's own preview, so it shows the full app (the public web version is a taster).
+html = html.replace('<script>\n', '<script>window.NB_FULL_WEB = true;</script>\n<script>\n', 1)
 pathlib.Path(sys.argv[1]).write_text(html)
 print(f"wrote {sys.argv[1]} ({len(html):,} bytes)")

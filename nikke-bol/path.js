@@ -40,9 +40,9 @@ function renderPath(root) {
       <svg class="stitch" viewBox="0 0 ${W} ${h}" aria-hidden="true">
         <path d="${units.map((_, i) => { const p = pos(i); return (i ? "L" : "M") + (W / 2 + p.x * U) + " " + (p.y + 34); }).join(" ")}"/></svg>
       ${units.map((u, i) => {
-        const info = unitInfo(u), p = pos(i), stars = unitStars(u), locked = i > next, now = i === next;
-        return `<div class="node${locked ? " locked" : ""}${now ? " now" : ""}${stars ? " complete" : ""}" style="top:${p.y}px; left:${W / 2 + p.x * U}px">
-          <button data-u="${i}" ${locked ? 'aria-disabled="true"' : ""} aria-label="${esc(info.en)}${locked ? " (locked)" : ""}">${locked ? "🔒" : u.emoji}</button>
+        const info = unitInfo(u), p = pos(i), stars = unitStars(u), locked = i > next, now = i === next, paid = !Unlock.unitOpen(u);
+        return `<div class="node${locked ? " locked" : ""}${now ? " now" : ""}${stars ? " complete" : ""}${paid ? " paid" : ""}" style="top:${p.y}px; left:${W / 2 + p.x * U}px">
+          <button data-u="${i}" ${locked ? 'aria-disabled="true"' : ""} aria-label="${esc(info.en)}${locked ? " (locked)" : paid ? " (in the full app)" : ""}">${locked ? "🔒" : u.emoji}</button>${paid && !locked ? `<span class="paidlock" aria-hidden="true">🔒</span>` : ""}
           <span class="nlabel ${p.x > 0 ? "left" : "right"}"><b>${info.pa}</b><small>${info.en}</small><span class="stars">${[1, 2, 3].map(k => `<i class="${k <= stars ? "on" : ""}">★</i>`).join("")}</span></span>
           ${now ? `<span class="go">${UI_SAY.learn}!</span>` : ""}
         </div>`;
@@ -59,6 +59,7 @@ function renderPath(root) {
 
 /* ---- Running a unit: learn the cards, then a short quiz; stars from first-try answers ---- */
 function startUnit(u) {
+  if (!Unlock.unitOpen(u)) return Unlock.need(() => startUnit(u), () => { state.scrollPath = true; goHome(); });
   if (u.kind === "sentences") return sentenceUnit(u);
   if (u.kind === "tones") return toneUnit(u);
   const info = unitInfo(u), items = unitItems(u), back = () => { state.scrollPath = true; goHome(); };
@@ -142,7 +143,7 @@ function finishUnit(u, score) {
       <div class="bigstars">${[1, 2, 3].map(k => `<i class="${k <= stars ? "on" : ""}" style="animation-delay:${k * .25}s">★</i>`).join("")}</div>
       <div class="pa">${stars === 3 ? UI_SAY.great : UI_SAY.well}</div>
       <p>${Math.round(score * 100)}% right first time.${stars < 3 ? " Play again any time for more stars." : ""}</p>
-      ${nextU ? `<button class="cta" id="fNext">Next: ${unitInfo(nextU).en} ›</button>` : `<p>You finished the whole path! 🏆</p>`}
+      ${nextU ? `<button class="cta" id="fNext">Next: ${Unlock.unitOpen(nextU) ? "" : "🔒 "}${unitInfo(nextU).en} ›</button>` : `<p>You finished the whole path! 🏆</p>`}
       <button class="cta ghost" id="fPath">Back to the path</button></div>`;
     yay(); say([stars === 3 ? UI_SAY.great : UI_SAY.well]);
     setTimeout(() => burstFrom(body.querySelector(".bigstars"), 80, true), 300);

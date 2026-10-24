@@ -22,6 +22,7 @@ function seed() {
   for (const dev of DEVICES) {
     const ctx = await b.newContext({ viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.scale, reducedMotion: "reduce" });
     const p = await ctx.newPage();
+    await p.addInitScript(() => { window.NB_FULL_WEB = true; }); // show the full app, without padlocks
     const shot = async n => { await p.waitForTimeout(600); await p.evaluate(() => { if (window.stickerQueue) { stickerQueue.length = 0; $("stickerPop").hidden = true; } }); await p.screenshot({ path: path.join(__dirname, "../store/screenshots", `${dev.name}-${n}.png`) }); };
     // 1 welcome (fresh install)
     await p.goto(url); await p.waitForTimeout(800); await shot("1-welcome");
@@ -34,6 +35,15 @@ function seed() {
     await p.evaluate(() => openCalendar()); await shot("6-calendar");
     await p.evaluate(() => { goHome(); openGame(); }); await shot("7-game");
     await p.evaluate(() => { const t = Date.now(); P.stickers = {}; ["first-word", "words-10", "words-50", "goal-1", "streak-3", "streak-7", "unit-1", "three-stars", "colours", "family", "writer"].forEach((id, i) => P.stickers[id] = t - i * 864e5); openStickers(); }); await shot("8-stickers");
+    if (dev.name === "iphone-6.7") {
+      // App Review wants a screenshot of the purchase screen with each in-app purchase.
+      await p.evaluate(() => {
+        window.Capacitor = { isNativePlatform: () => true, getPlatform: () => "ios", Plugins: { NativePurchases: { getProduct: async () => ({ product: { priceString: "£3.99", isFamilyShareable: true } }) } } };
+        Unlock.rec = { owned: false, pending: false, checked: 0, missSince: 0 }; Unlock.product = null; openUnlock();
+      });
+      await p.waitForTimeout(600);
+      await p.screenshot({ path: path.join(__dirname, "../store/iap-review-screenshot.png") });
+    }
     await ctx.close();
   }
   await b.close();

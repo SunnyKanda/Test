@@ -53,7 +53,8 @@ function renderHome() {
     if (!tabbed) html += `<button class="tile wide" style="--c:#ffb627" data-s="stickers"><span class="emo">🏅</span><span><span class="pa">${UI_SAY.stickers}</span><br><span class="en">Sticker book · ${Object.keys(P.stickers || {}).length} collected</span></span></button>`;
   } else {
     const study = STUDY_TILES.filter(t => atLeast(t.level));
-    html += `<div class="tiles">${study.map(t => tile(`data-s="${t.id}"`, t.c, t.emoji, t.pa, t.en, t.id === "review" && due ? `<span class="due">${due}</span>` : "")).join("")}</div>`;
+    const badge = t => PAID_TILES.has(t.id) && !Unlock.has() ? `<span class="due lock" aria-label="In the full app">🔒</span>` : t.id === "review" && due ? `<span class="due">${due}</span>` : "";
+    html += `<div class="tiles">${study.map(t => tile(`data-s="${t.id}"`, t.c, t.emoji, t.pa, t.en, badge(t))).join("")}</div>`;
   }
   $("tiles").innerHTML = html;
   wireWordCard();
@@ -61,7 +62,7 @@ function renderHome() {
     pop(); burst(e.clientX, e.clientY, 18);
     if (t.dataset.game) return openGame();
     if (t.dataset.s === "stickers") { say([UI_SAY.stickers]); return openStickers(); }
-    if (t.dataset.s) { const s = STUDY_TILES.find(x => x.id === t.dataset.s); say([s.pa]); return s.open(); }
+    if (t.dataset.s) { const s = STUDY_TILES.find(x => x.id === t.dataset.s); say([s.pa]); return PAID_TILES.has(s.id) ? Unlock.need(s.open) : s.open(); }
     const c = CATS[+t.dataset.i];
     say([c.pa], { tr: c.tr });
     openLearn(+t.dataset.i);

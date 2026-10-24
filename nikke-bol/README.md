@@ -15,6 +15,7 @@ Learn Punjabi, from a baby's first words to reading, writing and simple sentence
 - **Haptics:** a light buzz on taps and right or wrong answers in the phone app (switch off with "Happy sounds").
 - **Calendar:** a stitch for each day practised and a gold diamond when the goal was met, plus minutes per day for the last week.
 - **Grown-ups area:** behind a multiplication question. Learners, level, goal, sounds, family voices, backup and restore, privacy policy.
+- **Full app unlock** (phone app): word cards, the game, the first 7 path units, stickers and the calendar are free; one in-app purchase unlocks the rest (`unlock.js`). Locked things show a padlock and go through the grown-ups check to the unlock page, which also has *Restore purchase*. The web version is a taster with the same padlocks; the Claude artifact build is the full preview.
 
 ## Levels
 
@@ -85,6 +86,7 @@ Computer voices are good but not perfect, especially for tones and single syllab
 | `path.js` | Learning path, unit runner, daily goal ring, calendar |
 | `reminders.js` | Daily reminder notifications in the phone app |
 | `extras.js` | Stickers, word of the day, rating card |
+| `unlock.js` | The one-off unlock: padlocks, the unlock page, checking purchases with the App Store and Google Play |
 | `app.js` | Start-up |
 | `fonts/` | Baloo Paaji 2 (SIL Open Font License), bundled so it works offline |
 | `privacy.html` | Privacy policy for the app stores |
