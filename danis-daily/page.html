@@ -1,0 +1,381 @@
+<title>Dani's Daily</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="Dani's Daily">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<style>
+  /* Layout: one gentle Teletext page, phone first. Header row, double-height title band,
+     then P100 TODAY / P150 STILL ONGOING / P199 EARLIER stacked, fastext row at the foot.
+     Single dark look by choice: Teletext is black. No red, no motion. */
+  :root {
+    --bg: #000000;
+    --fg: #e9e7df;
+    --dim: #8f8e86;
+    --cyan: #86d2cd;
+    --amber: #e1b56a;
+    --green: #95cd8f;
+    --blue: #a9bbe2;
+    --magenta: #cba7d3;
+    --yellow: #ddd28f;
+    --band: #0d1e3a;
+    --rule: #262624;
+    --ink: #000000;
+    --font-tt: "VT323", ui-monospace, "Courier New", monospace;
+    color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-tt);
+    font-size: clamp(24px, 6.2vw, 29px);
+    line-height: 1.18;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeSpeed;
+  }
+  * { box-sizing: border-box; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 14px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+  }
+
+  /* Top row, like a Teletext header line */
+  .topline {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    color: var(--fg);
+    font-variant-numeric: tabular-nums;
+  }
+  .topline .pg { color: var(--fg); }
+  .topline .when { color: var(--yellow); }
+
+  /* Double-height text, the Teletext way: same width, twice as tall */
+  .dh { height: 2.25em; overflow: visible; }
+  .dh > span { display: inline-block; transform: scaleY(2); transform-origin: 0 0; white-space: nowrap; }
+
+  .masthead {
+    background: var(--band);
+    padding-block: 10px 12px;
+    padding-inline: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .masthead .dh { color: var(--yellow); font-size: 1.15em; letter-spacing: 0.04em; }
+  .masthead .sub { color: var(--cyan); }
+
+  /* Mosaic rule: a quiet row of Teletext blocks */
+  .mosaic {
+    height: 8px;
+    background: repeating-linear-gradient(90deg, currentColor 0 12px, transparent 12px 16px);
+    opacity: 0.45;
+  }
+
+  section { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 12px; }
+  .sec-head { display: flex; align-items: flex-start; gap: 0.6em; }
+  .sec-head .num { color: var(--fg); padding-top: 0.15em; font-variant-numeric: tabular-nums; }
+  .sec-head .dh { letter-spacing: 0.05em; }
+  #p100 .sec-head .dh, #p100 .mosaic { color: var(--cyan); }
+  #p150 .sec-head .dh, #p150 .mosaic { color: var(--amber); }
+  #p199 .sec-head .dh, #p199 .mosaic { color: var(--blue); }
+
+  .dayline { color: var(--dim); }
+  .notice { color: var(--yellow); }
+
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
+  .item { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .tag {
+    align-self: flex-start;
+    color: var(--ink);
+    background: var(--fg);
+    padding: 0 0.35em;
+    letter-spacing: 0.06em;
+    line-height: 1.1;
+  }
+  .t-uk { background: var(--cyan); }
+  .t-world { background: var(--blue); }
+  .t-cyber { background: var(--magenta); }
+  .t-money { background: var(--amber); }
+  .t-heads { background: var(--yellow); }
+  .t-memory { background: var(--dim); }
+  .t-good { background: var(--green); }
+  .txt { margin: 0; overflow-wrap: anywhere; }
+  .upd { color: var(--amber); }
+  .do { margin: 0; color: var(--amber); }
+  .do b { font-weight: normal; color: var(--yellow); }
+  a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+  .src { align-self: flex-start; color: var(--dim); }
+  .src a { color: var(--cyan); }
+
+  .quiet { margin: 0; color: var(--fg); }
+
+  .good {
+    border-top: 2px solid var(--green);
+    padding-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .good .txt { color: var(--green); }
+
+  /* Still ongoing */
+  .og { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .og .ttl { color: var(--amber); }
+  .og .meta { color: var(--dim); }
+
+  /* Earlier days, collapsed */
+  details { border-top: 1px solid var(--rule); padding-block: 10px; }
+  details:last-child { border-bottom: 1px solid var(--rule); }
+  summary {
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    color: var(--fg);
+  }
+  summary::-webkit-details-marker { display: none; }
+  summary .arrow { color: var(--blue); }
+  details[open] summary .arrow::before { content: "\25BE  "; }
+  details:not([open]) summary .arrow::before { content: "\25B8  "; }
+  summary .count { color: var(--dim); }
+  details > .day { padding-top: 16px; }
+  .day { display: flex; flex-direction: column; gap: 20px; }
+
+  .fastext {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 22px;
+    padding-top: 6px;
+  }
+  .fastext a { text-decoration: none; }
+  .fastext .f1 { color: var(--green); }
+  .fastext .f2 { color: var(--yellow); }
+  .fastext .f3 { color: var(--cyan); }
+  .foot { color: var(--dim); }
+</style>
+
+<div class="page">
+  <div class="topline">
+    <span class="pg">P100</span>
+    <span class="when" id="today-label">&nbsp;</span>
+  </div>
+
+  <header class="masthead">
+    <div class="dh"><span>DANI'S DAILY</span></div>
+    <div class="sub">Just enough to know what's going on.</div>
+  </header>
+
+  <section id="p100" aria-labelledby="h100">
+    <div class="sec-head"><span class="num">P100</span><div class="dh" id="h100"><span>TODAY</span></div></div>
+    <div class="mosaic" aria-hidden="true"></div>
+    <div id="today">
+      <p class="quiet" id="today-status">Fetching today's page&hellip;</p>
+    </div>
+  </section>
+
+  <section id="p150" aria-labelledby="h150">
+    <div class="sec-head"><span class="num">P150</span><div class="dh" id="h150"><span>STILL ONGOING</span></div></div>
+    <div class="mosaic" aria-hidden="true"></div>
+    <ul id="ongoing">
+      <li class="quiet">Long-running stories appear here, one line each.</li>
+    </ul>
+  </section>
+
+  <section id="p199" aria-labelledby="h199">
+    <div class="sec-head"><span class="num">P199</span><div class="dh" id="h199"><span>EARLIER</span></div></div>
+    <div class="mosaic" aria-hidden="true"></div>
+    <div id="earlier">
+      <p class="quiet">Previous days will be kept here, folded away.</p>
+    </div>
+  </section>
+
+  <nav class="fastext" aria-label="Pages">
+    <a class="f1" href="#p100">P100 Today</a>
+    <a class="f2" href="#p150">P150 Ongoing</a>
+    <a class="f3" href="#p199">P199 Earlier</a>
+  </nav>
+  <p class="foot">A new page arrives every morning at 06:45.</p>
+</div>
+
+<script>
+(function () {
+  var TAGS = { "UK": "t-uk", "WORLD": "t-world", "CYBER": "t-cyber", "MONEY": "t-money", "HEADS-UP": "t-heads", "IN MEMORY": "t-memory" };
+
+  function londonToday() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  }
+  function fmtDay(iso, long) {
+    var p = String(iso || "").split("-").map(Number);
+    if (p.length !== 3 || p.some(isNaN)) return String(iso || "");
+    var opts = long
+      ? { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }
+      : { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" };
+    return new Intl.DateTimeFormat("en-GB", opts).format(Date.UTC(p[0], p[1] - 1, p[2]));
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function safeUrl(u) {
+    try { var x = new URL(u); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : null; }
+    catch (e) { return null; }
+  }
+  function sourceLine(src) {
+    if (!src || !safeUrl(src.url)) return null;
+    var p = el("span", "src", "Source: ");
+    var a = el("a", null, (src.name || "Read more") + " ›");
+    a.href = safeUrl(src.url);
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    p.appendChild(a);
+    return p;
+  }
+
+  function renderItem(it) {
+    var li = el("li", "item");
+    var tag = String(it.tag || "UK").toUpperCase();
+    li.appendChild(el("span", "tag " + (TAGS[tag] || "t-uk"), tag));
+    var p = el("p", "txt");
+    if (it.update) p.appendChild(el("span", "upd", "UPDATE: "));
+    p.appendChild(document.createTextNode(it.text || ""));
+    li.appendChild(p);
+    if (it.doThis) {
+      var d = el("p", "do");
+      d.appendChild(el("b", null, "Do this: "));
+      d.appendChild(document.createTextNode(it.doThis));
+      li.appendChild(d);
+    }
+    var s = sourceLine(it.source);
+    if (s) li.appendChild(s);
+    return li;
+  }
+
+  function renderDay(day) {
+    var wrap = el("div", "day");
+    var items = Array.isArray(day.items) ? day.items : [];
+    if (day.quiet || items.length === 0) {
+      wrap.appendChild(el("p", "quiet", "Nothing major today."));
+    } else {
+      var ul = el("ul");
+      items.forEach(function (it) { ul.appendChild(renderItem(it)); });
+      wrap.appendChild(ul);
+    }
+    if (day.goodNews && day.goodNews.text) {
+      var g = el("div", "good");
+      g.appendChild(el("span", "tag t-good", "GOOD NEWS"));
+      g.appendChild(el("p", "txt", day.goodNews.text));
+      var s = sourceLine(day.goodNews.source);
+      if (s) g.appendChild(s);
+      wrap.appendChild(g);
+    }
+    return wrap;
+  }
+
+  function countLabel(day) {
+    var n = Array.isArray(day.items) ? day.items.length : 0;
+    if (day.quiet || n === 0) return "quiet day";
+    return n + (n === 1 ? " update" : " updates");
+  }
+
+  var today = londonToday();
+  document.getElementById("today-label").textContent = fmtDay(today, false).toUpperCase();
+
+  var openDays = {};
+  try { openDays = JSON.parse(localStorage.getItem("dd-open") || "{}") || {}; } catch (e) { openDays = {}; }
+  function rememberOpen(id, open) {
+    if (open) openDays[id] = 1; else delete openDays[id];
+    try { localStorage.setItem("dd-open", JSON.stringify(openDays)); } catch (e) {}
+  }
+
+  function showDays(snap) {
+    var days = snap.docs.map(function (d) { return d.data(); }).filter(function (d) { return d && d.date; });
+    var box = document.getElementById("today");
+    box.replaceChildren();
+    if (!days.length) {
+      box.appendChild(el("p", "quiet", "The first page arrives at 06:45."));
+      return;
+    }
+    var latest = days[0];
+    if (latest.date !== today) {
+      box.appendChild(el("p", "notice", "Today's page isn't ready yet. Showing " + fmtDay(latest.date, true) + "."));
+    } else {
+      box.appendChild(el("p", "dayline", fmtDay(latest.date, true)));
+    }
+    box.appendChild(renderDay(latest));
+
+    var earlier = document.getElementById("earlier");
+    earlier.replaceChildren();
+    var rest = days.slice(1);
+    if (!rest.length) {
+      earlier.appendChild(el("p", "quiet", "Previous days will be kept here, folded away."));
+      return;
+    }
+    rest.forEach(function (d) {
+      var det = el("details");
+      if (openDays[d.date]) det.open = true;
+      var sum = el("summary");
+      sum.appendChild(el("span", "arrow", fmtDay(d.date, false)));
+      sum.appendChild(el("span", "count", countLabel(d)));
+      det.appendChild(sum);
+      det.appendChild(renderDay(d));
+      det.addEventListener("toggle", function () { rememberOpen(d.date, det.open); });
+      earlier.appendChild(det);
+    });
+  }
+
+  function showOngoing(snap) {
+    var rows = snap.docs.map(function (d) { return d.data(); })
+      .filter(function (r) { return r && r.active !== false && r.line; })
+      .sort(function (a, b) { return (a.order || 99) - (b.order || 99); });
+    var ul = document.getElementById("ongoing");
+    ul.replaceChildren();
+    if (!rows.length) {
+      ul.appendChild(el("li", "quiet", "Nothing long-running to report."));
+      return;
+    }
+    rows.forEach(function (r) {
+      var li = el("li", "og");
+      li.appendChild(el("span", "ttl", r.title || ""));
+      li.appendChild(el("p", "txt", r.line));
+      var meta = el("span", "meta", r.changed ? "Last changed " + fmtDay(r.changed, false) : "");
+      li.appendChild(meta);
+      var s = sourceLine(r.source);
+      if (s) li.appendChild(s);
+      ul.appendChild(li);
+    });
+  }
+
+  function unavailable(msg) {
+    var box = document.getElementById("today");
+    box.replaceChildren(el("p", "notice", msg));
+  }
+
+  var use = (window.claude && window.claude.use) ? window.claude.use("db") : Promise.resolve(null);
+  use.then(function (db) {
+    if (!db) {
+      unavailable("Sign in to Claude to see today's page.");
+      return;
+    }
+    db.collection("days").orderBy("date", "desc").limit(15).onSnapshot(showDays, function () {
+      unavailable("Today's page can't load right now. Try again in a moment.");
+    });
+    db.collection("ongoing").onSnapshot(showOngoing, function () {});
+  });
+})();
+</script>
