@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Dani's Daily</title>
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-title" content="Dani's Daily">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<style>
+  :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body { margin: 0; }
+  img { max-width: 100%; }
+  [hidden] { display: none !important; }
+
+  /* Layout: a 1980s/90s Teletext index page, phone first. White header line with a yellow clock,
+     a blue band carrying blocky mosaic lettering, then each page (P100 / P150 / P199) opens with a
+     yellow label, a double-height white title and its page number on the right, over index rows.
+     Blue strapline and fastext links at the foot. Single black look by choice; full-strength
+     Teletext colours. No red, no flashing, no motion. */
+  :root {
+    --bg: #000000;
+    --white: #ffffff;
+    --yellow: #ffff00;
+    --cyan: #00ffff;
+    --green: #00ff00;
+    --blue: #0000ff;
+    --blue-rule: #0000ff;
+    --dim: #ffffff;
+    --font-tt: "VT323", ui-monospace, "Courier New", monospace;
+    color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-tt);
+    font-size: clamp(24px, 6.3vw, 30px);
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+    -webkit-text-size-adjust: 100%;
+  }
+  * { box-sizing: border-box; }
+
+  .page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 12px 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* Header line: P100  DANI'S DAILY 100  Sun 25 Oct  06:45 */
+  .topline { display: flex; gap: 0.6em; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
+  .topline .svc { flex: 1 1 auto; }
+  .topline .clock { color: var(--yellow); }
+
+  /* Blue band with mosaic lettering */
+  .masthead { background: var(--blue); padding-block: 12px; padding-inline: 12px; }
+  .masthead svg { display: block; width: 100%; height: auto; max-width: 100%; }
+  .masthead svg rect { fill: var(--yellow); }
+
+  /* Double-height text: same width, twice as tall */
+  .dh { height: 2.2em; }
+  .dh > span { display: inline-block; transform: scaleY(2); transform-origin: 0 0; white-space: nowrap; }
+
+  /* Page opener: yellow label, white double-height title, page number at right */
+  section { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 12px; }
+  .opener { display: flex; flex-direction: column; gap: 2px; }
+  .opener .label { color: var(--yellow); }
+  .opener .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6em; }
+  .opener .row .dh { color: var(--white); min-width: 0; }
+  .opener .row .pno { color: var(--yellow); font-variant-numeric: tabular-nums; padding-top: 0.1em; }
+  .rule { height: 3px; background: var(--blue-rule); }
+
+  /* Index rows */
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+  .item, .og { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .idx { display: flex; justify-content: space-between; gap: 0.6em; text-transform: uppercase; }
+  .idx .name { color: var(--yellow); }
+  .idx .sub { color: var(--white); font-variant-numeric: tabular-nums; }
+  .txt { margin: 0; overflow-wrap: anywhere; }
+  .upd { color: var(--yellow); }
+  .do { margin: 0; color: var(--cyan); }
+  .src { color: var(--dim); }
+  .src a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+
+  .quiet { margin: 0; }
+  .notice { margin: 0; color: var(--cyan); }
+
+  .good { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 3px solid var(--blue-rule); }
+  .good .idx .name { color: var(--green); }
+  .good .txt { color: var(--green); }
+
+  .og .meta { color: var(--cyan); }
+
+  /* Earlier days: index rows that fold open */
+  .day { display: flex; flex-direction: column; gap: 18px; }
+  details > .day { padding-block: 14px 6px; }
+  summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 0.6em; }
+  summary::-webkit-details-marker { display: none; }
+  summary .name { color: var(--yellow); text-transform: uppercase; }
+  summary .count { color: var(--white); flex: 1 1 auto; text-align: right; }
+  summary .sub { color: var(--white); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  .earlier-list { display: flex; flex-direction: column; gap: 10px; }
+
+  /* Foot: blue strapline, then fastext */
+  .strap { background: var(--blue); color: var(--yellow); padding-block: 4px; padding-inline: 10px; text-align: center; }
+  .fastext { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; }
+  .fastext a { text-decoration: none; }
+  .fastext .f1 { color: var(--green); }
+  .fastext .f2 { color: var(--yellow); }
+  .fastext .f3 { color: var(--cyan); }
+  .foot { color: var(--dim); margin: 0; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="topline">
+    <span>P100</span>
+    <span class="svc">DANI'S DAILY</span>
+    <span id="today-label">&nbsp;</span>
+    <span class="clock">06:45</span>
+  </div>
+
+  <header class="masthead">
+    <svg id="mosaic" role="img" aria-label="Dani's Daily" viewBox="0 0 68 10.6"></svg>
+  </header>
+
+  <section id="p100">
+    <div class="opener">
+      <span class="label">Today</span>
+      <div class="row"><div class="dh"><span id="today-title">TODAY</span></div><span class="pno">100</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <div id="today">
+      <p class="quiet">Today's page is on its way.</p>
+    </div>
+  </section>
+
+  <section id="p150">
+    <div class="opener">
+      <span class="label">Still ongoing</span>
+      <div class="row"><div class="dh"><span>LONG-RUNNING STORIES</span></div><span class="pno">150</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <ul id="ongoing">
+      <li class="quiet">Long-running stories appear here, one line each.</li>
+    </ul>
+  </section>
+
+  <section id="p199">
+    <div class="opener">
+      <span class="label">Earlier</span>
+      <div class="row"><div class="dh"><span>PREVIOUS DAYS</span></div><span class="pno">199</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <div id="earlier" class="earlier-list">
+      <p class="quiet">Previous days will be kept here, folded away.</p>
+    </div>
+  </section>
+
+  <div class="strap">Just enough to know</div>
+  <nav class="fastext" aria-label="Pages">
+    <a class="f1" href="#p100">Today</a>
+    <a class="f2" href="#p150">Ongoing</a>
+    <a class="f3" href="#p199">Earlier</a>
+  </nav>
+  <p class="foot">A new page arrives every morning at 06:45.</p>
+</div>
+
+<!-- DAILY DATA: the morning task replaces everything between the two markers. Keep "days" newest first, at most 14 days. -->
+<script type="application/json" id="dd-data">
+{
+ "days": [
+  {
+   "date": "2026-10-25",
+   "quiet": false,
+   "items": [
+    {
+     "tag": "HEADS-UP",
+     "text": "The clocks went back one hour at 2am. Phones update themselves, but ovens, car clocks and heating timers may not.",
+     "doThis": "Put back any clocks that don't change on their own, including the heating timer.",
+     "update": false,
+     "thread": "clocks-oct-2026",
+     "source": {
+      "name": "GOV.UK",
+      "url": "https://www.gov.uk/when-do-the-clocks-change"
+     }
+    },
+    {
+     "tag": "UK",
+     "text": "Storm Boelo is bringing strong winds to the north of the UK until 9pm tonight. Travel delays and power cuts are possible.",
+     "update": false,
+     "thread": "storm-boelo",
+     "source": {
+      "name": "Met Office",
+      "url": "https://www.metoffice.gov.uk/about-us/news-and-media/media-centre/weather-and-climate-news/2026/amber-warning-issued-for-storm-boelo-as-storm-austen-moves-through"
+     }
+    },
+    {
+     "tag": "MONEY",
+     "text": "The Autumn Budget is on Wednesday. The government has said income tax, National Insurance and VAT rates will not go up.",
+     "update": false,
+     "thread": "budget-2026",
+     "source": {
+      "name": "House of Commons Library",
+      "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-12245/"
+     }
+    },
+    {
+     "tag": "CYBER",
+     "text": "ASOS says hackers accessed customers' names and contact details this month. It says passwords and card details were not taken.",
+     "doThis": "If you use ASOS, ignore unexpected messages asking you to click a link or log in.",
+     "update": false,
+     "thread": "asos-breach",
+     "source": {
+      "name": "NCSC",
+      "url": "https://www.ncsc.gov.uk/news/incident-affecting-asos-customers"
+     }
+    }
+   ],
+   "goodNews": {
+    "text": "Stanford scientists found bleached coral can fully recover within about seven weeks after touching healthy coral from the same colony.",
+    "thread": "good-coral-recovery",
+    "source": {
+     "name": "Euronews",
+     "url": "https://www.euronews.com/2026/10/15/theyre-not-dead-yet-bleached-corals-recover-in-record-time-after-touching-healthy-clones"
+    }
+   }
+  }
+ ],
+ "ongoing": [
+  {
+   "id": "iran-war",
+   "title": "Iran war",
+   "line": "The Strait of Hormuz is still mostly closed to shipping. The US and Iran are holding indirect talks through mediators, with no deal yet.",
+   "changed": "2026-10-25",
+   "order": 1,
+   "active": true,
+   "source": {
+    "name": "CBS News",
+    "url": "https://www.cbsnews.com/live-updates/iran-war-us-trump-talks-strait-of-hormuz/"
+   }
+  },
+  {
+   "id": "russia-ukraine",
+   "title": "Russia-Ukraine war",
+   "line": "Fighting continues. Both sides say they are open to more US-brokered peace talks, but big disagreements remain.",
+   "changed": "2026-10-25",
+   "order": 2,
+   "active": true,
+   "source": {
+    "name": "AP via MPR News",
+    "url": "https://mprnews.org/story/2026/10/24/ukraine-and-russia-eye-new-peace-talks-but-steep-obstacles-remain"
+   }
+  },
+  {
+   "id": "energy-price-cap",
+   "title": "Energy bills",
+   "line": "The price cap is about £1,723 a year for a typical home until 31 December. The next figure is due in late November.",
+   "changed": "2026-10-25",
+   "order": 3,
+   "active": true,
+   "source": {
+    "name": "Ofgem",
+    "url": "https://www.ofgem.gov.uk/energy-price-cap"
+   }
+  }
+ ]
+}
+</script>
+<!-- END DAILY DATA -->
+
+<script>
+(function () {
+  var TAGS = ["UK", "WORLD", "CYBER", "MONEY", "HEADS-UP", "IN MEMORY"];
+
+  /* Mosaic lettering, 5x7 blocks per letter, drawn as tall Teletext cells */
+  var GLYPHS = {
+    "D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+    "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
+    "N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
+    "I": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
+    "S": ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
+    "L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
+    "Y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
+    "'": ["11", "01", "10", "00", "00", "00", "00"],
+    " ": ["000", "000", "000", "000", "000", "000", "000"]
+  };
+  function drawMosaic(word) {
+    var svg = document.getElementById("mosaic");
+    var ns = "http://www.w3.org/2000/svg";
+    var cellH = 1.4, gap = 0.12, x = 1;
+    word.split("").forEach(function (ch) {
+      var g = GLYPHS[ch];
+      if (!g) return;
+      g.forEach(function (row, r) {
+        row.split("").forEach(function (bit, c) {
+          if (bit !== "1") return;
+          var rect = document.createElementNS(ns, "rect");
+          rect.setAttribute("x", x + c + gap / 2);
+          rect.setAttribute("y", 0.4 + r * cellH + gap / 2);
+          rect.setAttribute("width", 1 - gap);
+          rect.setAttribute("height", cellH - gap);
+          svg.appendChild(rect);
+        });
+      });
+      x += g[0].length + 1;
+    });
+    svg.setAttribute("viewBox", "0 0 " + (x + 1) + " " + (0.8 + 7 * cellH));
+  }
+  drawMosaic("DANI'S DAILY");
+
+  function londonToday() {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  }
+  function fmtDay(iso, style) {
+    var p = String(iso || "").split("-").map(Number);
+    if (p.length !== 3 || p.some(isNaN)) return String(iso || "");
+    var opts = style === "long"
+      ? { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }
+      : { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" };
+    return new Intl.DateTimeFormat("en-GB", opts).format(Date.UTC(p[0], p[1] - 1, p[2]));
+  }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+  function safeUrl(u) {
+    try { var x = new URL(u); return (x.protocol === "https:" || x.protocol === "http:") ? x.href : null; }
+    catch (e) { return null; }
+  }
+  function sourceLine(src) {
+    if (!src || !safeUrl(src.url)) return null;
+    var p = el("span", "src", "Source: ");
+    var a = el("a", null, src.name || "Read more");
+    a.href = safeUrl(src.url);
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    p.appendChild(a);
+    return p;
+  }
+  function idxRow(name, sub) {
+    var r = el("div", "idx");
+    r.appendChild(el("span", "name", name));
+    if (sub) r.appendChild(el("span", "sub", sub));
+    return r;
+  }
+
+  function renderItem(it, sub) {
+    var li = el("li", "item");
+    var tag = String(it.tag || "UK").toUpperCase();
+    li.appendChild(idxRow(TAGS.indexOf(tag) >= 0 ? tag : "UK", sub));
+    var p = el("p", "txt");
+    if (it.update) p.appendChild(el("span", "upd", "UPDATE: "));
+    p.appendChild(document.createTextNode(it.text || ""));
+    li.appendChild(p);
+    if (it.doThis) li.appendChild(el("p", "do", "Do this: " + it.doThis));
+    var s = sourceLine(it.source);
+    if (s) li.appendChild(s);
+    return li;
+  }
+
+  function renderDay(day, firstSub) {
+    var wrap = el("div", "day");
+    var items = Array.isArray(day.items) ? day.items : [];
+    var n = firstSub;
+    if (day.quiet || items.length === 0) {
+      wrap.appendChild(el("p", "quiet", "Nothing major today."));
+    } else {
+      var ul = el("ul");
+      items.forEach(function (it) { ul.appendChild(renderItem(it, firstSub ? String(n++) : "")); });
+      wrap.appendChild(ul);
+    }
+    if (day.goodNews && day.goodNews.text) {
+      var g = el("div", "good");
+      g.appendChild(idxRow("GOOD NEWS", firstSub ? String(n) : ""));
+      g.appendChild(el("p", "txt", day.goodNews.text));
+      var s = sourceLine(day.goodNews.source);
+      if (s) g.appendChild(s);
+      wrap.appendChild(g);
+    }
+    return wrap;
+  }
+
+  function countLabel(day) {
+    var n = Array.isArray(day.items) ? day.items.length : 0;
+    if (day.quiet || n === 0) return "quiet day";
+    return n + (n === 1 ? " update" : " updates");
+  }
+
+  var today = londonToday();
+  document.getElementById("today-label").textContent = fmtDay(today, "short");
+
+  var openDays = {};
+  try { openDays = JSON.parse(localStorage.getItem("dd-open") || "{}") || {}; } catch (e) { openDays = {}; }
+  function rememberOpen(id, open) {
+    if (open) openDays[id] = 1; else delete openDays[id];
+    try { localStorage.setItem("dd-open", JSON.stringify(openDays)); } catch (e) {}
+  }
+
+  function showDays(days) {
+    var box = document.getElementById("today");
+    box.replaceChildren();
+    if (!days.length) {
+      box.appendChild(el("p", "quiet", "The first page arrives at 06:45."));
+      return;
+    }
+    var latest = days[0];
+    document.getElementById("today-title").textContent = fmtDay(latest.date, "long").toUpperCase();
+    if (latest.date !== today) {
+      box.appendChild(el("p", "notice", "Today's page isn't ready yet. Showing " + fmtDay(latest.date, "long") + "."));
+    }
+    box.appendChild(renderDay(latest, 101));
+
+    var earlier = document.getElementById("earlier");
+    earlier.replaceChildren();
+    var rest = days.slice(1);
+    if (!rest.length) {
+      earlier.appendChild(el("p", "quiet", "Previous days will be kept here, folded away."));
+      return;
+    }
+    rest.forEach(function (d, i) {
+      var det = el("details");
+      if (openDays[d.date]) det.open = true;
+      var sum = el("summary");
+      sum.appendChild(el("span", "name", fmtDay(d.date, "short")));
+      sum.appendChild(el("span", "count", countLabel(d)));
+      sum.appendChild(el("span", "sub", String(Math.min(198, 191 + i))));
+      det.appendChild(sum);
+      det.appendChild(renderDay(d, 0));
+      det.addEventListener("toggle", function () { rememberOpen(d.date, det.open); });
+      earlier.appendChild(det);
+    });
+  }
+
+  function showOngoing(rows) {
+    rows = rows.filter(function (r) { return r && r.active !== false && r.line; })
+      .sort(function (a, b) { return (a.order || 99) - (b.order || 99); });
+    var ul = document.getElementById("ongoing");
+    ul.replaceChildren();
+    if (!rows.length) {
+      ul.appendChild(el("li", "quiet", "Nothing long-running to report."));
+      return;
+    }
+    rows.forEach(function (r, i) {
+      var li = el("li", "og");
+      li.appendChild(idxRow(r.title || "", String(151 + i)));
+      li.appendChild(el("p", "txt", r.line));
+      if (r.changed) li.appendChild(el("span", "meta", "Last changed " + fmtDay(r.changed, "short")));
+      var s = sourceLine(r.source);
+      if (s) li.appendChild(s);
+      ul.appendChild(li);
+    });
+  }
+
+  var data = null;
+  try { data = JSON.parse(document.getElementById("dd-data").textContent); } catch (e) { data = null; }
+  if (!data) {
+    document.getElementById("today").replaceChildren(el("p", "notice", "Today's page can't load right now. Try again in a moment."));
+  } else {
+    var days = (Array.isArray(data.days) ? data.days : []).slice()
+      .sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    showDays(days);
+    showOngoing(Array.isArray(data.ongoing) ? data.ongoing : []);
+  }
+})();
+</script>
+</body>
+</html>
