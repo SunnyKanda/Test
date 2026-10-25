@@ -1,6 +1,6 @@
 {
-  "name": "Dani's Daily",
-  "short_name": "Dani's Daily",
+  "name": "CalmFax",
+  "short_name": "CalmFax",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#000000",

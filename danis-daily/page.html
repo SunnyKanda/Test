@@ -1,16 +1,17 @@
-<title>Dani's Daily</title>
+<title>CalmFax</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#000000">
-<meta name="apple-mobile-web-app-title" content="Dani's Daily">
+<meta name="apple-mobile-web-app-title" content="CalmFax">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
 <style>
   /* Layout: a 1980s/90s Teletext index page, phone first. White header line with a yellow clock,
-     a blue band carrying blocky mosaic lettering, then each page (P100 / P150 / P199) opens with a
-     yellow label, a double-height white title and its page number on the right, over index rows.
-     Blue strapline and fastext links at the foot. Single black look by choice; full-strength
-     Teletext colours. No red, no flashing, no motion. */
+     a blue band carrying blocky mosaic lettering, then each page (P100 today, P110 the week,
+     P150 ongoing, P160 coming up, P199 earlier, P900 settings) opens with a yellow label, a
+     double-height white title and its page number, over index rows. Blue strapline and fastext
+     links at the foot. Always black: three colour modes (bright Teletext, soft, amber departure
+     board) chosen in P900, "auto" = bright by day, soft at night. No red, no flashing, no motion. */
   :root {
     --bg: #000000;
     --white: #ffffff;
@@ -20,20 +21,46 @@
     --blue: #0000ff;
     --blue-rule: #0000ff;
     --dim: #ffffff;
+    --mosaic: #ffff00;
+    --ink: #000000;
     --font-tt: "VT323", ui-monospace, "Courier New", monospace;
+    --size: 1;
     color-scheme: dark;
   }
+  :root[data-mode="soft"] {
+    --white: #e9e7df;
+    --yellow: #e3cf6a;
+    --cyan: #86d2cd;
+    --green: #95cd8f;
+    --blue: #1f3478;
+    --blue-rule: #2a418f;
+    --dim: #a19f97;
+    --mosaic: #e3cf6a;
+  }
+  :root[data-mode="amber"] {
+    --white: #ffb000;
+    --yellow: #ffd04a;
+    --cyan: #ffb000;
+    --green: #ffe08a;
+    --blue: #2b1900;
+    --blue-rule: #6a4300;
+    --dim: #c98a00;
+    --mosaic: #ffb000;
+  }
+  :root[data-size="2"] { --size: 1.15; }
+  :root[data-size="3"] { --size: 1.32; }
   html { background: var(--bg); }
   body {
     background: var(--bg);
     color: var(--white);
     font-family: var(--font-tt);
-    font-size: clamp(24px, 6.3vw, 30px);
+    font-size: calc(clamp(24px, 6.3vw, 30px) * var(--size));
     line-height: 1.15;
     letter-spacing: 0.02em;
     -webkit-text-size-adjust: 100%;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
 
   .page {
     max-width: 700px;
@@ -46,7 +73,7 @@
     gap: 22px;
   }
 
-  /* Header line: P100  DANI'S DAILY 100  Sun 25 Oct  06:45 */
+  /* Header line: P100  CALMFAX  Sun 25 Oct  06:45 */
   .topline { display: flex; gap: 0.6em; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
   .topline .svc { flex: 1 1 auto; }
   .topline .clock { color: var(--yellow); }
@@ -54,7 +81,7 @@
   /* Blue band with mosaic lettering */
   .masthead { background: var(--blue); padding-block: 12px; padding-inline: 12px; }
   .masthead svg { display: block; width: 100%; height: auto; max-width: 100%; }
-  .masthead svg rect { fill: var(--yellow); }
+  .masthead svg rect { fill: var(--mosaic); }
 
   /* Double-height text: same width, twice as tall */
   .dh { height: 2.2em; }
@@ -80,10 +107,30 @@
   .do { margin: 0; color: var(--cyan); }
   .src { color: var(--dim); }
   .src a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
-  a:focus-visible, summary:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+
+  /* Buttons that read as Teletext text, not app chrome */
+  button {
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+  }
+  a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+  .term { text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+  .def { margin: 4px 0 0; padding-left: 0.6em; border-left: 3px solid var(--blue-rule); color: var(--cyan); }
+  .def b { font-weight: normal; color: var(--yellow); text-transform: uppercase; }
+  .why-btn { align-self: flex-start; color: var(--cyan); }
+  .why { margin: 4px 0 0; padding-left: 0.6em; border-left: 3px solid var(--blue-rule); }
+  .listen { align-self: flex-start; color: var(--cyan); }
 
   .quiet { margin: 0; }
   .notice { margin: 0; color: var(--cyan); }
+  .correction { margin: 0; color: var(--cyan); }
+  .correction b { font-weight: normal; color: var(--yellow); }
 
   .good { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 3px solid var(--blue-rule); }
   .good .idx .name { color: var(--green); }
@@ -101,6 +148,13 @@
   summary .sub { color: var(--white); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
   .earlier-list { display: flex; flex-direction: column; gap: 10px; }
 
+  /* Settings */
+  .setting { display: flex; flex-direction: column; gap: 6px; }
+  .setting .label { color: var(--yellow); }
+  .choices { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+  .choices button { padding: 0 0.3em; color: var(--white); }
+  .choices button[aria-pressed="true"] { background: var(--yellow); color: var(--ink); }
+
   /* Foot: blue strapline, then fastext */
   .strap { background: var(--blue); color: var(--yellow); padding-block: 4px; padding-inline: 10px; text-align: center; }
   .fastext { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; }
@@ -108,19 +162,20 @@
   .fastext .f1 { color: var(--green); }
   .fastext .f2 { color: var(--yellow); }
   .fastext .f3 { color: var(--cyan); }
+  .fastext .f4 { color: var(--white); }
   .foot { color: var(--dim); margin: 0; }
 </style>
 
 <div class="page">
   <div class="topline">
     <span>P100</span>
-    <span class="svc">DANI'S DAILY</span>
+    <span class="svc">CALMFAX</span>
     <span id="today-label">&nbsp;</span>
     <span class="clock">06:45</span>
   </div>
 
   <header class="masthead">
-    <svg id="mosaic" role="img" aria-label="Dani's Daily" viewBox="0 0 68 10.6"></svg>
+    <svg id="mosaic" role="img" aria-label="CalmFax" viewBox="0 0 44 10.6"></svg>
   </header>
 
   <section id="p100">
@@ -129,9 +184,19 @@
       <div class="row"><div class="dh"><span id="today-title">TODAY</span></div><span class="pno">100</span></div>
     </div>
     <div class="rule" aria-hidden="true"></div>
+    <button class="listen" id="listen" type="button" hidden>&#9654; Listen to today</button>
     <div id="today">
       <p class="quiet">Today's page is on its way.</p>
     </div>
+  </section>
+
+  <section id="p110" hidden>
+    <div class="opener">
+      <span class="label">Catch up</span>
+      <div class="row"><div class="dh"><span>THE WEEK IN FIVE</span></div><span class="pno">110</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <ul id="week"></ul>
   </section>
 
   <section id="p150">
@@ -142,6 +207,17 @@
     <div class="rule" aria-hidden="true"></div>
     <ul id="ongoing">
       <li class="quiet">Long-running stories appear here, one line each.</li>
+    </ul>
+  </section>
+
+  <section id="p160">
+    <div class="opener">
+      <span class="label">Coming up</span>
+      <div class="row"><div class="dh"><span>DATES TO KNOW</span></div><span class="pno">160</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <ul id="coming">
+      <li class="quiet">Nothing coming up that needs a heads-up.</li>
     </ul>
   </section>
 
@@ -156,11 +232,38 @@
     </div>
   </section>
 
+  <section id="p900">
+    <div class="opener">
+      <span class="label">Settings</span>
+      <div class="row"><div class="dh"><span>HOW IT LOOKS</span></div><span class="pno">900</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <div class="setting">
+      <span class="label">Colours</span>
+      <div class="choices" id="mode-choices">
+        <button type="button" data-mode="auto">Auto</button>
+        <button type="button" data-mode="bright">Bright</button>
+        <button type="button" data-mode="soft">Soft</button>
+        <button type="button" data-mode="amber">Amber</button>
+      </div>
+      <span class="src">Auto is bright by day and soft after 8pm.</span>
+    </div>
+    <div class="setting">
+      <span class="label">Text size</span>
+      <div class="choices" id="size-choices">
+        <button type="button" data-size="1">A</button>
+        <button type="button" data-size="2">A+</button>
+        <button type="button" data-size="3">A++</button>
+      </div>
+    </div>
+  </section>
+
   <div class="strap">Just enough to know</div>
   <nav class="fastext" aria-label="Pages">
     <a class="f1" href="#p100">Today</a>
     <a class="f2" href="#p150">Ongoing</a>
-    <a class="f3" href="#p199">Earlier</a>
+    <a class="f3" href="#p160">Coming up</a>
+    <a class="f4" href="#p199">Earlier</a>
   </nav>
   <p class="foot">A new page arrives every morning at 06:45.</p>
 </div>
@@ -185,13 +288,13 @@
      }
     },
     {
-     "tag": "UK",
-     "text": "Storm Boelo is bringing strong winds to the north of the UK until 9pm tonight. Travel delays and power cuts are possible.",
+     "tag": "LOCAL",
+     "text": "A yellow wind warning for Storm Boelo covers Calderdale until 9pm tonight. Travel delays and power cuts are possible.",
      "update": false,
      "thread": "storm-boelo",
      "source": {
-      "name": "Met Office",
-      "url": "https://www.metoffice.gov.uk/about-us/news-and-media/media-centre/weather-and-climate-news/2026/amber-warning-issued-for-storm-boelo-as-storm-austen-moves-through"
+      "name": "Yorkshire Evening Post",
+      "url": "https://www.yorkshireeveningpost.co.uk/news/weather/storm-boelo-leeds-yellow-weather-warning-wind-rain-weekend-forecast-9306071"
      }
     },
     {
@@ -237,7 +340,8 @@
    "source": {
     "name": "CBS News",
     "url": "https://www.cbsnews.com/live-updates/iran-war-us-trump-talks-strait-of-hormuz/"
-   }
+   },
+   "why": "The conflict between Iran and the US and Israel began earlier in 2026. A ceasefire in April did not hold. Iran has limited shipping through the Strait of Hormuz, which has pushed up fuel and energy prices."
   },
   {
    "id": "russia-ukraine",
@@ -249,7 +353,8 @@
    "source": {
     "name": "AP via MPR News",
     "url": "https://mprnews.org/story/2026/10/24/ukraine-and-russia-eye-new-peace-talks-but-steep-obstacles-remain"
-   }
+   },
+   "why": "Russia launched a full-scale invasion of Ukraine in February 2022. The US is trying to broker peace talks. The main disagreements are over land and future security guarantees for Ukraine."
   },
   {
    "id": "energy-price-cap",
@@ -261,28 +366,100 @@
    "source": {
     "name": "Ofgem",
     "url": "https://www.ofgem.gov.uk/energy-price-cap"
-   }
+   },
+   "why": "Ofgem, the energy regulator, resets the price cap every three months based on wholesale energy costs. It limits the rates suppliers can charge, not your total bill."
   }
- ]
+ ],
+ "comingUp": [
+  {
+   "date": "2026-10-28",
+   "tag": "MONEY",
+   "text": "The Autumn Budget is announced in Parliament. CalmFax will cover what changes for households the next morning.",
+   "source": {
+    "name": "House of Commons Library",
+    "url": "https://commonslibrary.parliament.uk/research-briefings/cbp-12245/"
+   }
+  },
+  {
+   "date": "2026-11-03",
+   "tag": "WORLD",
+   "text": "US midterm elections take place. Results usually come in overnight, UK time."
+  },
+  {
+   "date": "2026-11-08",
+   "tag": "UK",
+   "text": "Remembrance Sunday, with a two-minute silence at 11am."
+  }
+ ],
+ "glossary": {
+  "Autumn Budget": "The government's yearly plan for tax and spending, announced by the Chancellor in Parliament.",
+  "National Insurance": "A tax on earnings that pays towards the State Pension and some benefits.",
+  "VAT": "Value Added Tax: the tax included in the price of most things you buy, usually 20%.",
+  "price cap": "The most suppliers can charge per unit of energy and per day on a standard tariff. It doesn't limit your total bill.",
+  "Strait of Hormuz": "A narrow sea route by Iran. About a fifth of the world's oil normally passes through it.",
+  "yellow wind warning": "The Met Office's lowest level of warning: be aware, some disruption is possible.",
+  "midterm elections": "US elections held halfway through a president's term, for Congress and many state posts.",
+  "Remembrance Sunday": "The day the UK remembers those who died in war."
+ }
 }
 </script>
 <!-- END DAILY DATA -->
 
 <script>
 (function () {
-  var TAGS = ["UK", "WORLD", "CYBER", "MONEY", "HEADS-UP", "IN MEMORY"];
+  var TAGS = ["UK", "LOCAL", "WORLD", "CYBER", "MONEY", "HEADS-UP", "IN MEMORY"];
+  var root = document.documentElement;
 
-  /* Mosaic lettering, 5x7 blocks per letter, drawn as tall Teletext cells */
+  function store(key, val) {
+    try { if (val === undefined) return localStorage.getItem(key); localStorage.setItem(key, val); } catch (e) {}
+    return null;
+  }
+
+  /* ---- Settings: colour mode and text size, remembered on this phone ---- */
+  function londonHour() {
+    return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hour12: false }).format(new Date())) % 24;
+  }
+  function applyMode(choice) {
+    var h = londonHour();
+    var mode = choice === "auto" ? ((h >= 20 || h < 6) ? "soft" : "bright") : choice;
+    root.setAttribute("data-mode", mode);
+    document.querySelectorAll("#mode-choices button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === choice));
+    });
+  }
+  function applySize(size) {
+    root.setAttribute("data-size", size);
+    document.querySelectorAll("#size-choices button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-size") === size));
+    });
+  }
+  var modeChoice = store("cf-mode") || "auto";
+  var sizeChoice = store("cf-size") || "1";
+  applyMode(modeChoice);
+  applySize(sizeChoice);
+  document.getElementById("mode-choices").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    modeChoice = b.getAttribute("data-mode");
+    store("cf-mode", modeChoice);
+    applyMode(modeChoice);
+  });
+  document.getElementById("size-choices").addEventListener("click", function (e) {
+    var b = e.target.closest("button");
+    if (!b) return;
+    sizeChoice = b.getAttribute("data-size");
+    store("cf-size", sizeChoice);
+    applySize(sizeChoice);
+  });
+
+  /* ---- Mosaic lettering, 5x7 blocks per letter, drawn as tall Teletext cells ---- */
   var GLYPHS = {
-    "D": ["11110", "10001", "10001", "10001", "10001", "10001", "11110"],
+    "C": ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
     "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
-    "N": ["10001", "11001", "10101", "10011", "10001", "10001", "10001"],
-    "I": ["11111", "00100", "00100", "00100", "00100", "00100", "11111"],
-    "S": ["01111", "10000", "10000", "01110", "00001", "00001", "11110"],
     "L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
-    "Y": ["10001", "10001", "01010", "00100", "00100", "00100", "00100"],
-    "'": ["11", "01", "10", "00", "00", "00", "00"],
-    " ": ["000", "000", "000", "000", "000", "000", "000"]
+    "M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
+    "F": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
+    "X": ["10001", "10001", "01010", "00100", "01010", "10001", "10001"]
   };
   function drawMosaic(word) {
     var svg = document.getElementById("mosaic");
@@ -306,8 +483,9 @@
     });
     svg.setAttribute("viewBox", "0 0 " + (x + 1) + " " + (0.8 + 7 * cellH));
   }
-  drawMosaic("DANI'S DAILY");
+  drawMosaic("CALMFAX");
 
+  /* ---- Helpers ---- */
   function londonToday() {
     return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
   }
@@ -346,13 +524,58 @@
     return r;
   }
 
-  function renderItem(it, sub) {
+  /* ---- Plain-English explainers: tap a dotted word, a one-line meaning opens under it ---- */
+  var GLOSSARY = {};
+  var termRe = null;
+  function setGlossary(g) {
+    GLOSSARY = {};
+    Object.keys(g || {}).forEach(function (k) { if (g[k]) GLOSSARY[k.toLowerCase()] = { term: k, def: String(g[k]) }; });
+    var keys = Object.keys(GLOSSARY).sort(function (a, b) { return b.length - a.length; })
+      .map(function (k) { return k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); });
+    termRe = keys.length ? new RegExp("\\b(" + keys.join("|") + ")\\b", "gi") : null;
+  }
+  /* Fills `p` with `text`, turning the first mention of each glossary term (per block) into a button */
+  function fillText(p, text, used) {
+    text = String(text || "");
+    if (!termRe) { p.appendChild(document.createTextNode(text)); return; }
+    var last = 0, m;
+    termRe.lastIndex = 0;
+    while ((m = termRe.exec(text))) {
+      var key = m[1].toLowerCase();
+      if (used[key]) continue;
+      used[key] = true;
+      p.appendChild(document.createTextNode(text.slice(last, m.index)));
+      p.appendChild(termButton(m[1], GLOSSARY[key], p));
+      last = m.index + m[1].length;
+    }
+    p.appendChild(document.createTextNode(text.slice(last)));
+  }
+  function termButton(label, entry, para) {
+    var b = el("button", "term", label);
+    b.type = "button";
+    b.setAttribute("aria-expanded", "false");
+    var def = null;
+    b.addEventListener("click", function () {
+      if (def) { def.remove(); def = null; b.setAttribute("aria-expanded", "false"); return; }
+      def = el("p", "def");
+      def.appendChild(el("b", null, entry.term + ": "));
+      def.appendChild(document.createTextNode(entry.def));
+      var anchor = para;
+      while (anchor.nextElementSibling && anchor.nextElementSibling.classList.contains("def")) anchor = anchor.nextElementSibling;
+      anchor.after(def);
+      b.setAttribute("aria-expanded", "true");
+    });
+    return b;
+  }
+
+  /* ---- Rendering ---- */
+  function renderItem(it, sub, used) {
     var li = el("li", "item");
     var tag = String(it.tag || "UK").toUpperCase();
     li.appendChild(idxRow(TAGS.indexOf(tag) >= 0 ? tag : "UK", sub));
     var p = el("p", "txt");
     if (it.update) p.appendChild(el("span", "upd", "UPDATE: "));
-    p.appendChild(document.createTextNode(it.text || ""));
+    fillText(p, it.text, used);
     li.appendChild(p);
     if (it.doThis) li.appendChild(el("p", "do", "Do this: " + it.doThis));
     var s = sourceLine(it.source);
@@ -362,19 +585,28 @@
 
   function renderDay(day, firstSub) {
     var wrap = el("div", "day");
+    var used = {};
+    if (day.correction) {
+      var c = el("p", "correction");
+      c.appendChild(el("b", null, "CORRECTION: "));
+      c.appendChild(document.createTextNode(day.correction));
+      wrap.appendChild(c);
+    }
     var items = Array.isArray(day.items) ? day.items : [];
     var n = firstSub;
     if (day.quiet || items.length === 0) {
       wrap.appendChild(el("p", "quiet", "Nothing major today."));
     } else {
       var ul = el("ul");
-      items.forEach(function (it) { ul.appendChild(renderItem(it, firstSub ? String(n++) : "")); });
+      items.forEach(function (it) { ul.appendChild(renderItem(it, firstSub ? String(n++) : "", used)); });
       wrap.appendChild(ul);
     }
     if (day.goodNews && day.goodNews.text) {
       var g = el("div", "good");
       g.appendChild(idxRow("GOOD NEWS", firstSub ? String(n) : ""));
-      g.appendChild(el("p", "txt", day.goodNews.text));
+      var gp = el("p", "txt");
+      fillText(gp, day.goodNews.text, used);
+      g.appendChild(gp);
       var s = sourceLine(day.goodNews.source);
       if (s) g.appendChild(s);
       wrap.appendChild(g);
@@ -392,10 +624,27 @@
   document.getElementById("today-label").textContent = fmtDay(today, "short");
 
   var openDays = {};
-  try { openDays = JSON.parse(localStorage.getItem("dd-open") || "{}") || {}; } catch (e) { openDays = {}; }
+  try { openDays = JSON.parse(store("cf-open") || "{}") || {}; } catch (e) { openDays = {}; }
   function rememberOpen(id, open) {
     if (open) openDays[id] = 1; else delete openDays[id];
-    try { localStorage.setItem("dd-open", JSON.stringify(openDays)); } catch (e) {}
+    store("cf-open", JSON.stringify(openDays));
+  }
+
+  function showWeek(day) {
+    var sec = document.getElementById("p110");
+    var lines = Array.isArray(day.weekInFive) ? day.weekInFive.filter(Boolean) : [];
+    sec.hidden = !lines.length;
+    var ul = document.getElementById("week");
+    ul.replaceChildren();
+    var used = {};
+    lines.slice(0, 5).forEach(function (line, i) {
+      var li = el("li", "item");
+      var p = el("p", "txt");
+      fillText(p, line, used);
+      li.appendChild(idxRow("", String(111 + i)));
+      li.appendChild(p);
+      ul.appendChild(li);
+    });
   }
 
   function showDays(days) {
@@ -403,7 +652,7 @@
     box.replaceChildren();
     if (!days.length) {
       box.appendChild(el("p", "quiet", "The first page arrives at 06:45."));
-      return;
+      return null;
     }
     var latest = days[0];
     document.getElementById("today-title").textContent = fmtDay(latest.date, "long").toUpperCase();
@@ -411,13 +660,13 @@
       box.appendChild(el("p", "notice", "Today's page isn't ready yet. Showing " + fmtDay(latest.date, "long") + "."));
     }
     box.appendChild(renderDay(latest, 101));
+    showWeek(latest);
 
     var earlier = document.getElementById("earlier");
     earlier.replaceChildren();
     var rest = days.slice(1);
     if (!rest.length) {
       earlier.appendChild(el("p", "quiet", "Previous days will be kept here, folded away."));
-      return;
     }
     rest.forEach(function (d, i) {
       var det = el("details");
@@ -431,6 +680,7 @@
       det.addEventListener("toggle", function () { rememberOpen(d.date, det.open); });
       earlier.appendChild(det);
     });
+    return latest;
   }
 
   function showOngoing(rows) {
@@ -444,24 +694,104 @@
     }
     rows.forEach(function (r, i) {
       var li = el("li", "og");
+      var used = {};
       li.appendChild(idxRow(r.title || "", String(151 + i)));
-      li.appendChild(el("p", "txt", r.line));
+      var p = el("p", "txt");
+      fillText(p, r.line, used);
+      li.appendChild(p);
       if (r.changed) li.appendChild(el("span", "meta", "Last changed " + fmtDay(r.changed, "short")));
+      if (r.why) {
+        var b = el("button", "why-btn", "Why is this happening? ›");
+        b.type = "button";
+        b.setAttribute("aria-expanded", "false");
+        var why = el("p", "why", r.why);
+        why.hidden = true;
+        b.addEventListener("click", function () {
+          why.hidden = !why.hidden;
+          b.setAttribute("aria-expanded", String(!why.hidden));
+          b.textContent = why.hidden ? "Why is this happening? ›" : "Hide background";
+        });
+        li.appendChild(b);
+        li.appendChild(why);
+      }
       var s = sourceLine(r.source);
       if (s) li.appendChild(s);
       ul.appendChild(li);
     });
   }
 
+  function showComing(rows) {
+    rows = rows.filter(function (r) { return r && r.date && r.text && String(r.date) >= today; })
+      .sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); })
+      .slice(0, 6);
+    var ul = document.getElementById("coming");
+    ul.replaceChildren();
+    if (!rows.length) {
+      ul.appendChild(el("li", "quiet", "Nothing coming up that needs a heads-up."));
+      return;
+    }
+    rows.forEach(function (r, i) {
+      var li = el("li", "item");
+      var used = {};
+      li.appendChild(idxRow(r.date === today ? "Today" : fmtDay(r.date, "short"), String(161 + i)));
+      var p = el("p", "txt");
+      fillText(p, r.text, used);
+      li.appendChild(p);
+      var s = sourceLine(r.source);
+      if (s) li.appendChild(s);
+      ul.appendChild(li);
+    });
+  }
+
+  /* ---- Listen: the phone reads today's page aloud (about a minute) ---- */
+  function setupListen(day) {
+    var btn = document.getElementById("listen");
+    var synth = window.speechSynthesis;
+    if (!day || !synth || typeof SpeechSynthesisUtterance === "undefined") return;
+    var parts = ["CalmFax, " + fmtDay(day.date, "long") + "."];
+    if (day.correction) parts.push("Correction. " + day.correction);
+    var items = Array.isArray(day.items) ? day.items : [];
+    if (day.quiet || !items.length) parts.push("Nothing major today.");
+    items.forEach(function (it) {
+      var tag = String(it.tag || "").toLowerCase().replace("heads-up", "heads up");
+      parts.push(tag + ". " + (it.update ? "Update. " : "") + it.text);
+      if (it.doThis) parts.push("Do this: " + it.doThis);
+    });
+    if (day.goodNews && day.goodNews.text) parts.push("And some good news. " + day.goodNews.text);
+    var script = parts.join("  ");
+    var speaking = false;
+    function reset() { speaking = false; btn.innerHTML = "&#9654; Listen to today"; }
+    btn.hidden = false;
+    btn.addEventListener("click", function () {
+      if (speaking) { synth.cancel(); reset(); return; }
+      var u = new SpeechSynthesisUtterance(script);
+      u.lang = "en-GB";
+      u.rate = 0.95;
+      var voices = synth.getVoices() || [];
+      var gb = voices.filter(function (v) { return /en[-_]GB/i.test(v.lang); })[0];
+      if (gb) u.voice = gb;
+      u.onend = reset;
+      u.onerror = reset;
+      synth.cancel();
+      synth.speak(u);
+      speaking = true;
+      btn.innerHTML = "&#9632; Stop";
+    });
+  }
+
+  /* ---- Boot ---- */
   var data = null;
   try { data = JSON.parse(document.getElementById("dd-data").textContent); } catch (e) { data = null; }
   if (!data) {
     document.getElementById("today").replaceChildren(el("p", "notice", "Today's page can't load right now. Try again in a moment."));
   } else {
+    setGlossary(data.glossary);
     var days = (Array.isArray(data.days) ? data.days : []).slice()
       .sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
-    showDays(days);
+    var latest = showDays(days);
     showOngoing(Array.isArray(data.ongoing) ? data.ongoing : []);
+    showComing(Array.isArray(data.comingUp) ? data.comingUp : []);
+    setupListen(latest);
   }
 })();
 </script>

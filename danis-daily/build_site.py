@@ -1,10 +1,11 @@
-"""Export Dani's Daily as a self-contained static site (e.g. for SiteGround).
+"""Export CalmFax as a self-contained static site (e.g. for SiteGround).
 
 Reads page.html (the artifact source, which is a page fragment) and writes site/:
   index.html             complete standalone document
   manifest.webmanifest   lets "Add to Home Screen" open it full-screen
   apple-touch-icon.png   180x180 home-screen icon (iPhone)
   icon-512.png           512x512 icon (Android)
+  .htaccess              tells the server not to cache the page, so each morning's edition shows
 
 Run: python3 build_site.py
 """
@@ -48,7 +49,15 @@ def build_html():
 
 
 # 5x7 mosaic glyphs, same as the page masthead
-GLYPH_D = ["11110", "10001", "10001", "10001", "10001", "10001", "11110"]
+GLYPHS = (
+    ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],  # C
+    ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],  # F
+)
+
+HTACCESS = """<Files "index.html">
+  Header set Cache-Control "no-cache, must-revalidate"
+</Files>
+"""
 
 
 def build_icon(size):
@@ -57,14 +66,14 @@ def build_icon(size):
     band = int(size * 0.62)
     top = (size - band) // 2
     d.rectangle([0, top, size, top + band], fill=(0, 0, 255))
-    cols, rows = 11, 7  # "DD" with a one-cell gap
+    cols, rows = 11, 7  # "CF" with a one-cell gap
     cell_w = size * 0.8 / cols
     cell_h = band * 0.8 / rows
     x0 = (size - cell_w * cols) / 2
     y0 = top + (band - cell_h * rows) / 2
     gap = max(1, cell_w * 0.12)
-    for g_index, offset in enumerate((0, 6)):
-        for r, row in enumerate(GLYPH_D):
+    for glyph, offset in zip(GLYPHS, (0, 6)):
+        for r, row in enumerate(glyph):
             for c, bit in enumerate(row):
                 if bit == "1":
                     x = x0 + (offset + c) * cell_w
@@ -76,9 +85,10 @@ def build_icon(size):
 def main():
     SITE.mkdir(exist_ok=True)
     (SITE / "index.html").write_text(build_html())
+    (SITE / ".htaccess").write_text(HTACCESS)
     (SITE / "manifest.webmanifest").write_text(json.dumps({
-        "name": "Dani's Daily",
-        "short_name": "Dani's Daily",
+        "name": "CalmFax",
+        "short_name": "CalmFax",
         "start_url": "./",
         "display": "standalone",
         "background_color": "#000000",

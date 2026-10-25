@@ -1,0 +1,58 @@
+# Uploads CalmFax (danis-daily/site/) to SiteGround over SFTP whenever the morning task pushes a new edition.
+# Does nothing until these repository secrets exist (Settings > Secrets and variables > Actions):
+#   SG_HOST      SiteGround SSH host, e.g. ssh.yourdomain.com
+#   SG_PORT      SSH port (SiteGround uses 18765)
+#   SG_USER      SSH username from Site Tools > Devs > SSH Keys Manager
+#   SG_SSH_KEY   private key with no passphrase whose public half is imported in SSH Keys Manager
+#   SG_PATH      folder to publish into, e.g. www/yourdomain.com/public_html/calmfax
+name: Deploy CalmFax to SiteGround
+
+on:
+  push:
+    branches: [ccr-b933d7ea-7iqwd8]
+    paths: ["danis-daily/site/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: calmfax-siteground
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check SiteGround settings
+        id: cfg
+        env:
+          SG_HOST: ${{ secrets.SG_HOST }}
+        run: |
+          if [ -z "$SG_HOST" ]; then
+            echo "SiteGround secrets are not set yet, so nothing was uploaded."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload over SFTP
+        if: steps.cfg.outputs.skip != 'true'
+        env:
+          SG_HOST: ${{ secrets.SG_HOST }}
+          SG_PORT: ${{ secrets.SG_PORT }}
+          SG_USER: ${{ secrets.SG_USER }}
+          SG_SSH_KEY: ${{ secrets.SG_SSH_KEY }}
+          SG_PATH: ${{ secrets.SG_PATH }}
+        run: |
+          set -euo pipefail
+          port="${SG_PORT:-18765}"
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SG_SSH_KEY" > ~/.ssh/sg_key
+          chmod 600 ~/.ssh/sg_key
+          ssh-keyscan -p "$port" "$SG_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          {
+            echo "-mkdir $SG_PATH"
+            for f in danis-daily/site/* danis-daily/site/.htaccess; do
+              echo "put $f $SG_PATH/"
+            done
+          } > batch.txt
+          sftp -i ~/.ssh/sg_key -P "$port" -b batch.txt "$SG_USER@$SG_HOST"
+          echo "Uploaded CalmFax to $SG_PATH"
