@@ -23,7 +23,7 @@
 
   /* Layout: a 1980s/90s Teletext index page, phone first. White header line with a yellow clock,
      a blue band carrying blocky mosaic lettering, then each page (P100 today, P110 the week,
-     P150 ongoing, P160 coming up, P199 earlier, P900 settings) opens with a yellow label, a
+     P150 ongoing, P160 coming up, P170 talking points, P199 earlier, P900 settings) opens with a yellow label, a
      double-height white title and its page number, over index rows. Blue strapline and fastext
      links at the foot. Always black: three colour modes (bright Teletext, soft, amber departure
      board) chosen in P900, "auto" = bright by day, soft at night. No red, no flashing, no motion. */
@@ -120,6 +120,8 @@
   .txt { margin: 0; overflow-wrap: anywhere; }
   .upd { color: var(--yellow); }
   .do { margin: 0; color: var(--cyan); }
+  .affects { margin: 0; }
+  .affects b { font-weight: normal; color: var(--yellow); }
   .src { color: var(--dim); }
   .src a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
 
@@ -162,6 +164,15 @@
   summary .count { color: var(--white); flex: 1 1 auto; text-align: right; }
   summary .sub { color: var(--white); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
   .earlier-list { display: flex; flex-direction: column; gap: 10px; }
+
+  /* Talking points: folded away until Dani chooses to look */
+  .talk-intro { margin: 0; color: var(--cyan); }
+  .talk > summary { color: var(--yellow); justify-content: flex-start; }
+  .talk > summary .arrow { color: var(--yellow); }
+  .talk[open] > summary .arrow::before { content: "\25BE  "; }
+  .talk:not([open]) > summary .arrow::before { content: "\25B8  "; }
+  .talk > ul { padding-top: 16px; }
+  .ctx { margin: 0; color: var(--cyan); }
 
   /* Settings */
   .setting { display: flex; flex-direction: column; gap: 6px; }
@@ -238,6 +249,19 @@
     </ul>
   </section>
 
+  <section id="p170">
+    <div class="opener">
+      <span class="label">Talking points</span>
+      <div class="row"><div class="dh"><span>PEOPLE ARE SAYING</span></div><span class="pno">170</span></div>
+    </div>
+    <div class="rule" aria-hidden="true"></div>
+    <p class="talk-intro">Stories going round online and in conversation. Kept to one calm line each, with no upsetting details.</p>
+    <details class="talk" id="talk">
+      <summary><span class="arrow" id="talk-label">Show talking points</span></summary>
+      <ul id="talk-list"></ul>
+    </details>
+  </section>
+
   <section id="p199">
     <div class="opener">
       <span class="label">Earlier</span>
@@ -280,7 +304,8 @@
     <a class="f1" href="#p100">Today</a>
     <a class="f2" href="#p150">Ongoing</a>
     <a class="f3" href="#p160">Coming up</a>
-    <a class="f4" href="#p199">Earlier</a>
+    <a class="f4" href="#p170">Talking points</a>
+    <a class="f1" href="#p199">Earlier</a>
   </nav>
   <p class="foot">A new page arrives every morning at 06:45.</p>
 </div>
@@ -327,13 +352,14 @@
     {
      "tag": "CYBER",
      "text": "ASOS says hackers accessed customers' names and contact details this month. It says passwords and card details were not taken.",
-     "doThis": "If you use ASOS, ignore unexpected messages asking you to click a link or log in.",
+     "doThis": "Ignore unexpected messages claiming to be from ASOS that ask you to click a link or log in.",
      "update": false,
      "thread": "asos-breach",
      "source": {
       "name": "NCSC",
       "url": "https://www.ncsc.gov.uk/news/incident-affecting-asos-customers"
-     }
+     },
+     "affectsYou": "Only if you shop with ASOS."
     }
    ],
    "goodNews": {
@@ -343,7 +369,27 @@
      "name": "Euronews",
      "url": "https://www.euronews.com/2026/10/15/theyre-not-dead-yet-bleached-corals-recover-in-record-time-after-touching-healthy-clones"
     }
-   }
+   },
+   "talkingPoints": [
+    {
+     "text": "A man died after climbing into the tiger enclosure at Yorkshire Wildlife Park, near Doncaster, earlier this month.",
+     "context": "Widely shared because the park is well known in Yorkshire. The tiger was not harmed.",
+     "thread": "talk-yorkshire-wildlife-park-tiger",
+     "source": {
+      "name": "CBS News",
+      "url": "https://www.cbsnews.com/news/yorkshire-wildlife-park-tiger-enclosure-attack/"
+     }
+    },
+    {
+     "text": "France has had weeks of protests over education and the cost of living. Several cities used night-time curfews to calm things.",
+     "context": "One of the most talked-about stories in the UK last week, according to YouGov.",
+     "thread": "talk-france-protests",
+     "source": {
+      "name": "Euronews",
+      "url": "https://www.euronews.com/2026/10/19/french-pm-lecornu-calls-for-regional-authorities-to-impose-partial-curfews"
+     }
+    }
+   ]
   }
  ],
  "ongoing": [
@@ -594,6 +640,12 @@
     if (it.update) p.appendChild(el("span", "upd", "UPDATE: "));
     fillText(p, it.text, used);
     li.appendChild(p);
+    if (it.affectsYou) {
+      var a = el("p", "affects");
+      a.appendChild(el("b", null, "Affects you: "));
+      a.appendChild(document.createTextNode(it.affectsYou));
+      li.appendChild(a);
+    }
     if (it.doThis) li.appendChild(el("p", "do", "Do this: " + it.doThis));
     var s = sourceLine(it.source);
     if (s) li.appendChild(s);
@@ -760,6 +812,31 @@
     });
   }
 
+  function showTalk(day) {
+    var rows = day && Array.isArray(day.talkingPoints) ? day.talkingPoints.filter(function (t) { return t && t.text; }) : [];
+    var ul = document.getElementById("talk-list");
+    var label = document.getElementById("talk-label");
+    ul.replaceChildren();
+    if (!rows.length) {
+      label.textContent = "Nothing in particular today";
+      ul.appendChild(el("li", "quiet", "No talking points worth knowing about today."));
+      return;
+    }
+    label.textContent = "Show talking points (" + rows.length + ")";
+    rows.slice(0, 3).forEach(function (t, i) {
+      var li = el("li", "item");
+      var used = {};
+      li.appendChild(idxRow("", String(171 + i)));
+      var p = el("p", "txt");
+      fillText(p, t.text, used);
+      li.appendChild(p);
+      if (t.context) li.appendChild(el("p", "ctx", t.context));
+      var s = sourceLine(t.source);
+      if (s) li.appendChild(s);
+      ul.appendChild(li);
+    });
+  }
+
   /* ---- Listen: the phone reads today's page aloud (about a minute) ---- */
   function setupListen(day) {
     var btn = document.getElementById("listen");
@@ -772,6 +849,7 @@
     items.forEach(function (it) {
       var tag = String(it.tag || "").toLowerCase().replace("heads-up", "heads up");
       parts.push(tag + ". " + (it.update ? "Update. " : "") + it.text);
+      if (it.affectsYou) parts.push("Affects you: " + it.affectsYou);
       if (it.doThis) parts.push("Do this: " + it.doThis);
     });
     if (day.goodNews && day.goodNews.text) parts.push("And some good news. " + day.goodNews.text);
@@ -808,6 +886,7 @@
     var latest = showDays(days);
     showOngoing(Array.isArray(data.ongoing) ? data.ongoing : []);
     showComing(Array.isArray(data.comingUp) ? data.comingUp : []);
+    showTalk(latest);
     setupListen(latest);
   }
 })();
