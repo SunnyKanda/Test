@@ -53,7 +53,7 @@ When you create the app in Play Console, keep **Play App Signing** on (the defau
 
 **iOS → `ios-release.yml`** builds on a cloud Mac, signs automatically and uploads to App Store Connect, where it appears under *TestFlight* after processing (10–30 minutes). Before the first run:
 1. Create the app record in App Store Connect with bundle ID `com.nikkebol.app`.
-2. *Users and Access* → *Integrations* → *App Store Connect API* → generate a key with **App Manager** access. Download the `.p8` (only once).
+2. *Users and Access* → *Integrations* → *App Store Connect API* → generate a key with **App Manager** access. Download the `.p8` (only once). If the first run stops with a signing or certificate permission error, make a new key with **Admin** access instead: creating the distribution certificate automatically can need it.
 3. Add secrets: `APPLE_TEAM_ID` (Membership page), `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (paste the whole `.p8` text).
 
 Google Play requires new apps to target Android 16 (API 36) from 31 August 2026; the project targets 36.

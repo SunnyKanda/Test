@@ -28,7 +28,11 @@ jobs:
       - name: Android SDK 36
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-36" "build-tools;36.0.0" > /dev/null
       - run: npm ci
-      - run: npm run test:unlock
+      - name: Purchase tests (fake App Store / Google Play)
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+          npm run test:unlock
       - run: npm run build && npx cap sync android
       - name: Upload key
         run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
