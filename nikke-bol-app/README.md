@@ -37,6 +37,27 @@ After changing anything in `../nikke-bol`, run `npm run sync` (or the `ios` / `a
 2. In the Play Console, create the app, upload the `.aab` to *Internal testing* first, then *Production*.
 3. Fill in the listing, Data safety and target audience from `store/LISTING.md`.
 
+## Building for the stores without a Mac (GitHub Actions)
+
+Two workflows in `.github/workflows/` build release copies in the cloud. Run them from the repo's **Actions** tab → pick the workflow → **Run workflow**, or push a tag such as `v1.0`. The build number goes up by itself each run.
+
+**Android → `android-release.yml`** makes a signed `app-release.aab` (download it from the run's *Artifacts*). Upload it to Play Console → *Testing* → *Internal testing*. Secrets (repo *Settings* → *Secrets and variables* → *Actions*):
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | the upload key file, base64-encoded |
+| `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_PASSWORD` | its password |
+| `ANDROID_KEY_ALIAS` | `upload` |
+
+When you create the app in Play Console, keep **Play App Signing** on (the default): Google holds the real signing key and this file is only the upload key. Builds on your own machine can use `android/keystore.properties` instead (`storeFile`, `storePassword`, `keyAlias`, `keyPassword`; git-ignored).
+
+**iOS → `ios-release.yml`** builds on a cloud Mac, signs automatically and uploads to App Store Connect, where it appears under *TestFlight* after processing (10–30 minutes). Before the first run:
+1. Create the app record in App Store Connect with bundle ID `com.nikkebol.app`.
+2. *Users and Access* → *Integrations* → *App Store Connect API* → generate a key with **App Manager** access. Download the `.p8` (only once).
+3. Add secrets: `APPLE_TEAM_ID` (Membership page), `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_P8` (paste the whole `.p8` text).
+
+Google Play requires new apps to target Android 16 (API 36) from 31 August 2026; the project targets 36.
+
 ## The one-off unlock (in-app purchase)
 
 Part of the app is free; one purchase unlocks the rest. It uses [`@capgo/native-purchases`](https://github.com/Cap-go/capacitor-native-purchases) (StoreKit 2 on iOS, Google Play Billing 7 on Android) and lives in `../nikke-bol/unlock.js`.
@@ -82,7 +103,7 @@ The web version is a taster with the same padlocks (it points to the stores). `b
 - [ ] Test the daily reminder: switch it on, set the time a couple of minutes ahead, close the app and wait.
 - [ ] Test the unlock on a real iPhone (sandbox) and Android phone (licence tester): buy, cancel, delete and reinstall then *Restore purchase*, and a slow-card (pending) payment on Android.
 - [ ] Check the price shows in your currency on the unlock page, and that the padlocks disappear for every learner after buying.
-- [ ] Bump `version` in `package.json`, the iOS *Version*/*Build* in Xcode, and `versionCode`/`versionName` in `android/app/build.gradle` for each release.
+- [ ] Bump `version` in `package.json`, the iOS *Version*/*Build* in Xcode, and `versionName` in `android/app/build.gradle` and `MARKETING_VERSION` in Xcode for each release (build numbers are set automatically by the workflows).
 
 ## Regenerating assets
 

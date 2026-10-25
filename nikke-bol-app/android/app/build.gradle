@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// Release signing: read from android/keystore.properties (local, git-ignored)
+// or from environment variables (CI). See README "Releasing".
+def keystoreProps = new Properties()
+def keystorePropsFile = rootProject.file('keystore.properties')
+if (keystorePropsFile.exists()) keystorePropsFile.withInputStream { keystoreProps.load(it) }
+def signingValue = { String key, String env -> keystoreProps.getProperty(key) ?: System.getenv(env) }
+
 android {
     namespace "com.nikkebol.app"
     compileSdk rootProject.ext.compileSdkVersion
@@ -7,7 +14,8 @@ android {
         applicationId "com.nikkebol.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        // CI passes VERSION_CODE (the run number) so every upload is higher than the last.
+        versionCode((System.getenv('VERSION_CODE') ?: '1') as int)
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -16,8 +24,20 @@ android {
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def storePath = signingValue('storeFile', 'ANDROID_KEYSTORE_PATH')
+            if (storePath) {
+                storeFile file(storePath)
+                storePassword signingValue('storePassword', 'ANDROID_KEYSTORE_PASSWORD')
+                keyAlias signingValue('keyAlias', 'ANDROID_KEY_ALIAS')
+                keyPassword signingValue('keyPassword', 'ANDROID_KEY_PASSWORD')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (signingConfigs.release.storeFile) signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
