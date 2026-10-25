@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="pa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nikke Bol</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Nikke Bol (ਨਿੱਕੇ ਬੋਲ) — learn Punjabi from first words to reading, writing and sentences.">
+<meta name="theme-color" content="#3a0d2e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<section id="home" class="screen" aria-label="Home">
+  <div class="brand">
+    <h1>ਨਿੱਕੇ ਬੋਲ<small>Nikke Bol · little words</small></h1>
+    <div class="headbtns">
+      <button class="who" id="who" aria-label="Change learner" hidden></button>
+      <button class="grownups" id="grownups" aria-label="Grown-ups settings">🔒 <span>Grown-ups</span></button>
+    </div>
+  </div>
+  <button class="goal" id="goal" aria-label="Today's goal and streak"></button>
+  <div class="tabs" id="tabs" role="tablist" hidden></div>
+  <button class="today" id="today"></button>
+  <div id="tiles"></div>
+  <p class="foot" id="foot">Tap a picture to hear it. Swipe or use the arrows for the next one.</p>
+</section>
+
+<section id="learn" class="screen" aria-label="Learn" hidden>
+  <div class="bar">
+    <button class="round" id="back" aria-label="Back to home">‹</button>
+    <h2 id="ltitle"></h2>
+    <button class="round" id="toggleEn" aria-label="Show English">En</button>
+  </div>
+  <div class="sets" id="sets"></div>
+  <div class="stage"><div class="card" id="card" role="button" tabindex="0" aria-live="polite"></div></div>
+  <div class="recrow" id="recrow" hidden></div>
+  <div class="controls">
+    <button class="nav" id="prev" aria-label="Previous">‹</button>
+    <button class="nav play" id="play" aria-label="Play all">▶</button>
+    <button class="nav" id="next" aria-label="Next">›</button>
+  </div>
+  <div class="dots" id="dots"></div>
+</section>
+
+<section id="game" class="screen" aria-label="Game" hidden>
+  <div class="bar">
+    <button class="round" id="gback" aria-label="Back to home">‹</button>
+    <h2>ਖੇਡ<small>Find it!</small></h2>
+    <span class="stars" id="stars">⭐ 0</span>
+  </div>
+  <div class="sets" id="gsets"></div>
+  <button class="ask" id="ask"></button>
+  <div class="opts" id="opts"></div>
+</section>
+
+<section id="page" class="screen" aria-label="Lesson" hidden>
+  <div class="bar">
+    <button class="round" id="pback" aria-label="Back">‹</button>
+    <h2 id="ptitle"></h2>
+    <span id="pextra"></span>
+  </div>
+  <div id="pageBody" class="pagebody"></div>
+</section>
+
+<dialog id="settings">
+  <h3>For grown-ups</h3>
+  <p>Settings for <b id="sWho"></b>. Everything stays on this device.</p>
+  <button class="pill" id="sLearners">👪 Learners: switch, add, rename</button>
+  <div class="row"><label for="sLevel">Level</label><select id="sLevel"></select></div>
+  <div class="row"><label for="sGoal">Daily goal</label><select id="sGoal"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="20">20 minutes</option></select></div>
+  <div id="remRow"></div>
+  <div class="row"><label for="sEn">Show English words</label><input type="checkbox" id="sEn"></div>
+  <div class="row"><label for="sTr">Show roman spelling (laal, neela…)</label><input type="checkbox" id="sTr"></div>
+  <div class="row"><label for="sSfx">Happy sounds</label><input type="checkbox" id="sSfx"></div>
+  <div class="row"><label for="sRate">Speaking speed</label><input type="range" id="sRate" min="0.5" max="1.2" step="0.05"></div>
+  <div class="row"><label for="sRec">Record my own voice<br><small>Let Nani, Dadi or you say the words. Family recordings play instead of the built-in voice.</small></label><input type="checkbox" id="sRec"></div>
+  <h4>Family voices</h4>
+  <p id="famNote"></p>
+  <div class="famrow">
+    <button class="pill" id="famExport">Save a voice pack</button>
+    <label class="pill">Add a voice pack<input type="file" id="famImport" accept=".json,application/json"></label>
+  </div>
+  <p class="small">A voice pack is one file with all your recordings. Send it to family on WhatsApp or email; they open Nikke Bol, hold for grown-ups and add it.</p>
+  <h4>Moving to a new phone</h4>
+  <p class="small">A backup holds every learner, their progress and streaks, and your family recordings.</p>
+  <div class="famrow">
+    <button class="pill" id="bkSave">Save a backup</button>
+    <label class="pill">Restore a backup<input type="file" id="bkLoad" accept=".json,application/json"></label>
+  </div>
+  <h4>Full app</h4>
+  <div id="unlockRow"></div>
+  <h4>About</h4>
+  <p class="small">Nikke Bol 1.0 · No ads, no tracking, no accounts. <a href="privacy.html" target="_blank" rel="noopener">Privacy policy</a></p>
+  <button class="pill warn" id="sReset">Clear this learner's progress</button>
+  <button class="done" id="sDone">Done</button>
+</dialog>
+
+<dialog id="gate" class="gate">
+  <form id="gateForm">
+    <h3>Grown-ups only</h3>
+    <p>Please answer to continue.</p>
+    <div class="gq" id="gateQ"></div>
+    <input id="gateIn" type="number" inputmode="numeric" autocomplete="off" aria-label="Answer">
+    <p class="gmsg" id="gateMsg" role="alert"></p>
+    <div class="famrow"><button type="button" class="pill" id="gateCancel">Cancel</button><button type="submit" class="pill go">Continue</button></div>
+  </form>
+</dialog>
+
+<dialog id="profiles" class="profiles">
+  <h3>Who's learning?</h3>
+  <div id="profList" class="proflist"></div>
+  <div class="famrow"><button class="pill" id="profEdit">✏️ Edit this learner</button><button class="pill" id="profClose">Close</button></div>
+</dialog>
+
+<div id="welcome" class="welcome" hidden></div>
+<div id="stickerPop" class="overlay" hidden></div>
+<div id="rateCard" class="overlay" hidden></div>
+
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="data.js"></script>
+<script src="audio.js"></script>
+<script src="core.js"></script>
+<script src="words.js"></script>
+<script src="study.js"></script>
+<script src="profiles.js"></script>
+<script src="path.js"></script>
+<script src="reminders.js"></script>
+<script src="extras.js"></script>
+<script src="unlock.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
