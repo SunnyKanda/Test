@@ -81,7 +81,7 @@ const Storage = (() => {
   // Misc preferences
   function getAdultContent() { return get('adult_content', false); }
   function setAdultContent(v) { set('adult_content', v); }
-  function getBlockPopups() { return get('block_popups', true); }
+  function getBlockPopups() { return get('block_popups', false); }
   function setBlockPopups(v) { set('block_popups', v); }
 
   // Export/Import
