@@ -87,6 +87,7 @@ const App = (() => {
       case 'movies': loadBrowse('movie'); break;
       case 'tv': loadBrowse('tv'); break;
       case 'mylist': loadMyList(); break;
+      case 'live': loadLive(Storage.getLivePlaylist()); break;
       case 'search': focusSearch(); break;
     }
   }
@@ -202,6 +203,107 @@ const App = (() => {
   function loadMyList() {
     $('#app').innerHTML = UI.renderMyList();
     setupCardListeners();
+  }
+
+  // ===== LIVE TV =====
+  let liveChannels = [];
+  let liveShown = [];
+  let hls = null;
+
+  async function loadLive(key) {
+    Storage.setLivePlaylist(key);
+    const app = $('#app');
+    app.innerHTML = UI.renderLiveTv(LiveTV.PLAYLISTS, key);
+
+    $$('[data-playlist]').forEach(chip => chip.addEventListener('click', () => loadLive(chip.dataset.playlist)));
+    $('#liveSearch').addEventListener('input', renderLiveGrid);
+    $('#channelGrid').addEventListener('click', onChannelClick);
+
+    try {
+      const channels = await LiveTV.load(key);
+      if (currentPage !== 'live' || Storage.getLivePlaylist() !== key) return;
+      liveChannels = channels;
+      renderLiveGrid();
+    } catch (err) {
+      $('#channelGrid').innerHTML = `<div class="empty-state" style="grid-column:1/-1"><h3>Couldn't load channels</h3><p>${UI.esc(err.message)}</p></div>`;
+    }
+  }
+
+  function renderLiveGrid() {
+    const q = ($('#liveSearch')?.value || '').trim().toLowerCase();
+    liveShown = q
+      ? liveChannels.filter(c => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q))
+      : liveChannels;
+    $('#channelGrid').innerHTML = UI.renderChannels(liveShown);
+    $('#liveCount').textContent = liveChannels.length ? `${liveShown.length} of ${liveChannels.length} channels` : '';
+  }
+
+  function onChannelClick(e) {
+    const card = e.target.closest('.channel-card');
+    if (!card) return;
+    const channel = liveShown[parseInt(card.dataset.idx)];
+    if (!channel) return;
+
+    if (e.target.closest('[data-action="fav"]')) {
+      const on = Storage.toggleFavouriteChannel(channel);
+      UI.toast(on ? `${channel.name} added to Favourites` : `${channel.name} removed from Favourites`, on ? 'success' : 'info');
+      if (Storage.getLivePlaylist() === 'favourites') {
+        liveChannels = Storage.getFavouriteChannels();
+      }
+      renderLiveGrid();
+      return;
+    }
+    playLive(channel);
+  }
+
+  function showPlayerMessage(text) {
+    const msg = $('#playerMsg');
+    msg.textContent = text;
+    msg.hidden = !text;
+  }
+
+  function playLive(channel) {
+    const overlay = $('#playerOverlay');
+    const video = $('#liveVideo');
+    const frame = $('#playerFrame');
+
+    stopLive();
+    frame.src = '';
+    frame.hidden = true;
+    video.hidden = false;
+    $('#playerTitle').textContent = channel.name;
+    $('#playerSources').innerHTML = '<span class="live-badge">LIVE</span>';
+    showPlayerMessage('');
+    overlay.classList.add('visible');
+
+    const offline = () => showPlayerMessage(
+      channel.geo
+        ? 'This channel is region-locked and isn’t available where you are. Try another.'
+        : 'This channel is offline right now. Try another.'
+    );
+
+    if (window.Hls && Hls.isSupported()) {
+      hls = new Hls({ manifestLoadingMaxRetry: 1, levelLoadingMaxRetry: 2 });
+      hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) { stopLive(); offline(); } });
+      hls.loadSource(channel.url);
+      hls.attachMedia(video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.src = channel.url;
+      video.onerror = offline;
+    } else {
+      showPlayerMessage('Your browser can’t play live streams.');
+      return;
+    }
+    video.play().catch(() => {});
+  }
+
+  function stopLive() {
+    const video = $('#liveVideo');
+    if (hls) { hls.destroy(); hls = null; }
+    video.onerror = null;
+    video.pause();
+    video.removeAttribute('src');
+    video.load();
   }
 
   // ===== SEARCH =====
@@ -559,10 +661,13 @@ const App = (() => {
   }
 
   function closePlayer() {
-    const overlay = $('#playerOverlay');
     const frame = $('#playerFrame');
+    stopLive();
+    $('#liveVideo').hidden = true;
+    showPlayerMessage('');
     frame.src = '';
-    overlay.classList.remove('visible');
+    frame.hidden = false;
+    $('#playerOverlay').classList.remove('visible');
   }
 
   // ===== SETTINGS =====

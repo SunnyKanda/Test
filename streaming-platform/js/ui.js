@@ -470,6 +470,47 @@ const UI = (() => {
     `;
   }
 
+  function renderLiveTv(playlists, activeKey) {
+    return `
+      <div class="page-header">
+        <h1 class="page-title">Live TV</h1>
+        <p class="page-subtitle">Free-to-air channels from the public <a href="https://github.com/iptv-org/iptv" target="_blank" rel="noopener">iptv-org</a> list. Some may be offline.</p>
+      </div>
+      <div class="filter-bar">
+        ${playlists.map(p => `<button class="filter-chip ${p.key === activeKey ? 'active' : ''}" data-playlist="${esc(p.key)}">${esc(p.label)}</button>`).join('')}
+      </div>
+      <div class="live-body">
+        <input type="search" class="settings-input live-search" id="liveSearch" placeholder="Filter channels..." autocomplete="off">
+        <p class="page-subtitle live-count" id="liveCount"></p>
+        <div class="channel-grid" id="channelGrid"><div style="text-align:center;padding:40px;grid-column:1/-1"><div class="inline-spinner"></div></div></div>
+      </div>
+    `;
+  }
+
+  function renderChannels(channels) {
+    if (!channels.length) {
+      return '<div class="empty-state" style="grid-column:1/-1"><h3>No channels</h3><p>Nothing here yet. Tap the star on a channel to add it to Favourites.</p></div>';
+    }
+    return channels.map((ch, i) => {
+      const fav = Storage.isFavouriteChannel(ch.url);
+      return `
+        <div class="channel-card" data-idx="${i}">
+          <div class="channel-logo">
+            ${ch.logo
+              ? `<img src="${esc(ch.logo)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">`
+              : ''}
+            <span class="channel-initial">${esc(ch.name.charAt(0))}</span>
+          </div>
+          <div class="channel-info">
+            <div class="channel-name">${esc(ch.name)}</div>
+            <div class="channel-group">${esc(ch.group || 'General')}${ch.geo ? ' · region-locked' : ''}</div>
+          </div>
+          <button class="channel-fav ${fav ? 'on' : ''}" data-action="fav" aria-label="${fav ? 'Remove from favourites' : 'Add to favourites'}">${fav ? '&#9733;' : '&#9734;'}</button>
+        </div>
+      `;
+    }).join('');
+  }
+
   function renderError(title, message, retryPage) {
     return `
       <div class="empty-state" style="padding-top:30vh">
@@ -494,6 +535,6 @@ const UI = (() => {
     renderCard, renderWideCard, renderContinueCard, renderRow,
     renderHero, renderHome, renderBrowse, renderSearchPage,
     renderMyList, renderDetailModal, renderEpisodes, renderSearchDropdown,
-    renderSetup, renderError, toast, getMediaType, getTitle, getYear, formatRating
+    renderSetup, renderError, renderLiveTv, renderChannels, toast, getMediaType, getTitle, getYear, formatRating
   };
 })();

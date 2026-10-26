@@ -81,6 +81,19 @@ const Storage = (() => {
   // Misc preferences
   function getAdultContent() { return get('adult_content', false); }
   function setAdultContent(v) { set('adult_content', v); }
+  function getFavouriteChannels() { return get('fav_channels', []); }
+  function isFavouriteChannel(url) { return getFavouriteChannels().some(c => c.url === url); }
+  function toggleFavouriteChannel(channel) {
+    const favs = getFavouriteChannels();
+    const next = favs.some(c => c.url === channel.url)
+      ? favs.filter(c => c.url !== channel.url)
+      : [...favs, { name: channel.name, logo: channel.logo, group: channel.group, geo: channel.geo, url: channel.url }];
+    set('fav_channels', next);
+    return next.some(c => c.url === channel.url);
+  }
+  function getLivePlaylist() { return get('live_playlist', 'uk'); }
+  function setLivePlaylist(key) { set('live_playlist', key); }
+
   function getBlockPopups() { return get('block_popups', false); }
   function setBlockPopups(v) { set('block_popups', v); }
 
@@ -118,6 +131,8 @@ const Storage = (() => {
     getDisabledSources, setDisabledSources,
     getAdultContent, setAdultContent,
     getBlockPopups, setBlockPopups,
+    getFavouriteChannels, isFavouriteChannel, toggleFavouriteChannel,
+    getLivePlaylist, setLivePlaylist,
     exportData, importData, clearAll
   };
 })();
