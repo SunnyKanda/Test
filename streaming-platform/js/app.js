@@ -114,11 +114,7 @@ const App = (() => {
       app.innerHTML = UI.renderHome(data);
       setupCardListeners();
     } catch (err) {
-      app.innerHTML = `<div class="empty-state" style="padding-top:30vh">
-        <h3>Failed to load content</h3>
-        <p>${err.message}</p>
-        <button class="btn-primary btn-sm" style="margin-top:16px" onclick="App.navigateTo('home')">Retry</button>
-      </div>`;
+      app.innerHTML = UI.renderError('Failed to load content', err.message, 'home');
     }
   }
 
@@ -168,7 +164,7 @@ const App = (() => {
       setupLoadMore(data.total_pages);
     } catch (err) {
       if (!append) {
-        app.innerHTML = `<div class="empty-state" style="padding-top:30vh"><h3>Failed to load</h3><p>${err.message}</p></div>`;
+        app.innerHTML = UI.renderError('Failed to load', err.message, type === 'tv' ? 'tv' : 'movies');
       }
     }
     browseState.loading = false;
@@ -306,13 +302,20 @@ const App = (() => {
         const id = parseInt(card.dataset.id);
         const type = card.dataset.type;
 
-        if (actionBtn) {
+        if (card.dataset.resume) {
+          const entry = Storage.getHistory().find(h => h.id === id && h.media_type === type);
+          playContent(id, type, card.dataset.season, card.dataset.episode, entry?.episode_name, entry);
+        } else if (actionBtn) {
           e.stopPropagation();
           const action = actionBtn.dataset.action;
           if (action === 'play') {
-            playContent(id, type, card.dataset.season, card.dataset.episode);
+            playContent(id, type);
           } else if (action === 'watchlist') {
-            toggleWatchlist(id, type, card);
+            toggleWatchlist(id, type);
+            const inList = Storage.isInWatchlist(id, type);
+            actionBtn.classList.toggle('in-list', inList);
+            actionBtn.title = inList ? 'Remove from list' : 'Add to list';
+            actionBtn.innerHTML = UI.watchlistBtnInner(inList, false);
           } else if (action === 'info') {
             openDetail(id, type);
           }
@@ -340,25 +343,12 @@ const App = (() => {
     }
   }
 
-  function toggleWatchlist(id, type, cardEl) {
+  function toggleWatchlist(id, type) {
     if (Storage.isInWatchlist(id, type)) {
       Storage.removeFromWatchlist(id, type);
       UI.toast('Removed from My List', 'info');
     } else {
-      const card = cardEl || document.querySelector(`.card[data-id="${id}"][data-type="${type}"]`);
-      const item = {
-        id, media_type: type,
-        title: card?.querySelector('.card-overlay-title')?.textContent || '',
-        poster_path: null,
-        vote_average: 0
-      };
-      if (currentDetail) {
-        item.title = currentDetail.title || currentDetail.name;
-        item.poster_path = currentDetail.poster_path;
-        item.vote_average = currentDetail.vote_average;
-        item.release_date = currentDetail.release_date || currentDetail.first_air_date;
-      }
-      Storage.addToWatchlist(item);
+      Storage.addToWatchlist(UI.lookup(id, type) || { id, media_type: type, title: 'Untitled' });
       UI.toast('Added to My List', 'success');
     }
     if (currentPage === 'mylist') loadMyList();
@@ -403,7 +393,7 @@ const App = (() => {
         if (firstSeason) loadEpisodes(id, firstSeason.season_number);
       }
     } catch (err) {
-      body.innerHTML = `<div class="empty-state"><h3>Failed to load details</h3><p>${err.message}</p></div>`;
+      body.innerHTML = UI.renderError('Failed to load details', err.message);
     }
   }
 
@@ -420,33 +410,10 @@ const App = (() => {
           closeModal();
         } else if (action === 'watchlist') {
           toggleWatchlist(item.id, type);
-          const inList = Storage.isInWatchlist(item.id, type);
-          btn.innerHTML = inList
-            ? '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg> In My List'
-            : '<svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg> Add to List';
+          btn.innerHTML = UI.watchlistBtnInner(Storage.isInWatchlist(item.id, type), true);
         } else if (action === 'trailer') {
-          const key = btn.dataset.key;
-          openTrailer(key);
-        } else if (action === 'play-episode') {
-          const tvId = parseInt(btn.dataset.tvId);
-          const season = parseInt(btn.dataset.season);
-          const episode = parseInt(btn.dataset.episode);
-          const epName = btn.dataset.name;
-          playContent(tvId, 'tv', season, episode, epName);
-          closeModal();
+          openTrailer(btn.dataset.key);
         }
-      });
-    });
-
-    // Episode items
-    body.querySelectorAll('.episode-item').forEach(ep => {
-      ep.addEventListener('click', () => {
-        const tvId = parseInt(ep.dataset.tvId || ep.closest('[data-tv-id]')?.dataset.tvId);
-        const season = parseInt(ep.dataset.season);
-        const episode = parseInt(ep.dataset.episode);
-        const name = ep.dataset.name;
-        playContent(tvId, 'tv', season, episode, name);
-        closeModal();
       });
     });
 
@@ -517,8 +484,16 @@ const App = (() => {
 
     title.textContent = 'Trailer';
     sources.innerHTML = '';
-    frame.src = `https://www.youtube-nocookie.com/embed/${youtubeKey}?autoplay=1&rel=0`;
+    applySandbox(frame);
+    frame.src = `https://www.youtube-nocookie.com/embed/${encodeURIComponent(youtubeKey)}?autoplay=1&rel=0`;
     overlay.classList.add('visible');
+  }
+
+  // No allow-popups / allow-top-navigation: blocks the ad tabs and redirect hijacks embed hosts use.
+  const SANDBOX = 'allow-scripts allow-same-origin allow-forms allow-presentation';
+  function applySandbox(frame) {
+    if (Storage.getBlockPopups()) frame.setAttribute('sandbox', SANDBOX);
+    else frame.removeAttribute('sandbox');
   }
 
   // ===== PLAYER =====
@@ -526,62 +501,61 @@ const App = (() => {
     $('#playerBack').addEventListener('click', closePlayer);
   }
 
-  function playContent(id, type, season, episode, episodeName) {
+  function playContent(id, type, season, episode, episodeName, meta) {
     const overlay = $('#playerOverlay');
     const frame = $('#playerFrame');
     const titleEl = $('#playerTitle');
     const sourcesEl = $('#playerSources');
     const enabled = Providers.getEnabled();
 
-    let contentTitle = '';
-    if (currentDetail) {
-      contentTitle = currentDetail.title || currentDetail.name || '';
+    if (enabled.length === 0) {
+      UI.toast('All sources are disabled. Enable one in Settings.', 'error');
+      return;
     }
-    if (type === 'tv' && season && episode) {
-      contentTitle += ` S${season}:E${episode}`;
-      if (episodeName) contentTitle += ` - ${episodeName}`;
-    }
-    titleEl.textContent = contentTitle;
 
-    // Source buttons
+    const info = meta || UI.lookup(id, type) || { title: '' };
+
+    if (type === 'tv') {
+      season = parseInt(season) || 1;
+      episode = parseInt(episode) || 1;
+    }
+
+    let label = info.title || '';
+    if (type === 'tv') {
+      label += ` S${season}:E${episode}`;
+      if (episodeName) label += ` - ${episodeName}`;
+    }
+    titleEl.textContent = label;
+
+    const urlFor = src => (type === 'tv' ? src.tvUrl(id, season, episode) : src.movieUrl(id));
+    const preferredIdx = Math.max(0, enabled.findIndex(s => s.id === Storage.getPreferredSource()));
+
     sourcesEl.innerHTML = enabled.map((src, i) => `
-      <button class="source-btn ${i === 0 ? 'active' : ''}" data-source-idx="${i}" title="${src.note || ''}">${src.name}</button>
+      <button class="source-btn ${i === preferredIdx ? 'active' : ''}" data-source-idx="${i}" title="${UI.esc(src.note || '')}">${UI.esc(src.name)}</button>
     `).join('');
 
-    // Load first source
-    const url = type === 'tv' && season && episode
-      ? enabled[0]?.tvUrl(id, season, episode)
-      : enabled[0]?.movieUrl(id);
-
-    if (url) frame.src = url;
+    applySandbox(frame);
+    frame.src = urlFor(enabled[preferredIdx]);
     overlay.classList.add('visible');
 
-    // Source switching
     sourcesEl.querySelectorAll('.source-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         sourcesEl.querySelectorAll('.source-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const idx = parseInt(btn.dataset.sourceIdx);
-        const newUrl = type === 'tv' && season && episode
-          ? enabled[idx]?.tvUrl(id, season, episode)
-          : enabled[idx]?.movieUrl(id);
-        if (newUrl) frame.src = newUrl;
+        frame.src = urlFor(enabled[parseInt(btn.dataset.sourceIdx)]);
       });
     });
 
-    // Add to watch history
-    const historyItem = {
+    Storage.addToHistory({
       id, media_type: type,
-      title: contentTitle.split(' S')[0],
-      poster_path: currentDetail?.poster_path,
-      backdrop_path: currentDetail?.backdrop_path,
-      vote_average: currentDetail?.vote_average,
-      progress: Math.floor(Math.random() * 40 + 10),
-      season: season ? parseInt(season) : undefined,
-      episode: episode ? parseInt(episode) : undefined,
+      title: info.title,
+      poster_path: info.poster_path,
+      backdrop_path: info.backdrop_path,
+      vote_average: info.vote_average,
+      season: type === 'tv' ? season : undefined,
+      episode: type === 'tv' ? episode : undefined,
       episode_name: episodeName
-    };
-    Storage.addToHistory(historyItem);
+    });
   }
 
   function closePlayer() {
@@ -635,11 +609,12 @@ const App = (() => {
 
     // Preferred source
     $('#preferredSource').addEventListener('change', (e) => {
-      Storage.setPreferredSource(parseInt(e.target.value));
+      Storage.setPreferredSource(e.target.value);
     });
 
     // Toggles
     $('#adultContent').addEventListener('change', (e) => Storage.setAdultContent(e.target.checked));
+    $('#blockPopups').addEventListener('change', (e) => Storage.setBlockPopups(e.target.checked));
 
     // Export
     $('#exportData').addEventListener('click', () => {
@@ -694,8 +669,8 @@ const App = (() => {
     // Source selector
     const select = $('#preferredSource');
     const sources = Providers.getAll();
-    select.innerHTML = sources.map((s, i) => `<option value="${i}">${s.name} ${s.reliable ? '' : '(unstable)'}</option>`).join('');
-    select.value = Storage.getPreferredSource();
+    select.innerHTML = sources.map(s => `<option value="${s.id}">${s.name}${s.reliable ? '' : ' (unstable)'}</option>`).join('');
+    select.value = sources.some(s => s.id === Storage.getPreferredSource()) ? Storage.getPreferredSource() : sources[0].id;
 
     // Source list
     const list = $('#sourceList');
@@ -729,6 +704,7 @@ const App = (() => {
 
     // Toggles
     $('#adultContent').checked = Storage.getAdultContent();
+    $('#blockPopups').checked = Storage.getBlockPopups();
   }
 
   function setupDragDrop(container) {

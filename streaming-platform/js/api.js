@@ -6,21 +6,30 @@ const API = (() => {
 
   function getKey() { return Storage.getApiKey(); }
 
+  // v4 read access tokens are JWTs and go in a Bearer header; v3 keys go in the query string.
+  function isBearerToken(key) { return key.startsWith('eyJ'); }
+
+  function buildRequest(endpoint, params, key) {
+    const url = new URL(BASE + endpoint);
+    const headers = { accept: 'application/json' };
+    if (isBearerToken(key)) headers.Authorization = `Bearer ${key}`;
+    else url.searchParams.set('api_key', key);
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) url.searchParams.set(k, v);
+    });
+    return { url: url.toString(), headers };
+  }
+
   async function request(endpoint, params = {}) {
     const key = getKey();
     if (!key) throw new Error('API key not set');
 
-    const url = new URL(BASE + endpoint);
-    url.searchParams.set('api_key', key);
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== undefined && v !== null) url.searchParams.set(k, v);
-    });
-
-    const cacheKey = url.toString();
+    const { url, headers } = buildRequest(endpoint, params, key);
+    const cacheKey = url;
     const cached = cache.get(cacheKey);
     if (cached && Date.now() - cached.ts < CACHE_TTL) return cached.data;
 
-    const res = await fetch(url.toString());
+    const res = await fetch(url, { headers });
     if (!res.ok) {
       if (res.status === 401) throw new Error('Invalid API key');
       throw new Error(`API error: ${res.status}`);
@@ -46,7 +55,8 @@ const API = (() => {
 
   async function validateKey(key) {
     try {
-      const res = await fetch(`${BASE}/configuration?api_key=${key}`);
+      const { url, headers } = buildRequest('/configuration', {}, key);
+      const res = await fetch(url, { headers });
       return res.ok;
     } catch { return false; }
   }

@@ -21,8 +21,7 @@
               <stop offset="100%" style="stop-color:#ff6b6b"/>
             </linearGradient>
           </defs>
-          <text x="0" y="26" font-family="Inter" font-weight="900" font-size="28" fill="url(#logoGrad)">STREAM</text>
-          <text x="98" y="26" font-family="Inter" font-weight="300" font-size="28" fill="#fff">V</text>
+          <text x="0" y="26" font-family="Inter, system-ui, sans-serif" font-size="28"><tspan font-weight="900" fill="url(#logoGrad)">STREAM</tspan><tspan font-weight="300" fill="#fff">V</tspan></text>
         </svg>
       </a>
       <ul class="nav-links">
@@ -93,7 +92,7 @@
       <div class="player-sources" id="playerSources"></div>
     </div>
     <div class="player-container">
-      <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen"></iframe>
+      <iframe id="playerFrame" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer"></iframe>
     </div>
   </div>
 
@@ -109,7 +108,7 @@
           <h3>TMDB API Key</h3>
           <p class="settings-desc">Get a free API key from <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org</a></p>
           <div class="settings-input-group">
-            <input type="text" id="apiKeyInput" placeholder="Enter your TMDB API key" class="settings-input">
+            <input type="text" id="apiKeyInput" placeholder="API key or read access token" class="settings-input" autocomplete="off" spellcheck="false">
             <button id="saveApiKey" class="btn-primary">Save</button>
           </div>
           <div id="apiKeyStatus" class="settings-status"></div>
@@ -133,11 +132,12 @@
               <span class="toggle-slider"></span>
             </label>
             <label class="toggle-label">
-              <span>Auto-play Trailers</span>
-              <input type="checkbox" id="autoplayTrailers" class="toggle-input" checked>
+              <span>Block player pop-ups &amp; redirects</span>
+              <input type="checkbox" id="blockPopups" class="toggle-input" checked>
               <span class="toggle-slider"></span>
             </label>
           </div>
+          <p class="settings-desc" style="margin-top:8px">Sandboxes the video player so embed sites can't open ad tabs or hijack the page. If a source shows a "sandbox not allowed" message, try another source or turn this off.</p>
         </div>
         <div class="settings-section">
           <h3>Data</h3>

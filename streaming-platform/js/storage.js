@@ -61,7 +61,6 @@ const Storage = (() => {
       poster_path: item.poster_path,
       backdrop_path: item.backdrop_path,
       vote_average: item.vote_average,
-      progress: item.progress || 0,
       season: item.season,
       episode: item.episode,
       episode_name: item.episode_name,
@@ -74,14 +73,16 @@ const Storage = (() => {
   // Source Preferences
   function getSourceOrder() { return get('source_order', null); }
   function setSourceOrder(order) { set('source_order', order); }
-  function getPreferredSource() { return get('preferred_source', 0); }
-  function setPreferredSource(idx) { set('preferred_source', idx); }
+  function getPreferredSource() { return get('preferred_source', null); }
+  function setPreferredSource(sourceId) { set('preferred_source', sourceId); }
   function getDisabledSources() { return get('disabled_sources', []); }
   function setDisabledSources(arr) { set('disabled_sources', arr); }
 
   // Misc preferences
   function getAdultContent() { return get('adult_content', false); }
   function setAdultContent(v) { set('adult_content', v); }
+  function getBlockPopups() { return get('block_popups', true); }
+  function setBlockPopups(v) { set('block_popups', v); }
 
   // Export/Import
   function exportData() {
@@ -94,6 +95,9 @@ const Storage = (() => {
 
   function importData(json) {
     const data = JSON.parse(json);
+    const valid = arr => Array.isArray(arr) && arr.every(i =>
+      i && Number.isInteger(i.id) && (i.media_type === 'movie' || i.media_type === 'tv'));
+    if (!valid(data.watchlist || []) || !valid(data.history || [])) throw new Error('Invalid file');
     if (data.watchlist) set('watchlist', data.watchlist);
     if (data.history) set('history', data.history);
   }
@@ -113,6 +117,7 @@ const Storage = (() => {
     getPreferredSource, setPreferredSource,
     getDisabledSources, setDisabledSources,
     getAdultContent, setAdultContent,
+    getBlockPopups, setBlockPopups,
     exportData, importData, clearAll
   };
 })();
