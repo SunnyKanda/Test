@@ -1,120 +1,88 @@
 import { create } from 'zustand';
+import * as engine from '../lib/torrent-client';
+import type { FileInfo, TorrentMeta, TorrentStats } from '../lib/torrent-client';
 
 type View = 'home' | 'loading' | 'file-select' | 'player';
+
+interface HistoryItem {
+  name: string;
+  magnetURI: string;
+  timestamp: number;
+}
+
+function loadHistory(): HistoryItem[] {
+  try { return JSON.parse(localStorage.getItem('torrentflix-history') || '[]'); }
+  catch { return []; }
+}
 
 interface TorrentState {
   view: View;
   magnetURI: string;
-  torrentInfo: TorrentInfo | null;
-  streamURL: string | null;
-  selectedFile: TorrentFileInfo | null;
+  torrentMeta: TorrentMeta | null;
+  selectedFile: FileInfo | null;
   stats: TorrentStats | null;
   error: string | null;
-  history: Array<{ name: string; magnetURI: string; timestamp: number }>;
+  history: HistoryItem[];
 
-  setView: (view: View) => void;
-  setError: (error: string | null) => void;
   addMagnet: (magnetURI: string) => Promise<void>;
-  selectFile: (file: TorrentFileInfo) => Promise<void>;
-  updateStats: () => Promise<void>;
+  selectFile: (file: FileInfo) => void;
+  updateStats: () => void;
   goHome: () => void;
-  removeCurrent: () => void;
+  setError: (error: string | null) => void;
 }
 
 export const useTorrentStore = create<TorrentState>((set, get) => ({
   view: 'home',
   magnetURI: '',
-  torrentInfo: null,
-  streamURL: null,
+  torrentMeta: null,
   selectedFile: null,
   stats: null,
   error: null,
-  history: JSON.parse(localStorage.getItem('torrentflix-history') || '[]'),
-
-  setView: (view) => set({ view }),
-  setError: (error) => set({ error }),
+  history: loadHistory(),
 
   addMagnet: async (magnetURI: string) => {
-    set({ view: 'loading', magnetURI, error: null, torrentInfo: null });
+    set({ view: 'loading', magnetURI, error: null, torrentMeta: null });
 
     try {
-      const info = await window.torrentflix.addMagnet(magnetURI);
+      const meta = await engine.addMagnet(magnetURI);
 
-      if (info.error) {
-        set({ view: 'home', error: info.error });
-        return;
-      }
-
-      // Save to history
       const { history } = get();
-      const newHistory = [
-        { name: info.name, magnetURI, timestamp: Date.now() },
+      const updated = [
+        { name: meta.name, magnetURI, timestamp: Date.now() },
         ...history.filter((h) => h.magnetURI !== magnetURI),
       ].slice(0, 50);
-      localStorage.setItem('torrentflix-history', JSON.stringify(newHistory));
+      try { localStorage.setItem('torrentflix-history', JSON.stringify(updated)); } catch {}
 
-      const videoFiles = info.files.filter((f) => f.type === 'video');
+      const videoFiles = meta.files.filter((f) => f.type === 'video');
 
       if (videoFiles.length === 1) {
-        // Auto-select if there's only one video file
-        set({ torrentInfo: info, history: newHistory });
-        get().selectFile(videoFiles[0]);
+        set({ torrentMeta: meta, selectedFile: videoFiles[0], view: 'player', history: updated });
       } else if (videoFiles.length > 1) {
-        set({ view: 'file-select', torrentInfo: info, history: newHistory });
+        set({ view: 'file-select', torrentMeta: meta, history: updated });
       } else {
-        set({
-          view: 'home',
-          error: 'No playable video files found in this torrent',
-          history: newHistory,
-        });
+        set({ view: 'home', error: 'No playable video files found in this torrent.', history: updated });
       }
     } catch (err: any) {
       set({ view: 'home', error: err.message || 'Failed to load torrent' });
     }
   },
 
-  selectFile: async (file: TorrentFileInfo) => {
-    const { torrentInfo } = get();
-    if (!torrentInfo) return;
-
-    set({ view: 'loading', selectedFile: file });
-
-    try {
-      const { url } = await window.torrentflix.selectFile(torrentInfo.infoHash, file.index);
-      set({ view: 'player', streamURL: url });
-    } catch (err: any) {
-      set({ view: 'home', error: err.message || 'Failed to start stream' });
-    }
+  selectFile: (file: FileInfo) => {
+    set({ selectedFile: file, view: 'player' });
   },
 
-  updateStats: async () => {
-    const { torrentInfo } = get();
-    if (!torrentInfo) return;
-
-    const stats = await window.torrentflix.getStats(torrentInfo.infoHash);
+  updateStats: () => {
+    const { torrentMeta } = get();
+    if (!torrentMeta) return;
+    const stats = engine.getStats(torrentMeta.infoHash);
     set({ stats });
   },
 
   goHome: () => {
-    const { torrentInfo } = get();
-    if (torrentInfo) {
-      window.torrentflix.removeTorrent(torrentInfo.infoHash);
-    }
-    set({
-      view: 'home',
-      magnetURI: '',
-      torrentInfo: null,
-      streamURL: null,
-      selectedFile: null,
-      stats: null,
-      error: null,
-    });
+    const { torrentMeta } = get();
+    if (torrentMeta) engine.removeTorrent(torrentMeta.infoHash);
+    set({ view: 'home', magnetURI: '', torrentMeta: null, selectedFile: null, stats: null, error: null });
   },
 
-  removeCurrent: () => {
-    const { torrentInfo } = get();
-    if (torrentInfo) {
-      window.torrentflix.removeTorrent(torrentInfo.infoHash);
-    }
-  },
+  setError: (error) => set({ error }),
 }));

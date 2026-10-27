@@ -6,7 +6,7 @@ export function LoadingScreen() {
         <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin" />
       </div>
       <p className="text-white/60 text-sm">Resolving torrent metadata...</p>
-      <p className="text-white/30 text-xs mt-2">Connecting to peers</p>
+      <p className="text-white/30 text-xs mt-2">Finding peers via WebRTC</p>
     </div>
   );
 }
