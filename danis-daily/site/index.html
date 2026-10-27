@@ -6,308 +6,333 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>CalmFax</title>
-<meta name="theme-color" content="#000000">
+<meta name="theme-color" content="#eef2f0">
 <meta name="apple-mobile-web-app-title" content="CalmFax">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Nunito:wght@500;600;700&display=swap">
 <style>
   :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   body { margin: 0; }
   img { max-width: 100%; }
   [hidden] { display: none !important; }
 
-  /* Layout: a 1980s/90s Teletext index page, phone first. White header line with a yellow clock,
-     a blue band carrying blocky mosaic lettering, then each page (P100 today, P110 the week,
-     P150 ongoing, P160 coming up, P170 talking points, P199 earlier, P900 settings) opens with a yellow label, a
-     double-height white title and its page number, over index rows. Blue strapline and fastext
-     links at the foot. Always black: three colour modes (bright Teletext, soft, amber departure
-     board) chosen in P900, "auto" = bright by day, soft at night. No red, no flashing, no motion. */
+  /* Layout: one quiet column, like a note left on the kitchen table. A soft morning header
+     (date, name, greeting, a faint horizon), then Today, the two small treats (good news and
+     pop culture), Coming up, anything still ongoing, the folded-away talking points, earlier
+     days and settings. Mist and sage by day, deep evening blue-green by night. No motion. */
   :root {
-    --bg: #000000;
-    --white: #ffffff;
-    --yellow: #ffff00;
-    --cyan: #00ffff;
-    --green: #00ff00;
-    --blue: #0000ff;
-    --blue-rule: #0000ff;
-    --dim: #ffffff;
-    --mosaic: #ffff00;
-    --ink: #000000;
-    --font-tt: "VT323", ui-monospace, "Courier New", monospace;
+    --bg: #eef2f0;
+    --surface: #f8faf9;
+    --ink: #2b3836;
+    --muted: #5d6d69;
+    --line: #d5dfda;
+    --sage: #4f7d68;
+    --sage-soft: #dde9e3;
+    --sand: #7f6434;
+    --sand-soft: #f1ebdf;
+    --lilac: #625889;
+    --lilac-soft: #e7e3f1;
+    --sky: #44677f;
+    --sky-soft: #e0eaf1;
+    --font-display: "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
     --size: 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]):not([data-calm="light"]) {
+      --bg: #152022;
+      --surface: #1c292b;
+      --ink: #dde6e2;
+      --muted: #9badA7;
+      --line: #2b3a3c;
+      --sage: #8fbca6;
+      --sage-soft: #213430;
+      --sand: #d3b680;
+      --sand-soft: #2d281f;
+      --lilac: #b6abdb;
+      --lilac-soft: #282638;
+      --sky: #96b7ce;
+      --sky-soft: #1d2c35;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]:not([data-calm="light"]),
+  :root[data-calm="dark"] {
+    --bg: #152022;
+    --surface: #1c292b;
+    --ink: #dde6e2;
+    --muted: #9badA7;
+    --line: #2b3a3c;
+    --sage: #8fbca6;
+    --sage-soft: #213430;
+    --sand: #d3b680;
+    --sand-soft: #2d281f;
+    --lilac: #b6abdb;
+    --lilac-soft: #282638;
+    --sky: #96b7ce;
+    --sky-soft: #1d2c35;
     color-scheme: dark;
   }
-  :root[data-mode="soft"] {
-    --white: #e9e7df;
-    --yellow: #e3cf6a;
-    --cyan: #86d2cd;
-    --green: #95cd8f;
-    --blue: #1f3478;
-    --blue-rule: #2a418f;
-    --dim: #a19f97;
-    --mosaic: #e3cf6a;
-  }
-  :root[data-mode="amber"] {
-    --white: #ffb000;
-    --yellow: #ffd04a;
-    --cyan: #ffb000;
-    --green: #ffe08a;
-    --blue: #2b1900;
-    --blue-rule: #6a4300;
-    --dim: #c98a00;
-    --mosaic: #ffb000;
-  }
-  :root[data-size="2"] { --size: 1.15; }
-  :root[data-size="3"] { --size: 1.32; }
+  :root[data-calm="light"] { color-scheme: light; }
+  :root[data-size="2"] { --size: 1.12; }
+  :root[data-size="3"] { --size: 1.25; }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   html { background: var(--bg); }
   body {
     background: var(--bg);
-    color: var(--white);
-    font-family: var(--font-tt);
-    font-size: calc(clamp(24px, 6.3vw, 30px) * var(--size));
-    line-height: 1.15;
-    letter-spacing: 0.02em;
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: calc(18px * var(--size));
+    line-height: 1.6;
     -webkit-text-size-adjust: 100%;
   }
-  * { box-sizing: border-box; }
-  [hidden] { display: none !important; }
-
   .page {
-    max-width: 700px;
+    max-width: 640px;
     margin: 0 auto;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 12px 36px;
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 40px;
   }
 
-  /* Header line: P100  CALMFAX  Sun 25 Oct  06:45 */
-  .topline { display: flex; gap: 0.6em; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
-  .topline .svc { flex: 1 1 auto; }
-  .topline .clock { color: var(--yellow); }
+  /* Header */
+  .hero { position: relative; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
+  .hero .date { margin: 0; color: var(--muted); font-size: 0.95em; }
+  .hero h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 2.1em;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  .hero h1 span { color: var(--sage); }
+  .hero .greet { margin: 4px 0 0; font-size: 1.08em; max-width: 34ch; text-wrap: pretty; }
+  .hero .meta { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; color: var(--muted); font-size: 0.92em; }
+  .horizon { position: absolute; top: 0; right: 0; width: 96px; height: 56px; color: var(--sage); opacity: 0.55; }
 
-  /* Blue band with mosaic lettering */
-  .masthead { background: var(--blue); padding-block: 12px; padding-inline: 12px; }
-  .masthead svg { display: block; width: 100%; height: auto; max-width: 100%; }
-  .masthead svg rect { fill: var(--mosaic); }
+  /* Section headings */
+  section { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 16px; }
+  h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82em;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .sub { margin: -8px 0 0; color: var(--muted); font-size: 0.92em; }
 
-  /* Double-height text: same width, twice as tall */
-  .dh { height: 2.2em; }
-  .dh > span { display: inline-block; transform: scaleY(2); transform-origin: 0 0; white-space: nowrap; }
+  /* Today's items */
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
+  .item { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .item + .item { padding-top: 22px; border-top: 1px solid var(--line); }
+  .tag {
+    align-self: flex-start;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.72em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--sage-soft);
+    color: var(--sage);
+  }
+  .tag-money, .tag-heads { background: var(--sand-soft); color: var(--sand); }
+  .tag-cyber, .tag-world { background: var(--sky-soft); color: var(--sky); }
+  .tag-memory { background: var(--line); color: var(--muted); }
+  .txt { margin: 0; font-size: 1.06em; overflow-wrap: anywhere; text-wrap: pretty; }
+  .upd { color: var(--sage); font-weight: 700; }
+  .help {
+    margin: 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: var(--sky-soft);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.95em;
+  }
+  .help p { margin: 0; }
+  .help b { color: var(--sky); }
+  .src { color: var(--muted); font-size: 0.85em; }
+  a { color: var(--sage); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  .quiet { margin: 0; font-size: 1.06em; color: var(--muted); }
+  .notice { margin: 0; color: var(--sand); }
+  .correction { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--sand-soft); }
+  .correction b { color: var(--sand); }
 
-  /* Page opener: yellow label, white double-height title, page number at right */
-  section { display: flex; flex-direction: column; gap: 14px; scroll-margin-top: 12px; }
-  .opener { display: flex; flex-direction: column; gap: 2px; }
-  .opener .label { color: var(--yellow); }
-  .opener .row { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6em; }
-  .opener .row .dh { color: var(--white); min-width: 0; }
-  .opener .row .pno { color: var(--yellow); font-variant-numeric: tabular-nums; padding-top: 0.1em; }
-  .rule { height: 3px; background: var(--blue-rule); }
+  /* Treats: good news and pop culture */
+  .treats { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  @media (min-width: 620px) { .treats { grid-template-columns: 1fr 1fr; } }
+  .treat { border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .treat h2 { color: inherit; opacity: 0.85; }
+  .treat .txt { font-size: 1em; }
+  .treat .src { color: inherit; opacity: 0.8; }
+  .treat a { color: inherit; }
+  .treat.good { background: var(--sage-soft); color: var(--sage); }
+  .treat.good .txt { color: var(--ink); }
+  .treat.pop { background: var(--lilac-soft); color: var(--lilac); }
+  .treat.pop .txt { color: var(--ink); }
 
-  /* Index rows */
-  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
-  .item, .og { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .idx { display: flex; justify-content: space-between; gap: 0.6em; text-transform: uppercase; }
-  .idx .name { color: var(--yellow); }
-  .idx .sub { color: var(--white); font-variant-numeric: tabular-nums; }
-  .txt { margin: 0; overflow-wrap: anywhere; }
-  .upd { color: var(--yellow); }
-  .do { margin: 0; color: var(--cyan); }
-  .affects { margin: 0; }
-  .affects b { font-weight: normal; color: var(--yellow); }
-  .src { color: var(--dim); }
-  .src a { color: var(--cyan); text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  /* Coming up */
+  .dates li { display: grid; grid-template-columns: 6.2em 1fr; gap: 4px 14px; align-items: baseline; }
+  .dates .when { font-family: var(--font-display); font-weight: 700; color: var(--sage); font-size: 0.92em; }
+  .dates .what { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .dates .what .txt { font-size: 1em; }
 
-  /* Buttons that read as Teletext text, not app chrome */
+  /* Ongoing */
+  .og { display: flex; flex-direction: column; gap: 6px; }
+  .og + .og { padding-top: 20px; border-top: 1px solid var(--line); }
+  .og .ttl { font-family: var(--font-display); font-weight: 700; }
+  .og .meta { color: var(--muted); font-size: 0.85em; }
+  .why { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+
+  /* Buttons that read as quiet text links */
   button {
     font: inherit;
-    letter-spacing: inherit;
-    color: inherit;
+    color: var(--sage);
     background: none;
     border: 0;
     padding: 0;
     cursor: pointer;
     text-align: left;
   }
-  a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
-  .term { text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-thickness: 2px; }
-  .def { margin: 4px 0 0; padding-left: 0.6em; border-left: 3px solid var(--blue-rule); color: var(--cyan); }
-  .def b { font-weight: normal; color: var(--yellow); text-transform: uppercase; }
-  .why-btn { align-self: flex-start; color: var(--cyan); }
-  .why { margin: 4px 0 0; padding-left: 0.6em; border-left: 3px solid var(--blue-rule); }
-  .listen { align-self: flex-start; color: var(--cyan); }
+  a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; border-radius: 4px; }
+  .term { color: inherit; text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: var(--sage); }
+  .def { margin: 4px 0 0; padding: 8px 12px; border-left: 3px solid var(--sage); background: var(--surface); border-radius: 0 10px 10px 0; font-size: 0.95em; }
+  .def b { color: var(--sage); }
+  .why-btn { align-self: flex-start; font-size: 0.92em; }
+  .listen { font-size: 1em; font-weight: 700; }
 
-  .quiet { margin: 0; }
-  .notice { margin: 0; color: var(--cyan); }
-  .correction { margin: 0; color: var(--cyan); }
-  .correction b { font-weight: normal; color: var(--yellow); }
-
-  .good { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 3px solid var(--blue-rule); }
-  .good .idx .name { color: var(--green); }
-  .good .txt { color: var(--green); }
-
-  .og .meta { color: var(--cyan); }
-
-  /* Earlier days: index rows that fold open */
-  .day { display: flex; flex-direction: column; gap: 18px; }
-  details > .day { padding-block: 14px 6px; }
-  summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 0.6em; }
-  summary::-webkit-details-marker { display: none; }
-  summary .name { color: var(--yellow); text-transform: uppercase; }
-  summary .count { color: var(--white); flex: 1 1 auto; text-align: right; }
-  summary .sub { color: var(--white); font-variant-numeric: tabular-nums; min-width: 3ch; text-align: right; }
+  /* Folded sections */
+  .fold { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; }
+  .fold > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-display); font-weight: 600; }
+  .fold > summary::-webkit-details-marker { display: none; }
+  .fold > summary::after { content: "+"; color: var(--sage); font-weight: 700; }
+  .fold[open] > summary::after { content: "\2013"; }
+  .fold > .inner { padding-top: 16px; display: flex; flex-direction: column; gap: 18px; }
+  .fold .count { color: var(--muted); font-family: var(--font-body); font-weight: 400; margin-left: auto; padding-right: 10px; }
+  .talk-intro { margin: 0; color: var(--muted); font-size: 0.92em; }
+  .ctx { margin: 0; color: var(--muted); font-size: 0.95em; }
   .earlier-list { display: flex; flex-direction: column; gap: 10px; }
-
-  /* Talking points: folded away until Dani chooses to look */
-  .talk-intro { margin: 0; color: var(--cyan); }
-  .talk > summary { color: var(--yellow); justify-content: flex-start; }
-  .talk > summary .arrow { color: var(--yellow); }
-  .talk[open] > summary .arrow::before { content: "\25BE  "; }
-  .talk:not([open]) > summary .arrow::before { content: "\25B8  "; }
-  .talk > ul { padding-top: 16px; }
-  .ctx { margin: 0; color: var(--cyan); }
+  .day { display: flex; flex-direction: column; gap: 20px; }
 
   /* Settings */
-  .setting { display: flex; flex-direction: column; gap: 6px; }
-  .setting .label { color: var(--yellow); }
-  .choices { display: flex; flex-wrap: wrap; gap: 8px 14px; }
-  .choices button { padding: 0 0.3em; color: var(--white); }
-  .choices button[aria-pressed="true"] { background: var(--yellow); color: var(--ink); }
+  .setting { display: flex; flex-direction: column; gap: 8px; }
+  .setting .label { color: var(--muted); font-size: 0.92em; }
+  .choices { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; align-self: flex-start; }
+  .choices button { padding: 4px 14px; border-radius: 999px; color: var(--muted); font-size: 0.92em; }
+  .choices button[aria-pressed="true"] { background: var(--sage-soft); color: var(--sage); font-weight: 700; }
 
-  /* Foot: blue strapline, then fastext */
-  .strap { background: var(--blue); color: var(--yellow); padding-block: 4px; padding-inline: 10px; text-align: center; }
-  .fastext { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 18px; }
-  .fastext a { text-decoration: none; }
-  .fastext .f1 { color: var(--green); }
-  .fastext .f2 { color: var(--yellow); }
-  .fastext .f3 { color: var(--cyan); }
-  .fastext .f4 { color: var(--white); }
-  .foot { color: var(--dim); margin: 0; }
+  .foot { margin: 0; color: var(--muted); font-size: 0.88em; text-align: center; }
 </style>
 </head>
 <body>
 
 <div class="page">
-  <div class="topline">
-    <span>P100</span>
-    <span class="svc">CALMFAX</span>
-    <span id="today-label">&nbsp;</span>
-    <span class="clock">06:45</span>
-  </div>
-
-  <header class="masthead">
-    <svg id="mosaic" role="img" aria-label="CalmFax" viewBox="0 0 44 10.6"></svg>
+  <header class="hero">
+    <svg class="horizon" viewBox="0 0 96 56" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <path d="M30 44a18 18 0 0 1 36 0"/>
+      <path d="M8 44h80"/>
+      <path d="M22 52h52" opacity="0.6"/>
+      <path d="M48 14v6M28 22l4 4M68 22l-4 4" opacity="0.7"/>
+    </svg>
+    <p class="date" id="today-label">&nbsp;</p>
+    <h1>Calm<span>Fax</span></h1>
+    <p class="greet" id="greet">Here's what's worth knowing today. Nothing more.</p>
+    <p class="meta">
+      <span id="readtime">A short read</span>
+      <button class="listen" id="listen" type="button" hidden>&#9654; Listen</button>
+    </p>
   </header>
 
-  <section id="p100">
-    <div class="opener">
-      <span class="label">Today</span>
-      <div class="row"><div class="dh"><span id="today-title">TODAY</span></div><span class="pno">100</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
-    <button class="listen" id="listen" type="button" hidden>&#9654; Listen to today</button>
+  <section id="today-sec" aria-labelledby="h-today">
+    <h2 id="h-today">Today</h2>
     <div id="today">
       <p class="quiet">Today's page is on its way.</p>
     </div>
   </section>
 
-  <section id="p110" hidden>
-    <div class="opener">
-      <span class="label">Catch up</span>
-      <div class="row"><div class="dh"><span>THE WEEK IN FIVE</span></div><span class="pno">110</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
+  <div class="treats" id="treats">
+    <section class="treat good" id="good" hidden aria-labelledby="h-good">
+      <h2 id="h-good">Good news</h2>
+      <div id="good-body"></div>
+    </section>
+    <section class="treat pop" id="pop" hidden aria-labelledby="h-pop">
+      <h2 id="h-pop">Pop culture</h2>
+      <div id="pop-body"></div>
+    </section>
+  </div>
+
+  <section id="week-sec" hidden aria-labelledby="h-week">
+    <h2 id="h-week">Catch up: the week in five</h2>
     <ul id="week"></ul>
   </section>
 
-  <section id="p150">
-    <div class="opener">
-      <span class="label">Still ongoing</span>
-      <div class="row"><div class="dh"><span>LONG-RUNNING STORIES</span></div><span class="pno">150</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
-    <ul id="ongoing">
-      <li class="quiet">Long-running stories appear here, one line each.</li>
-    </ul>
-  </section>
-
-  <section id="p160">
-    <div class="opener">
-      <span class="label">Coming up</span>
-      <div class="row"><div class="dh"><span>DATES TO KNOW</span></div><span class="pno">160</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
-    <ul id="coming">
+  <section id="coming-sec" aria-labelledby="h-coming">
+    <h2 id="h-coming">Coming up</h2>
+    <ul class="dates" id="coming">
       <li class="quiet">Nothing coming up that needs a heads-up.</li>
     </ul>
   </section>
 
-  <section id="p170">
-    <div class="opener">
-      <span class="label">Talking points</span>
-      <div class="row"><div class="dh"><span>PEOPLE ARE SAYING</span></div><span class="pno">170</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
-    <p class="talk-intro">Stories going round online and in conversation. Kept to one calm line each, with no upsetting details.</p>
-    <details class="talk" id="talk">
-      <summary><span class="arrow" id="talk-label">Show talking points</span></summary>
-      <ul id="talk-list"></ul>
+  <section id="ongoing-sec" hidden aria-labelledby="h-ongoing">
+    <h2 id="h-ongoing">Still ongoing</h2>
+    <ul id="ongoing"></ul>
+  </section>
+
+  <section id="talk-sec" aria-labelledby="h-talk">
+    <h2 id="h-talk">Talking points</h2>
+    <details class="fold" id="talk">
+      <summary><span id="talk-label">Show talking points</span><span class="count" id="talk-count"></span></summary>
+      <div class="inner">
+        <p class="talk-intro">Stories going round online and in conversation. One calm line each, with no upsetting details.</p>
+        <ul id="talk-list"></ul>
+      </div>
     </details>
   </section>
 
-  <section id="p199">
-    <div class="opener">
-      <span class="label">Earlier</span>
-      <div class="row"><div class="dh"><span>PREVIOUS DAYS</span></div><span class="pno">199</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
+  <section id="earlier-sec" aria-labelledby="h-earlier">
+    <h2 id="h-earlier">Earlier days</h2>
     <div id="earlier" class="earlier-list">
       <p class="quiet">Previous days will be kept here, folded away.</p>
     </div>
   </section>
 
-  <section id="p900">
-    <div class="opener">
-      <span class="label">Settings</span>
-      <div class="row"><div class="dh"><span>HOW IT LOOKS</span></div><span class="pno">900</span></div>
-    </div>
-    <div class="rule" aria-hidden="true"></div>
+  <section id="settings" aria-labelledby="h-settings">
+    <h2 id="h-settings">How it looks</h2>
     <div class="setting">
       <span class="label">Colours</span>
       <div class="choices" id="mode-choices">
         <button type="button" data-mode="auto">Auto</button>
-        <button type="button" data-mode="bright">Bright</button>
-        <button type="button" data-mode="soft">Soft</button>
-        <button type="button" data-mode="amber">Amber</button>
+        <button type="button" data-mode="light">Light</button>
+        <button type="button" data-mode="dark">Dark</button>
       </div>
-      <span class="src">Auto is bright by day and soft after 8pm.</span>
     </div>
     <div class="setting">
       <span class="label">Text size</span>
       <div class="choices" id="size-choices">
-        <button type="button" data-size="1">A</button>
-        <button type="button" data-size="2">A+</button>
-        <button type="button" data-size="3">A++</button>
+        <button type="button" data-size="1">Standard</button>
+        <button type="button" data-size="2">Larger</button>
+        <button type="button" data-size="3">Largest</button>
       </div>
     </div>
   </section>
 
-  <div class="strap">Just enough to know</div>
-  <nav class="fastext" aria-label="Pages">
-    <a class="f1" href="#p100">Today</a>
-    <a class="f2" href="#p150">Ongoing</a>
-    <a class="f3" href="#p160">Coming up</a>
-    <a class="f4" href="#p170">Talking points</a>
-    <a class="f1" href="#p199">Earlier</a>
-  </nav>
-  <p class="foot">A new page arrives every morning at 06:45.</p>
+  <p class="foot">A fresh page arrives every morning at 6:45.</p>
 </div>
 
 <!-- DAILY DATA: the morning task replaces everything between the two markers. Keep "days" newest first, at most 14 days. -->
@@ -339,7 +364,15 @@
      "url": "https://www.itv.com/news/2026-10-20/wildlife-bucks-challenges-with-5000-species-recorded-at-national-trust-estate"
     }
    },
-   "talkingPoints": []
+   "talkingPoints": [],
+   "popCulture": {
+    "text": "Jay-Z will headline the Super Bowl half-time show in February. It's his first time performing it, after years producing the show.",
+    "thread": "pop-jay-z-super-bowl-2027",
+    "source": {
+     "name": "Rolling Stone",
+     "url": "https://www.rollingstone.com/music/music-news/jay-z-headline-2027-super-bowl-halftime-show-1235648064/"
+    }
+   }
   },
   {
    "date": "2026-10-26",
@@ -431,7 +464,7 @@
    "line": "The Strait of Hormuz is still mostly closed to shipping. The US and Iran are holding indirect talks through mediators, with no deal yet.",
    "changed": "2026-10-25",
    "order": 1,
-   "active": true,
+   "active": false,
    "source": {
     "name": "CBS News",
     "url": "https://www.cbsnews.com/live-updates/iran-war-us-trump-talks-strait-of-hormuz/"
@@ -444,7 +477,7 @@
    "line": "Fighting continues. Both sides say they are open to more US-brokered peace talks, but big disagreements remain.",
    "changed": "2026-10-25",
    "order": 2,
-   "active": true,
+   "active": false,
    "source": {
     "name": "AP via MPR News",
     "url": "https://mprnews.org/story/2026/10/24/ukraine-and-russia-eye-new-peace-talks-but-steep-obstacles-remain"
@@ -476,11 +509,6 @@
    }
   },
   {
-   "date": "2026-11-03",
-   "tag": "WORLD",
-   "text": "US midterm elections take place. Results usually come in overnight, UK time."
-  },
-  {
    "date": "2026-11-05",
    "tag": "MONEY",
    "text": "The Bank of England announces its interest rate decision at noon. It guides mortgage and savings rates.",
@@ -500,8 +528,6 @@
   "National Insurance": "A tax on earnings that pays towards the State Pension and some benefits.",
   "VAT": "Value Added Tax: the tax included in the price of most things you buy, usually 20%.",
   "price cap": "The most suppliers can charge per unit of energy and per day on a standard tariff. It doesn't limit your total bill.",
-  "Strait of Hormuz": "A narrow sea route by Iran. About a fifth of the world's oil normally passes through it.",
-  "midterm elections": "US elections held halfway through a president's term, for Congress and many state posts.",
   "Remembrance Sunday": "The day the UK remembers those who died in war.",
   "interest rate": "The Bank of England's base rate. It guides what banks charge on mortgages and loans, and pay on savings.",
   "yellow wind warning": "The Met Office's lowest level of warning: be aware, some disruption is possible.",
@@ -513,7 +539,7 @@
 
 <script>
 (function () {
-  var TAGS = ["UK", "LOCAL", "WORLD", "CYBER", "MONEY", "HEADS-UP", "IN MEMORY"];
+  var TAGS = { "UK": "tag-uk", "LOCAL": "tag-local", "WORLD": "tag-world", "CYBER": "tag-cyber", "MONEY": "tag-money", "HEADS-UP": "tag-heads", "IN MEMORY": "tag-memory" };
   var root = document.documentElement;
 
   function store(key, val) {
@@ -521,14 +547,9 @@
     return null;
   }
 
-  /* ---- Settings: colour mode and text size, remembered on this phone ---- */
-  function londonHour() {
-    return Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hour12: false }).format(new Date())) % 24;
-  }
+  /* ---- Settings: colours and text size, remembered on this phone ---- */
   function applyMode(choice) {
-    var h = londonHour();
-    var mode = choice === "auto" ? ((h >= 20 || h < 6) ? "soft" : "bright") : choice;
-    root.setAttribute("data-mode", mode);
+    if (choice === "auto") root.removeAttribute("data-calm"); else root.setAttribute("data-calm", choice);
     document.querySelectorAll("#mode-choices button").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === choice));
     });
@@ -539,15 +560,17 @@
       b.setAttribute("aria-pressed", String(b.getAttribute("data-size") === size));
     });
   }
-  var modeChoice = store("cf-mode") || "auto";
+  var modeChoice = store("cf-theme") || "auto";
   var sizeChoice = store("cf-size") || "1";
+  if (["auto", "light", "dark"].indexOf(modeChoice) < 0) modeChoice = "auto";
+  if (["1", "2", "3"].indexOf(sizeChoice) < 0) sizeChoice = "1";
   applyMode(modeChoice);
   applySize(sizeChoice);
   document.getElementById("mode-choices").addEventListener("click", function (e) {
     var b = e.target.closest("button");
     if (!b) return;
     modeChoice = b.getAttribute("data-mode");
-    store("cf-mode", modeChoice);
+    store("cf-theme", modeChoice);
     applyMode(modeChoice);
   });
   document.getElementById("size-choices").addEventListener("click", function (e) {
@@ -558,42 +581,12 @@
     applySize(sizeChoice);
   });
 
-  /* ---- Mosaic lettering, 5x7 blocks per letter, drawn as tall Teletext cells ---- */
-  var GLYPHS = {
-    "C": ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],
-    "A": ["01110", "10001", "10001", "11111", "10001", "10001", "10001"],
-    "L": ["10000", "10000", "10000", "10000", "10000", "10000", "11111"],
-    "M": ["10001", "11011", "10101", "10101", "10001", "10001", "10001"],
-    "F": ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],
-    "X": ["10001", "10001", "01010", "00100", "01010", "10001", "10001"]
-  };
-  function drawMosaic(word) {
-    var svg = document.getElementById("mosaic");
-    var ns = "http://www.w3.org/2000/svg";
-    var cellH = 1.4, gap = 0.12, x = 1;
-    word.split("").forEach(function (ch) {
-      var g = GLYPHS[ch];
-      if (!g) return;
-      g.forEach(function (row, r) {
-        row.split("").forEach(function (bit, c) {
-          if (bit !== "1") return;
-          var rect = document.createElementNS(ns, "rect");
-          rect.setAttribute("x", x + c + gap / 2);
-          rect.setAttribute("y", 0.4 + r * cellH + gap / 2);
-          rect.setAttribute("width", 1 - gap);
-          rect.setAttribute("height", cellH - gap);
-          svg.appendChild(rect);
-        });
-      });
-      x += g[0].length + 1;
-    });
-    svg.setAttribute("viewBox", "0 0 " + (x + 1) + " " + (0.8 + 7 * cellH));
-  }
-  drawMosaic("CALMFAX");
-
   /* ---- Helpers ---- */
-  function londonToday() {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+  function londonNow(part) {
+    var opts = { timeZone: "Europe/London" };
+    if (part === "date") { opts.year = "numeric"; opts.month = "2-digit"; opts.day = "2-digit"; return new Intl.DateTimeFormat("en-CA", opts).format(new Date()); }
+    opts.hour = "2-digit"; opts.hour12 = false;
+    return Number(new Intl.DateTimeFormat("en-GB", opts).format(new Date())) % 24;
   }
   function fmtDay(iso, style) {
     var p = String(iso || "").split("-").map(Number);
@@ -622,12 +615,6 @@
     a.rel = "noopener noreferrer";
     p.appendChild(a);
     return p;
-  }
-  function idxRow(name, sub) {
-    var r = el("div", "idx");
-    r.appendChild(el("span", "name", name));
-    if (sub) r.appendChild(el("span", "sub", sub));
-    return r;
   }
 
   /* ---- Plain-English explainers: tap a dotted word, a one-line meaning opens under it ---- */
@@ -675,54 +662,77 @@
   }
 
   /* ---- Rendering ---- */
-  function renderItem(it, sub, used) {
+  function renderItem(it, used) {
     var li = el("li", "item");
     var tag = String(it.tag || "UK").toUpperCase();
-    li.appendChild(idxRow(TAGS.indexOf(tag) >= 0 ? tag : "UK", sub));
+    if (!TAGS[tag]) tag = "UK";
+    li.appendChild(el("span", "tag " + TAGS[tag], tag === "HEADS-UP" ? "Heads-up" : tag.charAt(0) + tag.slice(1).toLowerCase()));
     var p = el("p", "txt");
-    if (it.update) p.appendChild(el("span", "upd", "UPDATE: "));
+    if (it.update) p.appendChild(el("span", "upd", "Update: "));
     fillText(p, it.text, used);
     li.appendChild(p);
-    if (it.affectsYou) {
-      var a = el("p", "affects");
-      a.appendChild(el("b", null, "Affects you: "));
-      a.appendChild(document.createTextNode(it.affectsYou));
-      li.appendChild(a);
+    if (it.affectsYou || it.doThis) {
+      var h = el("div", "help");
+      if (it.affectsYou) {
+        var a = el("p");
+        a.appendChild(el("b", null, "Affects you? "));
+        a.appendChild(document.createTextNode(it.affectsYou));
+        h.appendChild(a);
+      }
+      if (it.doThis) {
+        var d = el("p");
+        d.appendChild(el("b", null, "Do this: "));
+        d.appendChild(document.createTextNode(it.doThis));
+        h.appendChild(d);
+      }
+      li.appendChild(h);
     }
-    if (it.doThis) li.appendChild(el("p", "do", "Do this: " + it.doThis));
     var s = sourceLine(it.source);
     if (s) li.appendChild(s);
     return li;
   }
 
-  function renderDay(day, firstSub) {
+  function renderItems(day, used) {
     var wrap = el("div", "day");
-    var used = {};
     if (day.correction) {
       var c = el("p", "correction");
-      c.appendChild(el("b", null, "CORRECTION: "));
+      c.appendChild(el("b", null, "Correction: "));
       c.appendChild(document.createTextNode(day.correction));
       wrap.appendChild(c);
     }
     var items = Array.isArray(day.items) ? day.items : [];
-    var n = firstSub;
     if (day.quiet || items.length === 0) {
       wrap.appendChild(el("p", "quiet", "Nothing major today."));
     } else {
       var ul = el("ul");
-      items.forEach(function (it) { ul.appendChild(renderItem(it, firstSub ? String(n++) : "", used)); });
+      items.forEach(function (it) { ul.appendChild(renderItem(it, used)); });
       wrap.appendChild(ul);
     }
-    if (day.goodNews && day.goodNews.text) {
-      var g = el("div", "good");
-      g.appendChild(idxRow("GOOD NEWS", firstSub ? String(n) : ""));
-      var gp = el("p", "txt");
-      fillText(gp, day.goodNews.text, used);
-      g.appendChild(gp);
-      var s = sourceLine(day.goodNews.source);
-      if (s) g.appendChild(s);
-      wrap.appendChild(g);
-    }
+    return wrap;
+  }
+
+  function treatBody(entry, used) {
+    var frag = document.createDocumentFragment();
+    var p = el("p", "txt");
+    fillText(p, entry.text, used);
+    frag.appendChild(p);
+    var s = sourceLine(entry.source);
+    if (s) frag.appendChild(s);
+    return frag;
+  }
+
+  /* An earlier day, in full, inside its fold */
+  function renderPastDay(day) {
+    var used = {};
+    var wrap = renderItems(day, used);
+    [["goodNews", "Good news"], ["popCulture", "Pop culture"]].forEach(function (k) {
+      var e = day[k[0]];
+      if (!e || !e.text) return;
+      var box = el("div", "treat " + (k[0] === "goodNews" ? "good" : "pop"));
+      box.appendChild(el("h2", null, k[1]));
+      box.appendChild(treatBody(e, used));
+      wrap.appendChild(box);
+    });
     return wrap;
   }
 
@@ -732,8 +742,11 @@
     return n + (n === 1 ? " update" : " updates");
   }
 
-  var today = londonToday();
-  document.getElementById("today-label").textContent = fmtDay(today, "short");
+  var today = londonNow("date");
+  var hour = londonNow("hour");
+  document.getElementById("today-label").textContent = fmtDay(today, "long");
+  var hello = hour < 12 ? "Good morning, Dani." : hour < 18 ? "Good afternoon, Dani." : "Good evening, Dani.";
+  document.getElementById("greet").textContent = hello + " Here's what's worth knowing today. Nothing more.";
 
   var openDays = {};
   try { openDays = JSON.parse(store("cf-open") || "{}") || {}; } catch (e) { openDays = {}; }
@@ -743,52 +756,59 @@
   }
 
   function showWeek(day) {
-    var sec = document.getElementById("p110");
-    var lines = Array.isArray(day.weekInFive) ? day.weekInFive.filter(Boolean) : [];
-    sec.hidden = !lines.length;
+    var lines = Array.isArray(day.weekInFive) ? day.weekInFive.filter(Boolean).slice(0, 5) : [];
+    document.getElementById("week-sec").hidden = !lines.length;
     var ul = document.getElementById("week");
     ul.replaceChildren();
     var used = {};
-    lines.slice(0, 5).forEach(function (line, i) {
+    lines.forEach(function (line) {
       var li = el("li", "item");
       var p = el("p", "txt");
       fillText(p, line, used);
-      li.appendChild(idxRow("", String(111 + i)));
       li.appendChild(p);
       ul.appendChild(li);
     });
+  }
+
+  function showTreat(id, entry, used) {
+    var sec = document.getElementById(id);
+    var body = document.getElementById(id + "-body");
+    body.replaceChildren();
+    sec.hidden = !(entry && entry.text);
+    if (!sec.hidden) body.appendChild(treatBody(entry, used));
   }
 
   function showDays(days) {
     var box = document.getElementById("today");
     box.replaceChildren();
     if (!days.length) {
-      box.appendChild(el("p", "quiet", "The first page arrives at 06:45."));
+      box.appendChild(el("p", "quiet", "The first page arrives at 6:45."));
       return null;
     }
     var latest = days[0];
-    document.getElementById("today-title").textContent = fmtDay(latest.date, "long").toUpperCase();
     if (latest.date !== today) {
-      box.appendChild(el("p", "notice", "Today's page isn't ready yet. Showing " + fmtDay(latest.date, "long") + "."));
+      box.appendChild(el("p", "notice", "Today's page isn't ready yet. This is " + fmtDay(latest.date, "long") + "'s."));
     }
-    box.appendChild(renderDay(latest, 101));
+    var used = {};
+    box.appendChild(renderItems(latest, used));
+    showTreat("good", latest.goodNews, used);
+    showTreat("pop", latest.popCulture, used);
     showWeek(latest);
 
     var earlier = document.getElementById("earlier");
     earlier.replaceChildren();
     var rest = days.slice(1);
-    if (!rest.length) {
-      earlier.appendChild(el("p", "quiet", "Previous days will be kept here, folded away."));
-    }
-    rest.forEach(function (d, i) {
-      var det = el("details");
+    if (!rest.length) earlier.appendChild(el("p", "quiet", "Previous days will be kept here, folded away."));
+    rest.forEach(function (d) {
+      var det = el("details", "fold");
       if (openDays[d.date]) det.open = true;
       var sum = el("summary");
-      sum.appendChild(el("span", "name", fmtDay(d.date, "short")));
+      sum.appendChild(el("span", null, fmtDay(d.date, "long")));
       sum.appendChild(el("span", "count", countLabel(d)));
-      sum.appendChild(el("span", "sub", String(Math.min(198, 191 + i))));
       det.appendChild(sum);
-      det.appendChild(renderDay(d, 0));
+      var inner = el("div", "inner");
+      inner.appendChild(renderPastDay(d));
+      det.appendChild(inner);
       det.addEventListener("toggle", function () { rememberOpen(d.date, det.open); });
       earlier.appendChild(det);
     });
@@ -798,22 +818,19 @@
   function showOngoing(rows) {
     rows = rows.filter(function (r) { return r && r.active !== false && r.line; })
       .sort(function (a, b) { return (a.order || 99) - (b.order || 99); });
+    document.getElementById("ongoing-sec").hidden = !rows.length;
     var ul = document.getElementById("ongoing");
     ul.replaceChildren();
-    if (!rows.length) {
-      ul.appendChild(el("li", "quiet", "Nothing long-running to report."));
-      return;
-    }
-    rows.forEach(function (r, i) {
+    rows.forEach(function (r) {
       var li = el("li", "og");
       var used = {};
-      li.appendChild(idxRow(r.title || "", String(151 + i)));
+      li.appendChild(el("span", "ttl", r.title || ""));
       var p = el("p", "txt");
       fillText(p, r.line, used);
       li.appendChild(p);
       if (r.changed) li.appendChild(el("span", "meta", "Last changed " + fmtDay(r.changed, "short")));
       if (r.why) {
-        var b = el("button", "why-btn", "Why is this happening? ›");
+        var b = el("button", "why-btn", "Why is this happening?");
         b.type = "button";
         b.setAttribute("aria-expanded", "false");
         var why = el("p", "why", r.why);
@@ -821,7 +838,7 @@
         b.addEventListener("click", function () {
           why.hidden = !why.hidden;
           b.setAttribute("aria-expanded", String(!why.hidden));
-          b.textContent = why.hidden ? "Why is this happening? ›" : "Hide background";
+          b.textContent = why.hidden ? "Why is this happening?" : "Hide background";
         });
         li.appendChild(b);
         li.appendChild(why);
@@ -842,34 +859,33 @@
       ul.appendChild(el("li", "quiet", "Nothing coming up that needs a heads-up."));
       return;
     }
-    rows.forEach(function (r, i) {
-      var li = el("li", "item");
+    rows.forEach(function (r) {
+      var li = el("li");
       var used = {};
-      li.appendChild(idxRow(r.date === today ? "Today" : fmtDay(r.date, "short"), String(161 + i)));
+      li.appendChild(el("span", "when", r.date === today ? "Today" : fmtDay(r.date, "short")));
+      var what = el("div", "what");
       var p = el("p", "txt");
       fillText(p, r.text, used);
-      li.appendChild(p);
+      what.appendChild(p);
       var s = sourceLine(r.source);
-      if (s) li.appendChild(s);
+      if (s) what.appendChild(s);
+      li.appendChild(what);
       ul.appendChild(li);
     });
   }
 
   function showTalk(day) {
-    var rows = day && Array.isArray(day.talkingPoints) ? day.talkingPoints.filter(function (t) { return t && t.text; }) : [];
+    var rows = day && Array.isArray(day.talkingPoints) ? day.talkingPoints.filter(function (t) { return t && t.text; }).slice(0, 3) : [];
     var ul = document.getElementById("talk-list");
-    var label = document.getElementById("talk-label");
     ul.replaceChildren();
+    document.getElementById("talk-count").textContent = rows.length ? String(rows.length) : "none today";
     if (!rows.length) {
-      label.textContent = "Nothing in particular today";
-      ul.appendChild(el("li", "quiet", "No talking points worth knowing about today."));
+      ul.appendChild(el("li", "quiet", "Nothing worth knowing about today."));
       return;
     }
-    label.textContent = "Show talking points (" + rows.length + ")";
-    rows.slice(0, 3).forEach(function (t, i) {
+    rows.forEach(function (t) {
       var li = el("li", "item");
       var used = {};
-      li.appendChild(idxRow("", String(171 + i)));
       var p = el("p", "txt");
       fillText(p, t.text, used);
       li.appendChild(p);
@@ -880,31 +896,37 @@
     });
   }
 
-  /* ---- Listen: the phone reads today's page aloud (about a minute) ---- */
-  function setupListen(day) {
-    var btn = document.getElementById("listen");
-    var synth = window.speechSynthesis;
-    if (!day || !synth || typeof SpeechSynthesisUtterance === "undefined") return;
+  /* ---- Listen: the phone reads today's page aloud ---- */
+  function buildScript(day) {
     var parts = ["CalmFax, " + fmtDay(day.date, "long") + "."];
     if (day.correction) parts.push("Correction. " + day.correction);
     var items = Array.isArray(day.items) ? day.items : [];
     if (day.quiet || !items.length) parts.push("Nothing major today.");
     items.forEach(function (it) {
-      var tag = String(it.tag || "").toLowerCase().replace("heads-up", "heads up");
-      parts.push(tag + ". " + (it.update ? "Update. " : "") + it.text);
-      if (it.affectsYou) parts.push("Affects you: " + it.affectsYou);
+      parts.push((it.update ? "Update. " : "") + it.text);
+      if (it.affectsYou) parts.push("Does it affect you? " + it.affectsYou);
       if (it.doThis) parts.push("Do this: " + it.doThis);
     });
-    if (day.goodNews && day.goodNews.text) parts.push("And some good news. " + day.goodNews.text);
-    var script = parts.join("  ");
+    if (day.goodNews && day.goodNews.text) parts.push("Some good news. " + day.goodNews.text);
+    if (day.popCulture && day.popCulture.text) parts.push("And in pop culture. " + day.popCulture.text);
+    return parts.join("  ");
+  }
+  function setupListen(day) {
+    if (!day) return;
+    var script = buildScript(day);
+    var mins = Math.max(1, Math.round(script.split(/\s+/).length / 200));
+    document.getElementById("readtime").textContent = "About " + mins + " minute" + (mins === 1 ? "" : "s") + " to read";
+    var btn = document.getElementById("listen");
+    var synth = window.speechSynthesis;
+    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return;
     var speaking = false;
-    function reset() { speaking = false; btn.innerHTML = "&#9654; Listen to today"; }
+    function reset() { speaking = false; btn.innerHTML = "&#9654; Listen"; }
     btn.hidden = false;
     btn.addEventListener("click", function () {
       if (speaking) { synth.cancel(); reset(); return; }
       var u = new SpeechSynthesisUtterance(script);
       u.lang = "en-GB";
-      u.rate = 0.95;
+      u.rate = 0.92;
       var voices = synth.getVoices() || [];
       var gb = voices.filter(function (v) { return /en[-_]GB/i.test(v.lang); })[0];
       if (gb) u.voice = gb;

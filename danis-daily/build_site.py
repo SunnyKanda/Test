@@ -38,7 +38,7 @@ def build_html():
         "<meta name=\"robots\" content=\"noindex, nofollow\">\n"
         "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n"
         "<meta name=\"mobile-web-app-capable\" content=\"yes\">\n"
-        "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black\">\n"
+        "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"default\">\n"
         "<link rel=\"apple-touch-icon\" href=\"apple-touch-icon.png\">\n"
         "<link rel=\"manifest\" href=\"manifest.webmanifest\">\n"
         + head
@@ -48,12 +48,6 @@ def build_html():
     )
 
 
-# 5x7 mosaic glyphs, same as the page masthead
-GLYPHS = (
-    ["01111", "10000", "10000", "10000", "10000", "10000", "01111"],  # C
-    ["11111", "10000", "10000", "11110", "10000", "10000", "10000"],  # F
-)
-
 HTACCESS = """<Files "index.html">
   Header set Cache-Control "no-cache, must-revalidate"
 </Files>
@@ -61,25 +55,20 @@ HTACCESS = """<Files "index.html">
 
 
 def build_icon(size):
-    img = Image.new("RGB", (size, size), (0, 0, 0))
+    """A quiet horizon: a sage half-sun resting on a line, on mist."""
+    scale = 4  # draw large, then shrink, for smooth edges
+    big = size * scale
+    img = Image.new("RGB", (big, big), (238, 242, 240))
     d = ImageDraw.Draw(img)
-    band = int(size * 0.62)
-    top = (size - band) // 2
-    d.rectangle([0, top, size, top + band], fill=(0, 0, 255))
-    cols, rows = 11, 7  # "CF" with a one-cell gap
-    cell_w = size * 0.8 / cols
-    cell_h = band * 0.8 / rows
-    x0 = (size - cell_w * cols) / 2
-    y0 = top + (band - cell_h * rows) / 2
-    gap = max(1, cell_w * 0.12)
-    for glyph, offset in zip(GLYPHS, (0, 6)):
-        for r, row in enumerate(glyph):
-            for c, bit in enumerate(row):
-                if bit == "1":
-                    x = x0 + (offset + c) * cell_w
-                    y = y0 + r * cell_h
-                    d.rectangle([x + gap / 2, y + gap / 2, x + cell_w - gap / 2, y + cell_h - gap / 2], fill=(255, 255, 0))
-    return img
+    sage = (79, 125, 104)
+    w = max(2, int(big * 0.035))
+    cx, base, r = big / 2, big * 0.62, big * 0.2
+    d.arc([cx - r, base - r, cx + r, base + r], 180, 360, fill=sage, width=w)
+    d.line([big * 0.16, base, big * 0.84, base], fill=sage, width=w)
+    d.line([big * 0.3, base + big * 0.09, big * 0.7, base + big * 0.09], fill=(167, 190, 178), width=w)
+    for x0, y0, x1, y1 in ((0.5, 0.22, 0.5, 0.3), (0.29, 0.31, 0.33, 0.35), (0.71, 0.31, 0.67, 0.35)):
+        d.line([big * x0, big * y0, big * x1, big * y1], fill=sage, width=w)
+    return img.resize((size, size), Image.LANCZOS)
 
 
 def main():
@@ -91,8 +80,8 @@ def main():
         "short_name": "CalmFax",
         "start_url": "./",
         "display": "standalone",
-        "background_color": "#000000",
-        "theme_color": "#000000",
+        "background_color": "#eef2f0",
+        "theme_color": "#eef2f0",
         "icons": [
             {"src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
             {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
