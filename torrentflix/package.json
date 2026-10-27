@@ -1,0 +1,57 @@
+{
+  "name": "torrentflix",
+  "version": "0.1.0",
+  "description": "Stream torrents instantly — paste a magnet link and play",
+  "type": "module",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build && tsc -p tsconfig.electron.json",
+    "preview": "vite preview",
+    "electron:dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && tsc -p tsconfig.electron.json && electron .\"",
+    "electron:build": "npm run build && electron-builder",
+    "lint": "eslint src/ electron/"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "webtorrent": "^2.5.1",
+    "zustand": "^4.5.5",
+    "parse-torrent": "^11.0.17"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/webtorrent": "^0.109.7",
+    "@vitejs/plugin-react": "^4.3.4",
+    "autoprefixer": "^10.4.20",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.16",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.3",
+    "wait-on": "^8.0.1"
+  },
+  "build": {
+    "appId": "com.torrentflix.app",
+    "productName": "TorrentFlix",
+    "files": [
+      "dist/**/*",
+      "dist-electron/**/*"
+    ],
+    "mac": {
+      "target": "dmg",
+      "protocols": [{ "name": "Magnet", "schemes": ["magnet"] }]
+    },
+    "win": {
+      "target": "nsis",
+      "protocols": [{ "name": "Magnet", "schemes": ["magnet"] }]
+    },
+    "linux": {
+      "target": "AppImage",
+      "mimeTypes": ["x-scheme-handler/magnet"]
+    }
+  }
+}
