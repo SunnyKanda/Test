@@ -30,7 +30,6 @@ export function Player() {
   const [buffering, setBuffering] = useState(true);
   const hideRef = useRef<ReturnType<typeof setTimeout>>();
 
-  // Attach the torrent file stream to the video element
   useEffect(() => {
     if (!videoRef.current || !torrentMeta || !selectedFile) return;
     setBuffering(true);
@@ -44,8 +43,18 @@ export function Player() {
   }, []);
 
   const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    document.fullscreenElement ? document.exitFullscreen() : containerRef.current.requestFullscreen();
+    const v = videoRef.current;
+    const c = containerRef.current;
+    if (!v || !c) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (c.requestFullscreen) {
+      c.requestFullscreen();
+    } else if ((v as any).webkitEnterFullscreen) {
+      // iOS Safari fallback — fullscreen the video element directly
+      (v as any).webkitEnterFullscreen();
+    }
   }, []);
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,6 +73,7 @@ export function Player() {
     hideRef.current = setTimeout(() => { if (playing) setShowControls(false); }, 3000);
   };
 
+  // Keyboard shortcuts (desktop)
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       const v = videoRef.current;
@@ -90,17 +100,29 @@ export function Player() {
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  // Keep screen awake while playing
+  useEffect(() => {
+    let wakeLock: any = null;
+    if (playing && 'wakeLock' in navigator) {
+      (navigator as any).wakeLock.request('screen').then((wl: any) => { wakeLock = wl; }).catch(() => {});
+    }
+    return () => { wakeLock?.release(); };
+  }, [playing]);
+
   return (
     <div
       ref={containerRef}
-      className="relative h-full bg-black flex items-center justify-center cursor-none"
+      className="relative h-full bg-black flex items-center justify-center"
       style={{ cursor: showControls ? 'default' : 'none' }}
       onMouseMove={showControlsTemporarily}
+      onTouchStart={showControlsTemporarily}
       onMouseLeave={() => playing && setShowControls(false)}
     >
       <video
         ref={videoRef}
         className="w-full h-full"
+        playsInline
+        webkit-playsinline=""
         onClick={togglePlay}
         onDoubleClick={toggleFullscreen}
         onPlay={() => { setPlaying(true); setBuffering(false); }}
@@ -111,7 +133,6 @@ export function Player() {
         onCanPlay={() => setBuffering(false)}
       />
 
-      {/* Buffering indicator */}
       {buffering && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-12 h-12 rounded-full border-2 border-accent border-t-transparent animate-spin" />
@@ -120,10 +141,10 @@ export function Player() {
 
       {showInfo && <TorrentInfoOverlay />}
 
-      {/* Back button (top-left) */}
+      {/* Back button */}
       <button
         onClick={goHome}
-        className={`absolute top-4 left-4 text-white/60 hover:text-white bg-black/50 hover:bg-black/70 rounded-lg px-3 py-2 text-sm flex items-center gap-1 transition-all ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        className={`absolute top-4 left-4 text-white/80 bg-black/50 active:bg-black/70 rounded-lg px-3 py-2.5 text-sm flex items-center gap-1 transition-all ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -132,25 +153,25 @@ export function Player() {
       </button>
 
       {/* Bottom controls */}
-      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-20 px-4 pb-4 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-        <div className="text-white/60 text-xs mb-3 truncate">{selectedFile?.name}</div>
+      <div className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-16 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className="text-white/60 text-xs mb-2 truncate">{selectedFile?.name}</div>
 
-        {/* Seek bar */}
-        <div className="mb-3">
+        {/* Seek bar — taller touch target on mobile */}
+        <div className="mb-2 py-1">
           <input
             type="range" min={0} max={duration || 0} value={currentTime} onChange={handleSeek} step="any"
-            className="w-full h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent"
+            className="w-full h-1.5 sm:h-1 bg-white/20 rounded-full appearance-none cursor-pointer touch-none [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 sm:[&::-webkit-slider-thumb]:w-3 sm:[&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-accent"
             style={{ background: `linear-gradient(to right, #6d5dfc ${(currentTime / (duration || 1)) * 100}%, rgba(255,255,255,0.2) 0%)` }}
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* Play/Pause */}
-          <button onClick={togglePlay} className="text-white hover:text-accent transition-colors">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Play/Pause — larger touch target */}
+          <button onClick={togglePlay} className="text-white active:text-accent transition-colors p-1">
             {playing ? (
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>
+              <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" /></svg>
             ) : (
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              <svg className="w-7 h-7 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
             )}
           </button>
 
@@ -161,8 +182,8 @@ export function Player() {
 
           <div className="flex-1" />
 
-          {/* Volume */}
-          <div className="flex items-center gap-2">
+          {/* Volume — hidden on mobile (use hardware buttons) */}
+          <div className="hidden sm:flex items-center gap-2">
             <button
               onClick={() => { if (videoRef.current) { videoRef.current.muted = !videoRef.current.muted; setMuted(!muted); } }}
               className="text-white/60 hover:text-white transition-colors"
@@ -187,19 +208,19 @@ export function Player() {
           {/* Info toggle */}
           <button
             onClick={() => setShowInfo(!showInfo)}
-            className={`text-xs px-2 py-1 rounded transition-colors ${showInfo ? 'text-accent bg-accent/10' : 'text-white/40 hover:text-white/60'}`}
+            className={`text-xs px-2 py-1.5 rounded transition-colors ${showInfo ? 'text-accent bg-accent/10' : 'text-white/40 active:text-white/60'}`}
           >
             INFO
           </button>
 
           {/* Fullscreen */}
-          <button onClick={toggleFullscreen} className="text-white/60 hover:text-white transition-colors">
+          <button onClick={toggleFullscreen} className="text-white/60 active:text-white transition-colors p-1">
             {fullscreen ? (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9L4 4m0 0v4m0-4h4m7 1l5-5m0 0v4m0-4h-4M9 15l-5 5m0 0v-4m0 4h4m7-1l5 5m0 0v-4m0 4h-4" />
               </svg>
             ) : (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
               </svg>
             )}
@@ -207,10 +228,10 @@ export function Player() {
         </div>
       </div>
 
-      {/* Big centered play button when paused and not buffering */}
+      {/* Big centered play button when paused */}
       {!playing && !buffering && (
         <button onClick={togglePlay} className="absolute inset-0 flex items-center justify-center bg-black/30">
-          <div className="w-20 h-20 rounded-full bg-accent/80 flex items-center justify-center hover:bg-accent transition-colors">
+          <div className="w-20 h-20 rounded-full bg-accent/80 flex items-center justify-center active:bg-accent transition-colors">
             <svg className="w-10 h-10 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
               <path d="M8 5v14l11-7z" />
             </svg>

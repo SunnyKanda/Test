@@ -37,7 +37,7 @@ export function MagnetInput() {
 
   return (
     <div
-      className="flex flex-col items-center justify-center h-full px-4"
+      className="flex flex-col items-center justify-start sm:justify-center h-full px-4 pt-8 sm:pt-0 overflow-auto"
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
     >
@@ -57,20 +57,20 @@ export function MagnetInput() {
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="relative">
+        <form onSubmit={handleSubmit} className="space-y-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onPaste={handlePaste}
             placeholder="magnet:?xt=urn:btih:..."
-            className="w-full bg-surface-700 border border-surface-600 rounded-xl px-5 py-4 pr-24 text-white placeholder-white/25 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/25 transition-all text-sm font-mono"
+            className="w-full bg-surface-700 border border-surface-600 rounded-xl px-4 py-4 text-white placeholder-white/25 focus:outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/25 transition-all text-sm font-mono"
             autoFocus
           />
           <button
             type="submit"
             disabled={!isValid}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-accent hover:bg-accent-hover disabled:bg-surface-600 disabled:text-white/20 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="w-full sm:w-auto sm:float-right bg-accent hover:bg-accent-hover disabled:bg-surface-600 disabled:text-white/20 text-white px-6 py-3 rounded-xl text-sm font-medium transition-colors active:scale-95"
           >
             Play
           </button>

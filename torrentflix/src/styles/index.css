@@ -3,10 +3,21 @@
 @tailwind utilities;
 
 @layer base {
+  html, body, #root {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
   body {
     @apply m-0 p-0 font-sans antialiased;
-    -webkit-app-region: no-drag;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  input, textarea {
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   ::-webkit-scrollbar {
