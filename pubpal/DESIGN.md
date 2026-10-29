@@ -1,6 +1,16 @@
 # PubPal — Design Sketch
 
-> Status: **sketch only**. Nothing is built yet. This doc is the plan to agree on before writing code.
+> Status: **phase 1 web app built**. See `README.md` to run it. The original sketch is kept below. Where it differs from the decisions here, the decisions win.
+
+## Decisions (29 Oct 2026)
+
+- **Web app first.** Native apps come later.
+- **Pilot area:** Halifax, West Yorkshire.
+- **No individual beers.** Craft pubs change their menu too often. Each pub just records yes / no / unknown for cask ale, craft beer, lager, stout, cider and alcohol-free. This replaces the `beers` and `pub_beers` tables in §5 with six columns on `pubs`.
+- **Data:** anyone can suggest edits or new pubs, and an admin approves them. Long term, landlords pay to manage their own listing (`claimed` flag).
+- **Free and open to browse,** with no accounts.
+- **Maps:** browser location plus a free OpenStreetMap map, and a "Directions" button that opens Google Maps.
+- **Simpler stack:** SQLite with a distance calculation in Python instead of PostGIS. That's plenty for one town.
 
 ## 1. What it does
 

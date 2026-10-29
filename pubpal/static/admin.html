@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PubPal admin – suggestions</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { display: block; }
+    .wrap { max-width: 760px; margin: 0 auto; padding: 1rem; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 1rem; margin-bottom: .75rem; }
+    .card table { border-collapse: collapse; margin: .5rem 0; }
+    .card td { padding: .15rem .75rem .15rem 0; }
+    .row { display: flex; gap: .5rem; }
+    .approve { background: var(--yes); color: #fff; border-color: var(--yes); }
+    .reject { color: var(--no); }
+  </style>
+</head>
+<body>
+  <header class="topbar"><h1>🍺 PubPal admin</h1><span class="tagline">Pending suggestions</span></header>
+  <div class="wrap">
+    <form id="token-form" class="row">
+      <input id="token" type="password" placeholder="Admin token">
+      <button type="submit">Load</button>
+    </form>
+    <p id="status" class="muted"></p>
+    <div id="list"></div>
+  </div>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const show = (v) => (v === 1 ? "Yes" : v === 0 ? "No" : esc(v));
+    $("token").value = sessionStorage.getItem("pubpal-admin") || "";
+
+    async function api(path, method = "GET") {
+      const res = await fetch(path, { method, headers: { "X-Admin-Token": $("token").value } });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    async function load() {
+      try {
+        sessionStorage.setItem("pubpal-admin", $("token").value);
+        const { suggestions } = await api("/api/admin/suggestions");
+        $("status").textContent = `${suggestions.length} pending`;
+        $("list").innerHTML = suggestions.map((s) => `
+          <div class="card">
+            <strong>${s.pub_id ? `Edit: ${esc(s.pub_name)}` : "New pub"}</strong>
+            <span class="muted"> · ${esc(s.created_at)}</span>
+            <table>${Object.entries(s.changes).map(([k, v]) => `<tr><td class="muted">${esc(k)}</td><td>${show(v)}</td></tr>`).join("")}</table>
+            ${s.note ? `<p>“${esc(s.note)}”</p>` : ""}
+            <div class="row">
+              <button class="approve" data-id="${s.id}" data-action="approve">Approve</button>
+              <button class="reject" data-id="${s.id}" data-action="reject">Reject</button>
+            </div>
+          </div>`).join("");
+      } catch (e) {
+        $("status").textContent = e.message;
+        $("list").innerHTML = "";
+      }
+    }
+
+    $("token-form").addEventListener("submit", (e) => { e.preventDefault(); load(); });
+    $("list").addEventListener("click", async (e) => {
+      const b = e.target.closest("button[data-id]");
+      if (!b) return;
+      await api(`/api/admin/suggestions/${b.dataset.id}/${b.dataset.action}`, "POST").catch((err) => alert(err.message));
+      load();
+    });
+    if ($("token").value) load();
+  </script>
+</body>
+</html>

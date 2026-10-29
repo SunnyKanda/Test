@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PubPal – pubs near you in Halifax</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <h1>🍺 PubPal</h1>
+    <span class="tagline">Halifax, West Yorkshire</span>
+  </header>
+
+  <div id="demo-banner" class="banner" hidden>
+    Showing <strong>demo pubs</strong> (made-up data). Run <code>python import_osm.py</code> to load real Halifax pubs.
+  </div>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="where">
+        <button id="locate" class="primary">📍 Use my location</button>
+        <form id="postcode-form" class="postcode">
+          <input id="postcode" placeholder="or postcode, e.g. HX1 1RE" autocomplete="postal-code">
+          <button type="submit">Go</button>
+        </form>
+        <p id="where-status" class="muted"></p>
+      </div>
+
+      <label class="radius">
+        Within <strong id="radius-label">2 km</strong>
+        <input id="radius" type="range" min="0" max="5" step="1" value="2">
+      </label>
+
+      <details class="filters" open>
+        <summary>Filters <span id="filter-count" class="muted"></span></summary>
+        <div class="chip-group" id="facility-chips"></div>
+        <div class="chip-group" id="drink-chips"></div>
+      </details>
+
+      <p id="result-count" class="muted"></p>
+      <ul id="results" class="results"></ul>
+
+      <button id="add-pub" class="link">＋ Know a pub that's missing? Add it</button>
+    </section>
+
+    <section class="map-wrap">
+      <div id="map"></div>
+    </section>
+  </main>
+
+  <!-- Pub detail / suggest-edit drawer -->
+  <aside id="drawer" class="drawer" hidden>
+    <button class="close" id="drawer-close" aria-label="Close">✕</button>
+    <div id="drawer-body"></div>
+  </aside>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
