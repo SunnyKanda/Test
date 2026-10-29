@@ -44,7 +44,7 @@ const youMarker = L.circleMarker([HALIFAX.lat, HALIFAX.lng], {
   radius: 8, color: "#fff", weight: 3, fillColor: "#1e88e5", fillOpacity: 1,
 }).addTo(map).bindTooltip("Search centre");
 const radiusCircle = L.circle([HALIFAX.lat, HALIFAX.lng], {
-  radius: state.radiusKm * 1000, color: "#b5651d", weight: 1, fillOpacity: 0.06,
+  radius: state.radiusKm * 1000, color: "#0f6b4f", weight: 1, fillOpacity: 0.06,
 }).addTo(map);
 
 const pubIcon = L.divIcon({ className: "", html: '<div style="font-size:24px;line-height:24px">🍺</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
