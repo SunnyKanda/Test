@@ -36,6 +36,15 @@ function classifyFile(name: string): FileInfo['type'] {
   return 'other';
 }
 
+// WebSocket trackers that bridge WebRTC peers to the torrent network
+const WS_TRACKERS = [
+  'wss://tracker.openwebtorrent.com',
+  'wss://tracker.btorrent.xyz',
+  'wss://tracker.files.fm:7073/announce',
+  'wss://tracker.webtorrent.dev',
+  'wss://spacetradersapi-chatbox.herokuapp.com:443/announce',
+];
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let client: any = null;
 
@@ -46,7 +55,12 @@ function getClient(): any {
   return client;
 }
 
-export function addMagnet(magnetURI: string): Promise<TorrentMeta> {
+export type PeerCallback = (numPeers: number) => void;
+
+export function addMagnet(
+  magnetURI: string,
+  onPeerUpdate?: PeerCallback,
+): Promise<TorrentMeta> {
   return new Promise((resolve, reject) => {
     const c = getClient();
 
@@ -56,19 +70,39 @@ export function addMagnet(magnetURI: string): Promise<TorrentMeta> {
       return;
     }
 
-    const torrent = c.add(magnetURI);
+    // Inject WebSocket trackers into the magnet link for better browser connectivity
+    let enrichedURI = magnetURI;
+    for (const ws of WS_TRACKERS) {
+      if (!enrichedURI.includes(encodeURIComponent(ws))) {
+        enrichedURI += '&tr=' + encodeURIComponent(ws);
+      }
+    }
+
+    const torrent = c.add(enrichedURI);
+
+    let peerInterval: ReturnType<typeof setInterval> | null = null;
+    if (onPeerUpdate) {
+      peerInterval = setInterval(() => onPeerUpdate(torrent.numPeers), 1000);
+    }
+
+    const cleanup = () => {
+      if (peerInterval) clearInterval(peerInterval);
+    };
 
     const timeout = setTimeout(() => {
-      reject(new Error('Timed out connecting to peers. The torrent may have no WebRTC-capable seeders.'));
-    }, 45000);
+      cleanup();
+      reject(new Error('NO_WEBRTC_PEERS'));
+    }, 30000);
 
     torrent.on('ready', () => {
       clearTimeout(timeout);
+      cleanup();
       resolve(torrentToMeta(torrent));
     });
 
     torrent.on('error', (err: Error) => {
       clearTimeout(timeout);
+      cleanup();
       reject(err);
     });
   });

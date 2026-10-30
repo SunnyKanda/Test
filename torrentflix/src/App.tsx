@@ -3,6 +3,7 @@ import { useTorrentStore } from './stores/torrent-store';
 import { Search } from './components/Search';
 import { MagnetInput } from './components/MagnetInput';
 import { LoadingScreen } from './components/LoadingScreen';
+import { NoPeersScreen } from './components/NoPeersScreen';
 import { FileList } from './components/FileList';
 import { Player } from './components/Player';
 
@@ -19,6 +20,7 @@ export default function App() {
       <Header />
 
       {view === 'loading' && <LoadingScreen />}
+      {view === 'no-peers' && <NoPeersScreen />}
       {view === 'file-select' && <FileList />}
 
       {view === 'home' && (

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as engine from '../lib/torrent-client';
 import type { FileInfo, TorrentMeta, TorrentStats } from '../lib/torrent-client';
 
-type View = 'home' | 'loading' | 'file-select' | 'player';
+type View = 'home' | 'loading' | 'no-peers' | 'file-select' | 'player';
 
 interface HistoryItem {
   name: string;
@@ -22,6 +22,7 @@ interface TorrentState {
   selectedFile: FileInfo | null;
   stats: TorrentStats | null;
   error: string | null;
+  peerCount: number;
   history: HistoryItem[];
 
   addMagnet: (magnetURI: string) => Promise<void>;
@@ -29,6 +30,7 @@ interface TorrentState {
   updateStats: () => void;
   goHome: () => void;
   setError: (error: string | null) => void;
+  openInApp: () => void;
 }
 
 export const useTorrentStore = create<TorrentState>((set, get) => ({
@@ -38,13 +40,16 @@ export const useTorrentStore = create<TorrentState>((set, get) => ({
   selectedFile: null,
   stats: null,
   error: null,
+  peerCount: 0,
   history: loadHistory(),
 
   addMagnet: async (magnetURI: string) => {
-    set({ view: 'loading', magnetURI, error: null, torrentMeta: null });
+    set({ view: 'loading', magnetURI, error: null, torrentMeta: null, peerCount: 0 });
 
     try {
-      const meta = await engine.addMagnet(magnetURI);
+      const meta = await engine.addMagnet(magnetURI, (peers) => {
+        set({ peerCount: peers });
+      });
 
       const { history } = get();
       const updated = [
@@ -63,7 +68,11 @@ export const useTorrentStore = create<TorrentState>((set, get) => ({
         set({ view: 'home', error: 'No playable video files found in this torrent.', history: updated });
       }
     } catch (err: any) {
-      set({ view: 'home', error: err.message || 'Failed to load torrent' });
+      if (err.message === 'NO_WEBRTC_PEERS') {
+        set({ view: 'no-peers' });
+      } else {
+        set({ view: 'home', error: err.message || 'Failed to load torrent' });
+      }
     }
   },
 
@@ -81,8 +90,15 @@ export const useTorrentStore = create<TorrentState>((set, get) => ({
   goHome: () => {
     const { torrentMeta } = get();
     if (torrentMeta) engine.removeTorrent(torrentMeta.infoHash);
-    set({ view: 'home', magnetURI: '', torrentMeta: null, selectedFile: null, stats: null, error: null });
+    set({ view: 'home', magnetURI: '', torrentMeta: null, selectedFile: null, stats: null, error: null, peerCount: 0 });
   },
 
   setError: (error) => set({ error }),
+
+  openInApp: () => {
+    const { magnetURI } = get();
+    if (magnetURI) {
+      window.location.href = magnetURI;
+    }
+  },
 }));
