@@ -6,79 +6,43 @@
 <meta name="robots" content="noindex, nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>CalmFax</title>
-<meta name="theme-color" content="#eef2f0">
+<meta name="theme-color" content="#07070f">
 <meta name="apple-mobile-web-app-title" content="CalmFax">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Nunito:wght@500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Syne:wght@700;800&display=swap">
 <style>
   :root { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
   body { margin: 0; }
   img { max-width: 100%; }
   [hidden] { display: none !important; }
 
-  /* Layout: one quiet column, like a note left on the kitchen table. A soft morning header
-     (date, name, greeting, a faint horizon), then Today, the two small treats (good news and
-     pop culture), Coming up, anything still ongoing, the folded-away talking points, earlier
-     days and settings. Mist and sage by day, deep evening blue-green by night. No motion. */
+  /* Layout: one column of frosted-glass panels floating over a live three.js night sky
+     (a slowly turning wireframe crystal inside a drifting particle nebula). Big gradient
+     masthead with a light sweep, neon tag pills, glowing treat cards. A single dark look by
+     choice. Motion switch in settings; "Still" (or the phone's reduce-motion setting) freezes
+     the sky and every CSS animation, so the page is calm whenever Dani wants it to be. */
   :root {
-    --bg: #eef2f0;
-    --surface: #f8faf9;
-    --ink: #2b3836;
-    --muted: #5d6d69;
-    --line: #d5dfda;
-    --sage: #4f7d68;
-    --sage-soft: #dde9e3;
-    --sand: #7f6434;
-    --sand-soft: #f1ebdf;
-    --lilac: #625889;
-    --lilac-soft: #e7e3f1;
-    --sky: #44677f;
-    --sky-soft: #e0eaf1;
-    --font-display: "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --bg: #07070f;
+    --ink: #f2f1ff;
+    --muted: #aeabd0;
+    --glass: rgba(16, 15, 34, 0.62);
+    --glass-strong: rgba(22, 20, 46, 0.78);
+    --line: rgba(255, 255, 255, 0.09);
+    --cyan: #3ef0e0;
+    --violet: #9d6bff;
+    --pink: #ff5aa8;
+    --amber: #ffc65c;
+    --lime: #b2ff6b;
+    --font-display: "Syne", "Avenir Next", "Segoe UI", system-ui, sans-serif;
     --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
     --size: 1;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]):not([data-calm="light"]) {
-      --bg: #152022;
-      --surface: #1c292b;
-      --ink: #dde6e2;
-      --muted: #9badA7;
-      --line: #2b3a3c;
-      --sage: #8fbca6;
-      --sage-soft: #213430;
-      --sand: #d3b680;
-      --sand-soft: #2d281f;
-      --lilac: #b6abdb;
-      --lilac-soft: #282638;
-      --sky: #96b7ce;
-      --sky-soft: #1d2c35;
-      color-scheme: dark;
-    }
-  }
-  :root[data-theme="dark"]:not([data-calm="light"]),
-  :root[data-calm="dark"] {
-    --bg: #152022;
-    --surface: #1c292b;
-    --ink: #dde6e2;
-    --muted: #9badA7;
-    --line: #2b3a3c;
-    --sage: #8fbca6;
-    --sage-soft: #213430;
-    --sand: #d3b680;
-    --sand-soft: #2d281f;
-    --lilac: #b6abdb;
-    --lilac-soft: #282638;
-    --sky: #96b7ce;
-    --sky-soft: #1d2c35;
     color-scheme: dark;
   }
-  :root[data-calm="light"] { color-scheme: light; }
   :root[data-size="2"] { --size: 1.12; }
   :root[data-size="3"] { --size: 1.25; }
 
@@ -92,104 +56,182 @@
     font-size: calc(18px * var(--size));
     line-height: 1.6;
     -webkit-text-size-adjust: 100%;
-  }
-  .page {
-    max-width: 640px;
-    margin: 0 auto;
-    padding-left: max(20px, env(safe-area-inset-left, 0px));
-    padding-right: max(20px, env(safe-area-inset-right, 0px));
-    padding-block: 28px 56px;
-    display: flex;
-    flex-direction: column;
-    gap: 40px;
+    overflow-x: hidden;
   }
 
-  /* Header */
-  .hero { position: relative; display: flex; flex-direction: column; gap: 6px; padding-top: 8px; }
-  .hero .date { margin: 0; color: var(--muted); font-size: 0.95em; }
+  /* The live sky sits behind everything */
+  #sky {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(60% 45% at 80% 8%, rgba(157, 107, 255, 0.28), transparent 70%),
+      radial-gradient(50% 40% at 10% 30%, rgba(62, 240, 224, 0.16), transparent 70%),
+      radial-gradient(70% 50% at 50% 100%, rgba(255, 90, 168, 0.14), transparent 70%),
+      var(--bg);
+  }
+  #sky canvas { display: block; width: 100%; height: 100%; }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 660px;
+    margin: 0 auto;
+    padding-left: max(18px, env(safe-area-inset-left, 0px));
+    padding-right: max(18px, env(safe-area-inset-right, 0px));
+    padding-block: 32px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  /* Masthead */
+  .hero { display: flex; flex-direction: column; gap: 6px; padding-block: 24px 18px; }
+  .hero .date {
+    margin: 0;
+    color: var(--cyan);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.82em;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
   .hero h1 {
     margin: 0;
     font-family: var(--font-display);
-    font-weight: 600;
-    font-size: 2.1em;
-    line-height: 1.15;
-    letter-spacing: -0.01em;
-    color: var(--ink);
+    font-weight: 800;
+    font-size: clamp(3.1em, 15vw, 4.6em);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    background: linear-gradient(100deg, var(--cyan) 0%, var(--violet) 35%, var(--pink) 60%, var(--amber) 80%, var(--cyan) 100%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 0 18px rgba(157, 107, 255, 0.45));
+    animation: shimmer 9s linear infinite;
   }
-  .hero h1 span { color: var(--sage); }
-  .hero .greet { margin: 4px 0 0; font-size: 1.08em; max-width: 34ch; text-wrap: pretty; }
-  .hero .meta { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; color: var(--muted); font-size: 0.92em; }
-  .horizon { position: absolute; top: 0; right: 0; width: 96px; height: 56px; color: var(--sage); opacity: 0.55; }
+  .hero h1 span { color: inherit; }
+  .hero .greet { margin: 10px 0 0; font-size: 1.12em; max-width: 30ch; text-wrap: pretty; }
+  .hero .meta { margin: 12px 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; color: var(--muted); font-size: 0.92em; }
 
-  /* Section headings */
-  section { display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 16px; }
+  /* Glass panels */
+  section:not(.treat) {
+    background: var(--glass);
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 20px 20px 22px;
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    scroll-margin-top: 16px;
+    animation: rise 0.8s cubic-bezier(.2, .8, .2, 1) both;
+  }
+  .page > *:nth-child(3) { animation-delay: 0.08s; }
+  .page > *:nth-child(4) { animation-delay: 0.16s; }
+  .page > *:nth-child(5) { animation-delay: 0.24s; }
+  .page > *:nth-child(6) { animation-delay: 0.32s; }
   h2 {
     margin: 0;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.82em;
-    letter-spacing: 0.12em;
+    font-size: 0.8em;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     color: var(--muted);
   }
   .sub { margin: -8px 0 0; color: var(--muted); font-size: 0.92em; }
 
   /* Today's items */
-  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 22px; }
+  ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 20px; }
   .item { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-  .item + .item { padding-top: 22px; border-top: 1px solid var(--line); }
+  .item + .item { padding-top: 20px; border-top: 1px solid var(--line); }
   .tag {
     align-self: flex-start;
     font-family: var(--font-display);
     font-weight: 700;
-    font-size: 0.72em;
-    letter-spacing: 0.08em;
+    font-size: 0.7em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    padding: 2px 10px;
+    padding: 3px 11px;
     border-radius: 999px;
-    background: var(--sage-soft);
-    color: var(--sage);
+    color: var(--violet);
+    border: 1px solid currentColor;
+    background: rgba(157, 107, 255, 0.12);
+    box-shadow: 0 0 14px rgba(157, 107, 255, 0.35);
   }
-  .tag-money, .tag-heads { background: var(--sand-soft); color: var(--sand); }
-  .tag-cyber, .tag-world { background: var(--sky-soft); color: var(--sky); }
-  .tag-memory { background: var(--line); color: var(--muted); }
+  .tag-local { color: var(--lime); background: rgba(178, 255, 107, 0.1); box-shadow: 0 0 14px rgba(178, 255, 107, 0.3); }
+  .tag-money, .tag-heads { color: var(--amber); background: rgba(255, 198, 92, 0.1); box-shadow: 0 0 14px rgba(255, 198, 92, 0.3); }
+  .tag-cyber, .tag-world { color: var(--cyan); background: rgba(62, 240, 224, 0.1); box-shadow: 0 0 14px rgba(62, 240, 224, 0.3); }
+  .tag-memory { color: var(--muted); background: rgba(255, 255, 255, 0.05); box-shadow: none; }
   .txt { margin: 0; font-size: 1.06em; overflow-wrap: anywhere; text-wrap: pretty; }
-  .upd { color: var(--sage); font-weight: 700; }
+  .upd { color: var(--cyan); font-weight: 700; }
   .help {
     margin: 0;
-    padding: 10px 14px;
-    border-radius: 12px;
-    background: var(--sky-soft);
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(62, 240, 224, 0.07);
+    border: 1px solid rgba(62, 240, 224, 0.22);
     display: flex;
     flex-direction: column;
     gap: 4px;
     font-size: 0.95em;
   }
   .help p { margin: 0; }
-  .help b { color: var(--sky); }
+  .help b { color: var(--cyan); }
   .src { color: var(--muted); font-size: 0.85em; }
-  a { color: var(--sage); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+  a { color: var(--cyan); text-underline-offset: 3px; text-decoration-thickness: 1px; }
   .quiet { margin: 0; font-size: 1.06em; color: var(--muted); }
-  .notice { margin: 0; color: var(--sand); }
-  .correction { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--sand-soft); }
-  .correction b { color: var(--sand); }
+  .notice { margin: 0; color: var(--amber); }
+  .correction { margin: 0; padding: 10px 14px; border-radius: 14px; background: rgba(255, 198, 92, 0.08); border: 1px solid rgba(255, 198, 92, 0.25); }
+  .correction b { color: var(--amber); }
 
-  /* Treats: good news and pop culture */
-  .treats { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  /* Treats: glowing gradient-edged cards */
+  .treats { display: grid; grid-template-columns: 1fr; gap: 16px; }
   @media (min-width: 620px) { .treats { grid-template-columns: 1fr 1fr; } }
-  .treat { border-radius: 18px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-  .treat h2 { color: inherit; opacity: 0.85; }
+  .treat {
+    position: relative;
+    border-radius: 22px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    animation: rise 0.8s cubic-bezier(.2, .8, .2, 1) 0.12s both;
+  }
+  .treat::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1.5px;
+    background: var(--edge);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .treat.good { --edge: linear-gradient(135deg, var(--lime), var(--cyan)); box-shadow: 0 0 34px rgba(178, 255, 107, 0.16); }
+  .treat.pop { --edge: linear-gradient(135deg, var(--pink), var(--violet)); box-shadow: 0 0 34px rgba(255, 90, 168, 0.18); }
+  .treat.good h2 { color: var(--lime); }
+  .treat.pop h2 { color: var(--pink); }
   .treat .txt { font-size: 1em; }
-  .treat .src { color: inherit; opacity: 0.8; }
   .treat a { color: inherit; }
-  .treat.good { background: var(--sage-soft); color: var(--sage); }
-  .treat.good .txt { color: var(--ink); }
-  .treat.pop { background: var(--lilac-soft); color: var(--lilac); }
-  .treat.pop .txt { color: var(--ink); }
+  .treat.good .src a { color: var(--lime); }
+  .treat.pop .src a { color: var(--pink); }
 
   /* Coming up */
   .dates li { display: grid; grid-template-columns: 6.2em 1fr; gap: 4px 14px; align-items: baseline; }
-  .dates .when { font-family: var(--font-display); font-weight: 700; color: var(--sage); font-size: 0.92em; }
+  .dates .when { font-family: var(--font-display); font-weight: 700; color: var(--amber); font-size: 0.9em; letter-spacing: 0.04em; }
   .dates .what { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
   .dates .what .txt { font-size: 1em; }
 
@@ -198,33 +240,41 @@
   .og + .og { padding-top: 20px; border-top: 1px solid var(--line); }
   .og .ttl { font-family: var(--font-display); font-weight: 700; }
   .og .meta { color: var(--muted); font-size: 0.85em; }
-  .why { margin: 0; padding: 10px 14px; border-radius: 12px; background: var(--surface); border: 1px solid var(--line); }
+  .why { margin: 0; padding: 10px 14px; border-radius: 14px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); }
 
-  /* Buttons that read as quiet text links */
+  /* Buttons that read as text links */
   button {
     font: inherit;
-    color: var(--sage);
+    color: var(--cyan);
     background: none;
     border: 0;
     padding: 0;
     cursor: pointer;
     text-align: left;
   }
-  a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--sage); outline-offset: 3px; border-radius: 4px; }
-  .term { color: inherit; text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: var(--sage); }
-  .def { margin: 4px 0 0; padding: 8px 12px; border-left: 3px solid var(--sage); background: var(--surface); border-radius: 0 10px 10px 0; font-size: 0.95em; }
-  .def b { color: var(--sage); }
+  a:focus-visible, summary:focus-visible, button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 6px; }
+  .term { color: inherit; text-decoration: underline dotted; text-underline-offset: 4px; text-decoration-color: var(--cyan); }
+  .def { margin: 4px 0 0; padding: 8px 12px; border-left: 3px solid var(--violet); background: rgba(157, 107, 255, 0.08); border-radius: 0 12px 12px 0; font-size: 0.95em; }
+  .def b { color: var(--violet); }
   .why-btn { align-self: flex-start; font-size: 0.92em; }
-  .listen { font-size: 1em; font-weight: 700; }
+  .listen {
+    font-weight: 700;
+    color: #0a0a14;
+    padding: 6px 16px;
+    border-radius: 999px;
+    background: linear-gradient(100deg, var(--cyan), var(--violet), var(--pink));
+    box-shadow: 0 0 22px rgba(157, 107, 255, 0.5);
+  }
 
   /* Folded sections */
-  .fold { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; }
-  .fold > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-display); font-weight: 600; }
+  .fold { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--line); border-radius: 16px; padding: 14px 18px; }
+  .fold > summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 12px; font-family: var(--font-display); font-weight: 700; }
   .fold > summary::-webkit-details-marker { display: none; }
-  .fold > summary::after { content: "+"; color: var(--sage); font-weight: 700; }
+  .fold > summary::after { content: "+"; color: var(--cyan); font-weight: 700; }
   .fold[open] > summary::after { content: "\2013"; }
   .fold > .inner { padding-top: 16px; display: flex; flex-direction: column; gap: 18px; }
   .fold .count { color: var(--muted); font-family: var(--font-body); font-weight: 400; margin-left: auto; padding-right: 10px; }
+  .fold .treat { animation: none; }
   .talk-intro { margin: 0; color: var(--muted); font-size: 0.92em; }
   .ctx { margin: 0; color: var(--muted); font-size: 0.95em; }
   .earlier-list { display: flex; flex-direction: column; gap: 10px; }
@@ -233,23 +283,28 @@
   /* Settings */
   .setting { display: flex; flex-direction: column; gap: 8px; }
   .setting .label { color: var(--muted); font-size: 0.92em; }
-  .choices { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; align-self: flex-start; }
-  .choices button { padding: 4px 14px; border-radius: 999px; color: var(--muted); font-size: 0.92em; }
-  .choices button[aria-pressed="true"] { background: var(--sage-soft); color: var(--sage); font-weight: 700; }
+  .choices { display: inline-flex; flex-wrap: wrap; gap: 6px; padding: 4px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); border-radius: 999px; align-self: flex-start; }
+  .choices button { padding: 5px 15px; border-radius: 999px; color: var(--muted); font-size: 0.92em; }
+  .choices button[aria-pressed="true"] { background: linear-gradient(100deg, var(--cyan), var(--violet)); color: #0a0a14; font-weight: 700; }
 
-  .foot { margin: 0; color: var(--muted); font-size: 0.88em; text-align: center; }
+  .foot { position: relative; z-index: 1; margin: 0; color: var(--muted); font-size: 0.88em; text-align: center; }
+
+  @keyframes shimmer { to { background-position: -220% 0; } }
+  @keyframes rise { from { transform: translateY(18px); opacity: 0.35; } to { transform: none; opacity: 1; } }
+
+  /* Still mode, and phones set to reduce motion: everything stops */
+  :root[data-motion="off"] *, :root[data-motion="off"] *::before { animation: none !important; transition: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
 </style>
 </head>
 <body>
 
+<div id="sky" aria-hidden="true"></div>
+
 <div class="page">
   <header class="hero">
-    <svg class="horizon" viewBox="0 0 96 56" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <path d="M30 44a18 18 0 0 1 36 0"/>
-      <path d="M8 44h80"/>
-      <path d="M22 52h52" opacity="0.6"/>
-      <path d="M48 14v6M28 22l4 4M68 22l-4 4" opacity="0.7"/>
-    </svg>
     <p class="date" id="today-label">&nbsp;</p>
     <h1>Calm<span>Fax</span></h1>
     <p class="greet" id="greet">Here's what's worth knowing today. Nothing more.</p>
@@ -315,11 +370,10 @@
   <section id="settings" aria-labelledby="h-settings">
     <h2 id="h-settings">How it looks</h2>
     <div class="setting">
-      <span class="label">Colours</span>
+      <span class="label">Motion</span>
       <div class="choices" id="mode-choices">
-        <button type="button" data-mode="auto">Auto</button>
-        <button type="button" data-mode="light">Light</button>
-        <button type="button" data-mode="dark">Dark</button>
+        <button type="button" data-mode="on">Moving</button>
+        <button type="button" data-mode="off">Still</button>
       </div>
     </div>
     <div class="setting">
@@ -663,9 +717,10 @@
     return null;
   }
 
-  /* ---- Settings: colours and text size, remembered on this phone ---- */
+  /* ---- Settings: motion and text size, remembered on this phone ---- */
   function applyMode(choice) {
-    if (choice === "auto") root.removeAttribute("data-calm"); else root.setAttribute("data-calm", choice);
+    root.setAttribute("data-motion", choice);
+    if (window.cfSetMotion) window.cfSetMotion();
     document.querySelectorAll("#mode-choices button").forEach(function (b) {
       b.setAttribute("aria-pressed", String(b.getAttribute("data-mode") === choice));
     });
@@ -676,9 +731,9 @@
       b.setAttribute("aria-pressed", String(b.getAttribute("data-size") === size));
     });
   }
-  var modeChoice = store("cf-theme") || "auto";
+  var modeChoice = store("cf-motion") || "on";
   var sizeChoice = store("cf-size") || "1";
-  if (["auto", "light", "dark"].indexOf(modeChoice) < 0) modeChoice = "auto";
+  if (["on", "off"].indexOf(modeChoice) < 0) modeChoice = "on";
   if (["1", "2", "3"].indexOf(sizeChoice) < 0) sizeChoice = "1";
   applyMode(modeChoice);
   applySize(sizeChoice);
@@ -686,7 +741,7 @@
     var b = e.target.closest("button");
     if (!b) return;
     modeChoice = b.getAttribute("data-mode");
-    store("cf-theme", modeChoice);
+    store("cf-motion", modeChoice);
     applyMode(modeChoice);
   });
   document.getElementById("size-choices").addEventListener("click", function (e) {
@@ -1070,6 +1125,155 @@
     showTalk(latest);
     setupListen(latest);
   }
+})();
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+/* ---- The night sky: a slowly turning wireframe crystal inside a drifting particle nebula ---- */
+(function () {
+  var holder = document.getElementById("sky");
+  if (!holder || typeof THREE === "undefined") return;
+  var root = document.documentElement;
+  var reduce = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : { matches: false };
+
+  var renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "low-power" });
+  } catch (e) { return; }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+  holder.appendChild(renderer.domElement);
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(55, 1, 0.1, 100);
+  camera.position.set(0, 0, 7);
+
+  /* The crystal: an icosahedron shell, an inner wireframe twin, and a soft core */
+  var crystal = new THREE.Group();
+  var outer = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.6, 1)),
+    new THREE.LineBasicMaterial({ color: 0x3ef0e0, transparent: true, opacity: 0.85 })
+  );
+  var inner = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.0, 0)),
+    new THREE.LineBasicMaterial({ color: 0xff5aa8, transparent: true, opacity: 0.9 })
+  );
+  var core = new THREE.Mesh(
+    new THREE.SphereGeometry(0.55, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0x9d6bff, transparent: true, opacity: 0.35 })
+  );
+  crystal.add(outer, inner, core);
+  scene.add(crystal);
+
+  /* Glow halo behind the crystal, drawn from a canvas gradient */
+  function glowTexture() {
+    var c = document.createElement("canvas");
+    c.width = c.height = 128;
+    var g = c.getContext("2d");
+    var grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grd.addColorStop(0, "rgba(255,255,255,1)");
+    grd.addColorStop(0.25, "rgba(255,255,255,0.45)");
+    grd.addColorStop(1, "rgba(255,255,255,0)");
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 128, 128);
+    return new THREE.CanvasTexture(c);
+  }
+  var glowTex = glowTexture();
+  var halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0x9d6bff, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false }));
+  halo.scale.set(6, 6, 1);
+  crystal.add(halo);
+
+  /* The nebula: soft points in a wide shell, tinted cyan to violet to pink */
+  var COUNT = window.innerWidth < 600 ? 900 : 1600;
+  var pos = new Float32Array(COUNT * 3);
+  var col = new Float32Array(COUNT * 3);
+  var palette = [new THREE.Color(0x3ef0e0), new THREE.Color(0x9d6bff), new THREE.Color(0xff5aa8), new THREE.Color(0xffc65c)];
+  for (var i = 0; i < COUNT; i++) {
+    var r = 4 + Math.random() * 14;
+    var t = Math.random() * Math.PI * 2;
+    var p = Math.acos(2 * Math.random() - 1);
+    pos[i * 3] = r * Math.sin(p) * Math.cos(t);
+    pos[i * 3 + 1] = r * Math.sin(p) * Math.sin(t) * 0.6;
+    pos[i * 3 + 2] = r * Math.cos(p) - 6;
+    var a = palette[i % palette.length], b = palette[(i + 1) % palette.length];
+    var mix = a.clone().lerp(b, Math.random());
+    col[i * 3] = mix.r; col[i * 3 + 1] = mix.g; col[i * 3 + 2] = mix.b;
+  }
+  var starGeo = new THREE.BufferGeometry();
+  starGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  starGeo.setAttribute("color", new THREE.BufferAttribute(col, 3));
+  var stars = new THREE.Points(starGeo, new THREE.PointsMaterial({
+    size: 0.12, map: glowTex, vertexColors: true, transparent: true, opacity: 0.9,
+    blending: THREE.AdditiveBlending, depthWrite: false
+  }));
+  scene.add(stars);
+
+  /* Place the crystal beside the masthead: top right on phones, right of the column on wide screens */
+  function layout() {
+    var w = window.innerWidth, h = window.innerHeight;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    var narrow = w < 700;
+    crystal.position.set(narrow ? 1.95 : 3.4, narrow ? 3.4 : 1.4, 0);
+    crystal.scale.setScalar(narrow ? 0.65 : 1.1);
+  }
+  layout();
+  window.addEventListener("resize", layout);
+
+  /* Gentle parallax from pointer, tilt and scroll */
+  var tx = 0, ty = 0, cx = 0, cy = 0;
+  window.addEventListener("pointermove", function (e) {
+    tx = (e.clientX / window.innerWidth - 0.5) * 0.6;
+    ty = (e.clientY / window.innerHeight - 0.5) * 0.6;
+  }, { passive: true });
+
+  function still() { return root.getAttribute("data-motion") === "off" || reduce.matches; }
+
+  var clock = new THREE.Clock();
+  var running = false, raf = 0, flash = 1;
+  function frame() {
+    var dt = Math.min(clock.getDelta(), 0.05);
+    var t = clock.elapsedTime;
+    var scroll = window.scrollY || 0;
+    cx += (tx - cx) * 0.05;
+    cy += (ty - cy) * 0.05;
+    crystal.rotation.y += dt * 0.25;
+    crystal.rotation.x = 0.35 + Math.sin(t * 0.3) * 0.15 + scroll * 0.0006;
+    inner.rotation.y -= dt * 0.6;
+    inner.rotation.z += dt * 0.3;
+    var pulse = 1 + Math.sin(t * 1.4) * 0.06;
+    core.scale.setScalar(pulse);
+    halo.material.opacity = 0.45 + Math.sin(t * 1.4) * 0.12 + flash * 0.6;
+    flash *= 0.94;
+    stars.rotation.y = t * 0.02 + cx * 0.3;
+    stars.rotation.x = cy * 0.2 - scroll * 0.0002;
+    camera.position.y = -scroll * 0.0015;
+    renderer.render(scene, camera);
+    raf = running ? requestAnimationFrame(frame) : 0;
+  }
+  function start() {
+    if (running) return;
+    running = true;
+    clock.getDelta();
+    raf = requestAnimationFrame(frame);
+  }
+  function stop() {
+    running = false;
+    if (raf) cancelAnimationFrame(raf);
+    raf = 0;
+    flash = 0;
+    renderer.render(scene, camera);
+  }
+  function sync() { if (still() || document.hidden) stop(); else start(); }
+
+  window.cfSetMotion = sync;
+  document.addEventListener("visibilitychange", sync);
+  if (reduce.addEventListener) reduce.addEventListener("change", sync);
+  /* A frame always renders, so the sky is there even when still */
+  renderer.render(scene, camera);
+  sync();
 })();
 </script>
 </body>

@@ -38,7 +38,7 @@ def build_html():
         "<meta name=\"robots\" content=\"noindex, nofollow\">\n"
         "<meta name=\"apple-mobile-web-app-capable\" content=\"yes\">\n"
         "<meta name=\"mobile-web-app-capable\" content=\"yes\">\n"
-        "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"default\">\n"
+        "<meta name=\"apple-mobile-web-app-status-bar-style\" content=\"black-translucent\">\n"
         "<link rel=\"apple-touch-icon\" href=\"apple-touch-icon.png\">\n"
         "<link rel=\"manifest\" href=\"manifest.webmanifest\">\n"
         + head
@@ -55,19 +55,25 @@ HTACCESS = """<Files "index.html">
 
 
 def build_icon(size):
-    """A quiet horizon: a sage half-sun resting on a line, on mist."""
+    """A neon crystal: a cyan-to-pink hexagon outline with a violet core, on night."""
+    import math
     scale = 4  # draw large, then shrink, for smooth edges
     big = size * scale
-    img = Image.new("RGB", (big, big), (238, 242, 240))
+    img = Image.new("RGB", (big, big), (7, 7, 15))
     d = ImageDraw.Draw(img)
-    sage = (79, 125, 104)
-    w = max(2, int(big * 0.035))
-    cx, base, r = big / 2, big * 0.62, big * 0.2
-    d.arc([cx - r, base - r, cx + r, base + r], 180, 360, fill=sage, width=w)
-    d.line([big * 0.16, base, big * 0.84, base], fill=sage, width=w)
-    d.line([big * 0.3, base + big * 0.09, big * 0.7, base + big * 0.09], fill=(167, 190, 178), width=w)
-    for x0, y0, x1, y1 in ((0.5, 0.22, 0.5, 0.3), (0.29, 0.31, 0.33, 0.35), (0.71, 0.31, 0.67, 0.35)):
-        d.line([big * x0, big * y0, big * x1, big * y1], fill=sage, width=w)
+    cx = cy = big / 2
+    w = max(2, int(big * 0.03))
+    for i, r in enumerate((big * 0.34, big * 0.22)):
+        pts = [(cx + r * math.cos(math.radians(60 * k - 90)), cy + r * math.sin(math.radians(60 * k - 90))) for k in range(6)]
+        for k in range(6):
+            t = k / 6
+            start, end = ((62, 240, 224), (255, 90, 168)) if i == 0 else ((157, 107, 255), (255, 90, 168))
+            colour = tuple(int(start[c] + (end[c] - start[c]) * t) for c in range(3))
+            d.line([pts[k], pts[(k + 1) % 6]], fill=colour, width=w)
+            if i == 0:
+                d.line([pts[k], (cx, cy)], fill=(60, 52, 110), width=max(1, w // 2))
+    core = big * 0.09
+    d.ellipse([cx - core, cy - core, cx + core, cy + core], fill=(157, 107, 255))
     return img.resize((size, size), Image.LANCZOS)
 
 
@@ -80,8 +86,8 @@ def main():
         "short_name": "CalmFax",
         "start_url": "./",
         "display": "standalone",
-        "background_color": "#eef2f0",
-        "theme_color": "#eef2f0",
+        "background_color": "#07070f",
+        "theme_color": "#07070f",
         "icons": [
             {"src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png"},
             {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
