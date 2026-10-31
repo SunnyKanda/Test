@@ -1,0 +1,6 @@
+# PubPal: keep settings and the database private.
+<Files "config.php">
+  Require all denied
+</Files>
+Options -Indexes
+DirectoryIndex index.html

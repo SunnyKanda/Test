@@ -81,7 +81,7 @@ async function search({ fit = false } = {}) {
   const { lat, lng } = state.centre;
   const params = new URLSearchParams({ lat, lng, radius_km: state.radiusKm, has: [...state.filters].join(",") });
   try {
-    const res = await fetch(`/api/pubs?${params}`);
+    const res = await fetch(`api.php?action=pubs&${params}`);
     if (!res.ok) throw new Error();
     state.pubs = (await res.json()).results;
   } catch {
@@ -253,7 +253,7 @@ function statusTile(value, label) {
 }
 
 async function openPub(id) {
-  const res = await fetch(`/api/pubs/${id}`);
+  const res = await fetch(`api.php?action=pub&id=${id}`);
   if (!res.ok) return;
   const p = await res.json();
   const dist = state.pubs.find((x) => x.id === id)?.distance_km;
@@ -333,7 +333,7 @@ function openSuggestForm(pub) {
   $("suggest-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const form = e.target;
-    submitSuggestion(form, `/api/pubs/${pub.id}/suggestions`, { flags: readFlags(form, pub), note: form.elements.note.value || null });
+    submitSuggestion(form, `api.php?action=suggest_edit&id=${pub.id}`, { flags: readFlags(form, pub), note: form.elements.note.value || null });
   });
 }
 
@@ -361,7 +361,7 @@ $("add-pub").addEventListener("click", () => {
     const form = e.target;
     const f = form.elements;
     const { lat, lng } = pin.getLatLng();
-    submitSuggestion(form, "/api/suggestions", {
+    submitSuggestion(form, "api.php?action=suggest_pub", {
       name: f.name.value, address: f.address.value || null, postcode: f.postcode.value || null,
       lat, lng, flags: readFlags(form, null), note: f.note.value || null,
     });

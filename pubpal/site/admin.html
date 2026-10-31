@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>PubPal admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&display=swap">
+  <link rel="icon" href="logo.svg">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .admin { max-width: 640px; margin: 0 auto; display: grid; gap: 16px; padding: 14px max(18px, env(safe-area-inset-right)) 40px max(18px, env(safe-area-inset-left)); }
+    .box { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 16px; display: grid; gap: 12px; }
+    .box h2 { font-family: var(--font-head); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 0; }
+    .box p { margin: 0; }
+    .stats { display: flex; gap: 8px; flex-wrap: wrap; }
+    .stat { background: var(--bg); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; min-width: 110px; }
+    .stat b { display: block; font-family: var(--font-head); font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+    .stat span { font-size: .8rem; color: var(--muted); }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .card { background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 14px; display: grid; gap: 8px; }
+    .card h3 { margin: 0; font-family: var(--font-head); font-size: 1rem; }
+    .card table { border-collapse: collapse; font-size: .9rem; }
+    .card td { padding: 2px 14px 2px 0; vertical-align: top; }
+    .card td:first-child { color: var(--muted); }
+    .approve { background: var(--yes); }
+    .reject { background: var(--surface); color: var(--no); border: 1px solid var(--line); }
+    .quiet { color: var(--muted); font-size: .88rem; }
+    #msg:empty { display: none; }
+  </style>
+</head>
+<body>
+  <main class="admin">
+    <header class="brandline">
+      <div class="brand"><img src="logo.svg" alt="" class="mark">PubPal admin</div>
+      <a class="place" href="./">← Back to the app</a>
+    </header>
+
+    <div id="msg" class="toast"></div>
+
+    <!-- First visit: choose the admin password -->
+    <form id="setup" class="box" hidden>
+      <h2>Choose an admin password</h2>
+      <p class="quiet">This is the first visit to the admin page. The password you choose here is needed to approve suggestions and load pubs. Do this straight away after uploading.</p>
+      <label class="field" for="new-password">Password (at least 8 characters)<input id="new-password" type="password" minlength="8" required autocomplete="new-password"></label>
+      <label class="field" for="new-password-2">Type it again<input id="new-password-2" type="password" minlength="8" required autocomplete="new-password"></label>
+      <button class="btn" type="submit">Save password</button>
+    </form>
+
+    <form id="login" class="box" hidden>
+      <h2>Sign in</h2>
+      <label class="field" for="password">Admin password<input id="password" type="password" required autocomplete="current-password"></label>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+
+    <div id="dashboard" hidden>
+      <div class="admin" style="padding:0">
+        <section class="box">
+          <h2>Pubs</h2>
+          <div class="stats">
+            <div class="stat"><b id="count-total">0</b><span>pubs listed</span></div>
+            <div class="stat"><b id="count-demo">0</b><span>of them made-up demo pubs</span></div>
+          </div>
+          <p class="quiet">Import loads every pub in and around Halifax from OpenStreetMap. It's safe to run again: it adds new pubs and never overwrites facilities or drinks you've approved. It also removes the demo pubs.</p>
+          <div class="two">
+            <button class="btn" type="button" id="import">Import Halifax pubs</button>
+            <button class="btn soft" type="button" id="demo">Load demo pubs</button>
+          </div>
+        </section>
+
+        <section class="box">
+          <h2>Suggestions waiting for you <span id="pending-count" class="quiet"></span></h2>
+          <div id="list" style="display:grid;gap:10px"></div>
+        </section>
+
+        <button class="btn soft" type="button" id="sign-out">Sign out</button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+    const LABELS = {
+      name: "Name", address: "Address", postcode: "Postcode", phone: "Phone", website: "Website", lat: "Latitude", lng: "Longitude",
+      shows_sports: "Shows sports", pool_table: "Pool table", dog_friendly: "Dog friendly", outdoor_seating: "Outdoor seating",
+      baby_changing: "Baby changing", accessible: "Accessible", real_ale: "Cask ale", craft_beer: "Craft beer", lager: "Lager",
+      stout: "Stout", cider: "Cider", alcohol_free: "Alcohol-free",
+    };
+    const FLAG_KEYS = new Set(["shows_sports", "pool_table", "dog_friendly", "outdoor_seating", "baby_changing", "accessible", "real_ale", "craft_beer", "lager", "stout", "cider", "alcohol_free"]);
+
+    let password = "";
+    try { password = sessionStorage.getItem("pubpal-admin") || ""; } catch {}
+
+    function say(text, isError = false) {
+      $("msg").textContent = text;
+      $("msg").className = isError ? "toast error" : "toast";
+    }
+
+    async function api(action, { method = "GET", body, query = "" } = {}) {
+      const res = await fetch(`api.php?action=${action}${query}`, {
+        method,
+        headers: { "Content-Type": "application/json", "X-Admin-Password": password },
+        body: body ? JSON.stringify(body) : undefined,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw Object.assign(new Error(data.detail || "Something went wrong. Try again."), { status: res.status });
+      return data;
+    }
+
+    function show(view) {
+      for (const id of ["setup", "login", "dashboard"]) $(id).hidden = id !== view;
+    }
+
+    function showCounts(pubs) {
+      $("count-total").textContent = pubs.total;
+      $("count-demo").textContent = pubs.demo;
+    }
+
+    function describe(key, value) {
+      if (FLAG_KEYS.has(key)) return value ? "Yes" : "No";
+      return key === "lat" || key === "lng" ? Number(value).toFixed(5) : esc(value);
+    }
+
+    async function loadDashboard() {
+      try {
+        const { suggestions, pubs } = await api("admin_suggestions");
+        try { sessionStorage.setItem("pubpal-admin", password); } catch {}
+        show("dashboard");
+        showCounts(pubs);
+        $("pending-count").textContent = suggestions.length ? `(${suggestions.length})` : "";
+        $("list").innerHTML = suggestions.length ? suggestions.map((s) => `
+          <div class="card">
+            <h3>${s.pub_id ? `Edit to ${esc(s.pub_name)}` : `New pub: ${esc(s.changes.name)}`}</h3>
+            <span class="quiet">Sent ${esc(s.created_at)} UTC</span>
+            <table>${Object.entries(s.changes).map(([k, v]) => `<tr><td>${LABELS[k] || esc(k)}</td><td>${describe(k, v)}</td></tr>`).join("")}</table>
+            ${!s.pub_id ? `<a class="quiet" href="https://www.google.com/maps?q=${s.changes.lat},${s.changes.lng}" target="_blank" rel="noopener">See the pin on Google Maps</a>` : ""}
+            ${s.note ? `<p>“${esc(s.note)}”</p>` : ""}
+            <div class="two">
+              <button class="btn approve" type="button" data-id="${s.id}" data-decision="approve">Approve</button>
+              <button class="btn reject" type="button" data-id="${s.id}" data-decision="reject">Reject</button>
+            </div>
+          </div>`).join("") : `<p class="quiet">Nothing waiting. New suggestions from the app appear here.</p>`;
+      } catch (e) {
+        password = "";
+        try { sessionStorage.removeItem("pubpal-admin"); } catch {}
+        show("login");
+        if (e.status !== 401 || $("password").value) say(e.message, true);
+      }
+    }
+
+    async function start() {
+      try {
+        const status = await api("admin_status");
+        if (!status.password_set) return show("setup");
+        if (password) return loadDashboard();
+        show("login");
+      } catch (e) {
+        say(e.message, true);
+      }
+    }
+
+    $("setup").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const p1 = $("new-password").value, p2 = $("new-password-2").value;
+      if (p1 !== p2) return say("The two passwords don't match. Type them again.", true);
+      try {
+        await api("admin_setup", { method: "POST", body: { password: p1 } });
+        password = p1;
+        say("Password saved. Next, import the Halifax pubs.");
+        loadDashboard();
+      } catch (err) {
+        say(err.message, true);
+      }
+    });
+
+    $("login").addEventListener("submit", (e) => {
+      e.preventDefault();
+      password = $("password").value;
+      $("msg").textContent = "";
+      loadDashboard();
+    });
+
+    $("sign-out").addEventListener("click", () => {
+      password = "";
+      try { sessionStorage.removeItem("pubpal-admin"); } catch {}
+      $("password").value = "";
+      $("msg").textContent = "";
+      show("login");
+    });
+
+    $("import").addEventListener("click", async (e) => {
+      const btn = e.currentTarget;
+      btn.disabled = true;
+      btn.textContent = "Importing… (up to a minute)";
+      try {
+        const r = await api("admin_import", { method: "POST" });
+        showCounts(r.pubs);
+        say(`Done: ${r.added} new pubs added, ${r.updated} updated.`);
+      } catch (err) {
+        say(err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Import Halifax pubs";
+      }
+    });
+
+    $("demo").addEventListener("click", async () => {
+      try {
+        const r = await api("admin_demo", { method: "POST" });
+        showCounts(r.pubs);
+        say(`Loaded ${r.loaded} made-up demo pubs. Importing real pubs removes them.`);
+      } catch (err) {
+        say(err.message, true);
+      }
+    });
+
+    $("list").addEventListener("click", async (e) => {
+      const b = e.target.closest("button[data-id]");
+      if (!b) return;
+      b.disabled = true;
+      try {
+        await api("admin_resolve", { method: "POST", query: `&id=${b.dataset.id}&decision=${b.dataset.decision}` });
+        say(b.dataset.decision === "approve" ? "Approved. It's live in the app now." : "Rejected.");
+      } catch (err) {
+        say(err.message, true);
+      }
+      loadDashboard();
+    });
+
+    start();
+  </script>
+</body>
+</html>

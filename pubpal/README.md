@@ -1,49 +1,71 @@
 # PubPal
 
-Find pubs near you in Halifax, West Yorkshire. Share your location, type a postcode, or tap the map, then pick a radius and filter by what matters to you:
+Find pubs near you in Halifax, West Yorkshire. Share your location, type a postcode, or tap the map, then pick a distance and filter by what matters to you:
 
 - **Facilities:** shows sports, pool table, dog friendly, outdoor seating, baby changing, accessible
 - **Drinks:** cask ale, craft beer, lager, stout, cider, alcohol-free (just "do they have it", not a full menu)
 
-Anyone can suggest an edit or add a missing pub. Suggestions go live only after an admin approves them.
+Anyone can suggest an edit or add a missing pub. Suggestions go live only after you approve them on the admin page.
 
-## Run it
+It's plain PHP with no build step, made for ordinary shared hosting such as SiteGround.
 
-```bash
-cd pubpal
-pip install -r requirements.txt
+## Put it on SiteGround
 
-python import_osm.py        # load real Halifax pubs from OpenStreetMap (needs internet)
-# or: python seed_demo.py   # a few made-up pubs, just to try it out
+1. **Upload:** in Site Tools, open **Site → File Manager** and go to `public_html`. To put the app at its own address, such as `yoursite.com/pubpal`, create a folder first and open that. Upload `pubpal-siteground.zip`, then right-click it and choose **Extract**. You can delete the zip afterwards.
+2. **Use HTTPS:** check **Security → SSL Manager** shows a certificate for your domain. Phones only share their location with `https://` sites.
+3. **Set the admin password straight away:** open `https://yoursite.com/pubpal/admin.html` and choose one. Until you do, anyone who finds that page could set it.
+4. **Load the pubs:** on the same page, tap **Import Halifax pubs**. It takes up to a minute. If OpenStreetMap is busy, try again later; **Load demo pubs** gives you made-up ones to try the app with meanwhile.
+5. **Open the app:** go to `https://yoursite.com/pubpal/`.
 
-PUBPAL_ADMIN_TOKEN=pick-a-password uvicorn server:app --reload
-```
+The site needs **PHP 8.1 or newer**. In Site Tools that's under **Devs → PHP Manager**.
 
-Then open:
+### Database
 
-- http://localhost:8000: the app
-- http://localhost:8000/admin: approve or reject suggestions (enter the token you chose)
+By default PubPal keeps everything in a single SQLite file, `data/pubpal.sqlite`, which it creates itself. The `.htaccess` files stop anyone downloading it, or the `lib/` folder and `config.php`.
 
-Location sharing in the browser works on `localhost` and on any `https://` site. It won't work over plain `http://` on another address, such as testing from your phone across Wi-Fi.
+If the app says the database isn't working, SQLite may not be switched on for your hosting. In that case use MySQL instead:
 
-## Tests
+1. In Site Tools, open **Site → MySQL** and create a database and a user with access to it.
+2. In File Manager, edit `config.php` and fill in the database name, user and password.
 
-```bash
-cd pubpal && python -m pytest -q tests
-```
+PubPal creates its tables automatically on first use.
 
-## How it fits together
+## Files
 
-| Piece            | What it does                                                    |
-|------------------|-----------------------------------------------------------------|
-| `server.py`      | FastAPI app: pub search, pub details, suggestions, admin        |
-| `db.py`          | SQLite tables (`pubs`, `suggestions`) and the radius search     |
-| `import_osm.py`  | Pulls `amenity=pub` from OpenStreetMap for the Halifax area. Safe to re-run: it never overwrites facilities or drinks you've already set |
-| `seed_demo.py`   | Fictional demo pubs, clearly flagged in the UI                  |
-| `static/`        | The web page: Leaflet map, filters, pub drawer, suggestion forms, admin page |
+| Path                | What it is                                                         |
+|---------------------|--------------------------------------------------------------------|
+| `site/index.html`, `app.js`, `style.css` | The app: map, filters, pub pages, suggestion forms |
+| `site/admin.html`   | Admin page: password, importing pubs, approving suggestions        |
+| `site/api.php`      | The JSON API the pages talk to (`api.php?action=…`)                |
+| `site/lib/db.php`   | Database tables, radius search, suggestions                         |
+| `site/lib/osm.php`  | OpenStreetMap import and the demo pubs                              |
+| `site/config.php`   | Optional MySQL settings                                             |
+| `pubpal-siteground.zip` | The contents of `site/`, ready to upload                       |
 
 Every facility and drink is **yes / no / unknown**. Unknown shows as "?" so missing data never looks like a "no". Filters only match pubs where the answer is a known yes.
 
-**Maps:** the map uses free OpenStreetMap tiles, which need no API key. The **Directions** button opens Google Maps, also with no key. Postcode lookup uses the free postcodes.io service.
+**Maps:** the map uses free OpenStreetMap tiles, which need no API key. The Directions button opens Google Maps, also with no key. Postcode lookup uses the free postcodes.io service.
 
-**Later:** the `claimed` column marks landlord-managed listings. It's the hook for the paid "landlord fills in their own page" tier. Nothing uses it yet beyond a "✓ Landlord" badge.
+**Later:** the `claimed` column marks landlord-managed listings. It's the hook for the paid "landlord fills in their own page" tier.
+
+## Developing
+
+Run it locally with PHP's built-in server (it ignores `.htaccess`, which is fine for local use):
+
+```bash
+php -S localhost:8000 -t pubpal/site
+```
+
+Tests drive the API through that server, using a fake OpenStreetMap:
+
+```bash
+pip install pytest httpx
+python -m pytest -q pubpal/tests                       # SQLite
+PUBPAL_TEST_MYSQL=1 python -m pytest -q pubpal/tests   # SQLite and a local MySQL/MariaDB
+```
+
+Rebuild the upload zip after changing anything in `site/`:
+
+```bash
+cd pubpal/site && rm -f ../pubpal-siteground.zip && zip -rq ../pubpal-siteground.zip . -x 'data/*.sqlite'
+```

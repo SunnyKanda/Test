@@ -11,6 +11,7 @@
 - **Free and open to browse,** with no accounts.
 - **Maps:** browser location plus a free OpenStreetMap map, and a "Directions" button that opens Google Maps.
 - **Simpler stack:** SQLite with a distance calculation in Python instead of PostGIS. That's plenty for one town.
+- **Hosting (31 Oct):** plain PHP on SiteGround shared hosting instead of Python. SQLite by default, MySQL optional. The admin page sets its password on first visit and imports pubs from OpenStreetMap, so nothing needs a command line.
 
 ## 1. What it does
 
