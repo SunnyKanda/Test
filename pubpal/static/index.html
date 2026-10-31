@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>PubPal – pubs near you in Halifax</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,52 +11,55 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1><img src="logo.svg" alt="">PubPal</h1>
-    <span class="tagline">Halifax, West Yorkshire</span>
-  </header>
-
-  <div id="demo-banner" class="banner" hidden>
-    Showing <strong>demo pubs</strong> (made-up data). Run <code>python import_osm.py</code> to load real Halifax pubs.
-  </div>
-
   <main class="layout">
-    <section class="panel">
-      <div class="where">
-        <button id="locate" class="primary">📍 Use my location</button>
-        <form id="postcode-form" class="postcode">
-          <input id="postcode" placeholder="or postcode, e.g. HX1 1RE" autocomplete="postal-code">
-          <button type="submit">Go</button>
-        </form>
-        <p id="where-status" class="muted"></p>
+    <section class="side">
+      <header class="brandline">
+        <div class="brand"><img src="logo.svg" alt="" class="mark">PubPal</div>
+        <span class="place">Halifax, West Yorkshire</span>
+      </header>
+
+      <div>
+        <p class="eyebrow">Good places, good company</p>
+        <h1>Find your <em>kind</em> of pub.</h1>
       </div>
 
-      <label class="radius">
-        Within <strong id="radius-label">2 km</strong>
-        <input id="radius" type="range" min="0" max="5" step="1" value="2">
-      </label>
+      <p id="demo-banner" class="notice" hidden>
+        <strong>Showing made-up demo pubs.</strong> Run <code>python import_osm.py</code> to load real Halifax pubs.
+      </p>
 
-      <details class="filters" open>
-        <summary>Filters <span id="filter-count" class="muted"></span></summary>
-        <div class="chip-group" id="facility-chips"></div>
-        <div class="chip-group" id="drink-chips"></div>
-      </details>
+      <form id="postcode-form" class="search">
+        <span aria-hidden="true">⌕</span>
+        <input id="postcode" placeholder="Postcode, e.g. HX1 1RE" autocomplete="postal-code" aria-label="Postcode">
+        <button type="submit" class="search-go">Go</button>
+      </form>
 
-      <p id="result-count" class="muted"></p>
+      <div class="pills">
+        <button type="button" id="locate" class="pill" aria-pressed="false">◎ Near me</button>
+        <button type="button" id="radius-pill" class="pill" aria-pressed="false"></button>
+        <button type="button" id="filter-pill" class="pill" aria-pressed="false"></button>
+      </div>
+      <p id="where-status" class="status-line"></p>
+
+      <div id="panel" class="panel" hidden>
+        <div><p class="group">Distance <span id="radius-label"></span></p><div class="pills" id="radii"></div></div>
+        <div><p class="group">Facilities</p><div class="opts" id="facility-opts"></div></div>
+        <div><p class="group">Drinks available</p><div class="opts" id="drink-opts"></div></div>
+        <button type="button" class="btn" id="panel-done"></button>
+        <button type="button" class="btn soft" id="panel-clear">Clear filters</button>
+      </div>
+
+      <div class="map-wrap"><div id="map"></div></div>
+
+      <div class="listhead"><strong>Nearby places</strong><span id="result-count"></span></div>
       <ul id="results" class="results"></ul>
 
-      <button id="add-pub" class="link">＋ Know a pub that's missing? Add it</button>
-    </section>
-
-    <section class="map-wrap">
-      <div id="map"></div>
+      <button type="button" id="add-pub" class="btn soft">⊕ Add a missing pub</button>
     </section>
   </main>
 
-  <!-- Pub detail / suggest-edit drawer -->
-  <aside id="drawer" class="drawer" hidden>
-    <button class="close" id="drawer-close" aria-label="Close">✕</button>
-    <div id="drawer-body"></div>
+  <div id="scrim" class="scrim" hidden></div>
+  <aside id="drawer" class="drawer" hidden role="dialog" aria-modal="true">
+    <div class="drawer-in" id="drawer-body"></div>
   </aside>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

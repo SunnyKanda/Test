@@ -4,12 +4,12 @@ const HALIFAX = { lat: 53.7245, lng: -1.8616 }; // town centre, used until we kn
 const RADII_KM = [0.5, 1, 2, 5, 10, 25];
 
 const FACILITIES = {
-  shows_sports: ["⚽", "Shows sports"],
-  pool_table: ["🎱", "Pool table"],
-  dog_friendly: ["🐶", "Dog friendly"],
-  outdoor_seating: ["🌳", "Outdoor seating"],
-  baby_changing: ["🚼", "Baby changing"],
-  accessible: ["♿", "Accessible"],
+  shows_sports: "Shows sports",
+  pool_table: "Pool table",
+  dog_friendly: "Dog friendly",
+  outdoor_seating: "Outdoor seating",
+  baby_changing: "Baby changing",
+  accessible: "Accessible",
 };
 const DRINKS = {
   real_ale: "Cask ale",
@@ -19,11 +19,22 @@ const DRINKS = {
   cider: "Cider",
   alcohol_free: "Alcohol-free",
 };
+// Short labels for the tags under each pub in the list, in order of priority.
+const TAGS = {
+  dog_friendly: "Dogs ✓",
+  accessible: "Step-free ✓",
+  outdoor_seating: "Outdoor ✓",
+  alcohol_free: "Alcohol-free ✓",
+  shows_sports: "Sports ✓",
+  pool_table: "Pool ✓",
+  baby_changing: "Baby change ✓",
+};
 
 const state = {
   centre: { ...HALIFAX },
   radiusKm: 2,
   filters: new Set(),
+  panelOpen: false,
   pubs: [],
   markers: new Map(),
 };
@@ -31,48 +42,84 @@ const state = {
 const $ = (id) => document.getElementById(id);
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const formatKm = (km) => (km < 1 ? `${Math.round(km * 1000)} m` : `${Number(km.toFixed(km < 10 ? 1 : 0))} km`);
+const flagsOf = (p) => ({ ...p.facilities, ...p.drinks });
 
 // ─── Map ──────────────────────────────────────────────────────────────────────
 
-const map = L.map("map", { zoomControl: true }).setView([HALIFAX.lat, HALIFAX.lng], 14);
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  maxZoom: 19,
-  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-}).addTo(map);
+const TILES = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
+const TILE_CREDIT = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+const map = L.map("map").setView([HALIFAX.lat, HALIFAX.lng], 14);
+L.tileLayer(TILES, { maxZoom: 19, attribution: TILE_CREDIT }).addTo(map);
 
 const youMarker = L.circleMarker([HALIFAX.lat, HALIFAX.lng], {
-  radius: 8, color: "#fff", weight: 3, fillColor: "#1e88e5", fillOpacity: 1,
+  radius: 7, color: "#fff", weight: 3, fillColor: "#3f87e8", fillOpacity: 1,
 }).addTo(map).bindTooltip("Search centre");
 const radiusCircle = L.circle([HALIFAX.lat, HALIFAX.lng], {
-  radius: state.radiusKm * 1000, color: "#f96363", weight: 2, dashArray: "6 6", fillOpacity: 0.07,
+  radius: state.radiusKm * 1000, color: "#f96363", weight: 2, dashArray: "6 6", fillColor: "#f96363", fillOpacity: 0.07,
 }).addTo(map);
 
-const pubIcon = L.divIcon({ className: "", html: '<div style="width:16px;height:16px;border-radius:50%;background:#d7383f;border:3px solid #fff;box-shadow:0 2px 6px rgba(25,48,73,.35)"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
+const pubIcon = (nearest) =>
+  L.divIcon({ className: "", html: `<div class="pub-dot${nearest ? " nearest" : ""}"></div>`, iconSize: nearest ? [26, 26] : [22, 22] });
 
 // Tap anywhere on the map to search from there.
-map.on("click", (e) => {
-  if (addPubMarker) return;
-  setCentre(e.latlng.lat, e.latlng.lng, "Searching from the point you tapped.");
-});
+map.on("click", (e) => setCentre(e.latlng.lat, e.latlng.lng, "Searching from the point you tapped."));
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
-function setCentre(lat, lng, message) {
+function setCentre(lat, lng, message, { nearMe = false } = {}) {
   state.centre = { lat, lng };
   youMarker.setLatLng([lat, lng]);
   radiusCircle.setLatLng([lat, lng]);
-  if (message) $("where-status").textContent = message;
+  $("locate").setAttribute("aria-pressed", nearMe);
+  $("where-status").textContent = message || "";
   search({ fit: true });
 }
 
 async function search({ fit = false } = {}) {
   const { lat, lng } = state.centre;
   const params = new URLSearchParams({ lat, lng, radius_km: state.radiusKm, has: [...state.filters].join(",") });
-  const res = await fetch(`/api/pubs?${params}`);
-  const data = await res.json();
-  state.pubs = data.results;
+  try {
+    const res = await fetch(`/api/pubs?${params}`);
+    if (!res.ok) throw new Error();
+    state.pubs = (await res.json()).results;
+  } catch {
+    $("where-status").textContent = "Couldn't load pubs. Check your connection and try again.";
+    return;
+  }
+  renderControls();
   renderResults();
   if (fit) map.fitBounds(radiusCircle.getBounds(), { padding: [20, 20] });
+}
+
+function nextRadius() {
+  return RADII_KM[Math.min(RADII_KM.indexOf(state.radiusKm) + 1, RADII_KM.length - 1)];
+}
+
+function setRadius(km) {
+  state.radiusKm = km;
+  radiusCircle.setRadius(km * 1000);
+  search({ fit: true });
+}
+
+function renderControls() {
+  const n = state.pubs.length;
+  $("radius-pill").textContent = `↔ ${formatKm(state.radiusKm)}`;
+  $("filter-pill").innerHTML = `☷ Filters${state.filters.size ? `<span class="n">${state.filters.size}</span>` : ""}`;
+  $("filter-pill").setAttribute("aria-pressed", state.panelOpen);
+  $("panel").hidden = !state.panelOpen;
+  $("radius-label").textContent = formatKm(state.radiusKm);
+  $("radii").innerHTML = RADII_KM
+    .map((km) => `<button type="button" class="pill" data-km="${km}" aria-pressed="${km === state.radiusKm}">${formatKm(km)}</button>`)
+    .join("");
+  const opts = (labels) => Object.entries(labels).map(([key, label]) => {
+    const on = state.filters.has(key);
+    return `<button type="button" class="opt" data-key="${key}" aria-pressed="${on}"><span>${label}</span><span class="box">${on ? "✓" : ""}</span></button>`;
+  }).join("");
+  $("facility-opts").innerHTML = opts(FACILITIES);
+  $("drink-opts").innerHTML = opts(DRINKS);
+  $("panel-done").textContent = `See ${n} matching place${n === 1 ? "" : "s"} →`;
 }
 
 function renderResults() {
@@ -81,34 +128,41 @@ function renderResults() {
 
   $("demo-banner").hidden = !state.pubs.some((p) => p.is_demo);
   const n = state.pubs.length;
-  $("result-count").textContent = n
-    ? `${n} pub${n === 1 ? "" : "s"} within ${formatKm(state.radiusKm)}`
-    : `No pubs found within ${formatKm(state.radiusKm)}${state.filters.size ? " with those filters" : ""}. Try a bigger radius.`;
+  $("result-count").textContent = n ? `${n} within ${formatKm(state.radiusKm)} · nearest first` : "";
 
-  $("results").innerHTML = state.pubs.map((p) => `
-    <li data-id="${p.id}">
-      <div class="result-head">
-        <span>${esc(p.name)}${p.claimed ? '<span class="badge">✓ Landlord</span>' : ""}</span>
-        <span class="result-dist">${formatKm(p.distance_km)}</span>
-      </div>
-      <div class="result-icons">${Object.entries(FACILITIES).filter(([k]) => p.facilities[k]).map(([, [icon, label]]) => `<span title="${label}">${icon}</span>`).join("")}</div>
-      <div class="result-drinks">${Object.entries(DRINKS).filter(([k]) => p.drinks[k]).map(([, label]) => label).join(" · ")}</div>
-    </li>`).join("");
+  $("results").innerHTML = n
+    ? state.pubs.map((p) => {
+      const flags = flagsOf(p);
+      const tags = (p.claimed ? ['<span class="tag landlord">✓ Landlord</span>'] : [])
+        .concat(Object.keys(TAGS).filter((k) => flags[k]).slice(0, 3).map((k) => `<span class="tag">${TAGS[k]}</span>`))
+        .join("");
+      const drinks = Object.keys(DRINKS).filter((k) => flags[k]).map((k) => DRINKS[k]).join(" · ");
+      return `<li><button type="button" class="row" data-id="${p.id}">
+        <span class="thumb"></span>
+        <span class="row-main">
+          <span class="row-top"><b>${esc(p.name)}</b><span>↗ ${formatKm(p.distance_km)}</span></span>
+          <span class="tags">${tags}</span>
+          <span class="drinks">${drinks}</span>
+        </span></button></li>`;
+    }).join("")
+    : `<li class="empty"><b>No pubs found</b>
+        <p>Nothing matched within ${formatKm(state.radiusKm)}${state.filters.size ? " with those filters" : ""}. Try a bigger distance or clear a filter.</p>
+        ${state.radiusKm < RADII_KM.at(-1) ? `<button type="button" class="btn" id="widen">Try ${formatKm(nextRadius())} →</button>` : ""}</li>`;
 
-  for (const p of state.pubs) {
-    const marker = L.marker([p.lat, p.lng], { icon: pubIcon, title: p.name })
+  state.pubs.forEach((p, i) => {
+    const marker = L.marker([p.lat, p.lng], { icon: pubIcon(i === 0), title: p.name, zIndexOffset: i === 0 ? 1000 : 0 })
       .addTo(map)
-      .bindTooltip(`${p.name} · ${formatKm(p.distance_km)}`)
       .on("click", () => openPub(p.id));
+    if (i === 0) marker.bindTooltip(`Nearest · ${formatKm(p.distance_km)}`, { permanent: true, direction: "top", offset: [0, -12], className: "nearest-tip" });
+    else marker.bindTooltip(`${p.name} · ${formatKm(p.distance_km)}`);
     state.markers.set(p.id, marker);
-  }
+  });
 }
 
-const formatKm = (km) => (km < 1 ? `${Math.round(km * 1000)} m` : `${Number(km.toFixed(km < 10 ? 1 : 0))} km`);
-
 $("results").addEventListener("click", (e) => {
-  const li = e.target.closest("li[data-id]");
-  if (li) openPub(Number(li.dataset.id));
+  if (e.target.closest("#widen")) return setRadius(nextRadius());
+  const row = e.target.closest(".row");
+  if (row) openPub(Number(row.dataset.id));
 });
 
 // ─── Controls ─────────────────────────────────────────────────────────────────
@@ -120,7 +174,7 @@ $("locate").addEventListener("click", () => {
   }
   $("where-status").textContent = "Finding you…";
   navigator.geolocation.getCurrentPosition(
-    (pos) => setCentre(pos.coords.latitude, pos.coords.longitude, "Showing pubs near you."),
+    (pos) => setCentre(pos.coords.latitude, pos.coords.longitude, "Showing pubs near you.", { nearMe: true }),
     () => ($("where-status").textContent = "Couldn't get your location. Try a postcode, or tap the map."),
     { enableHighAccuracy: true, timeout: 10000 },
   );
@@ -137,52 +191,65 @@ $("postcode-form").addEventListener("submit", async (e) => {
     const { result } = await res.json();
     setCentre(result.latitude, result.longitude, `Showing pubs near ${result.postcode}.`);
   } catch {
-    $("where-status").textContent = "Couldn't find that postcode.";
+    $("where-status").textContent = "Couldn't find that postcode. Check it and try again.";
   }
 });
 
-$("radius").addEventListener("input", (e) => {
-  state.radiusKm = RADII_KM[Number(e.target.value)];
-  $("radius-label").textContent = formatKm(state.radiusKm);
-  radiusCircle.setRadius(state.radiusKm * 1000);
+$("radius-pill").addEventListener("click", () => setRadius(RADII_KM[(RADII_KM.indexOf(state.radiusKm) + 1) % RADII_KM.length]));
+$("filter-pill").addEventListener("click", () => {
+  state.panelOpen = !state.panelOpen;
+  renderControls();
 });
-$("radius").addEventListener("change", () => search({ fit: true }));
-
-function renderChips(containerId, entries) {
-  $(containerId).innerHTML = entries
-    .map(([key, label]) => `<button class="chip" data-key="${key}" aria-pressed="false">${label}</button>`)
-    .join("");
-}
-renderChips("facility-chips", Object.entries(FACILITIES).map(([k, [icon, label]]) => [k, `${icon} ${label}`]));
-renderChips("drink-chips", Object.entries(DRINKS));
-
-document.querySelector(".filters").addEventListener("click", (e) => {
-  const chip = e.target.closest(".chip");
-  if (!chip) return;
-  const key = chip.dataset.key;
+$("panel-done").addEventListener("click", () => {
+  state.panelOpen = false;
+  renderControls();
+  $("results").scrollIntoView({ behavior: "smooth", block: "start" });
+});
+$("panel-clear").addEventListener("click", () => {
+  state.filters.clear();
+  search();
+});
+$("panel").addEventListener("click", (e) => {
+  const r = e.target.closest("[data-km]");
+  if (r) return setRadius(Number(r.dataset.km));
+  const opt = e.target.closest(".opt");
+  if (!opt) return;
+  const key = opt.dataset.key;
   state.filters.has(key) ? state.filters.delete(key) : state.filters.add(key);
-  chip.setAttribute("aria-pressed", state.filters.has(key));
-  $("filter-count").textContent = state.filters.size ? `(${state.filters.size} on)` : "";
   search();
 });
 
-// ─── Pub detail drawer ────────────────────────────────────────────────────────
+// ─── Pub sheet ────────────────────────────────────────────────────────────────
+
+let pinMap = null;
 
 function openDrawer(html) {
+  if (pinMap) { pinMap.remove(); pinMap = null; }
   $("drawer-body").innerHTML = html;
   $("drawer").hidden = false;
+  $("scrim").hidden = false;
+  $("drawer").scrollTop = 0;
 }
 function closeDrawer() {
+  if (pinMap) { pinMap.remove(); pinMap = null; }
   $("drawer").hidden = true;
-  clearAddPubMarker();
-  document.querySelectorAll(".results li.active").forEach((li) => li.classList.remove("active"));
+  $("scrim").hidden = true;
+  document.querySelectorAll(".row.active").forEach((r) => r.classList.remove("active"));
 }
-$("drawer-close").addEventListener("click", closeDrawer);
+$("scrim").addEventListener("click", closeDrawer);
+$("drawer").addEventListener("click", (e) => { if (e.target.closest(".close")) closeDrawer(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("drawer").hidden) closeDrawer(); });
 
-function flagRow(value, label) {
-  const cls = value === true ? "yes" : value === false ? "no" : "unknown";
-  const mark = value === true ? "✓" : value === false ? "✗" : "?";
-  return `<div class="flag ${cls}"><span class="mark">${mark}</span>${label}</div>`;
+const sheetHead = (title, sub, extra = "") => `
+  <div class="grab"></div>
+  <div class="sheet-head">
+    <div><h2>${esc(title)}</h2>${sub ? `<p class="loc">${sub}</p>` : ""}${extra}</div>
+    <button type="button" class="close" aria-label="Close">✕</button>
+  </div>`;
+
+function statusTile(value, label) {
+  const [cls, mark, word] = value === true ? ["yes", "✓", "Yes"] : value === false ? ["no", "×", "No"] : ["unknown", "?", "Not known yet"];
+  return `<div class="st"><span>${label}</span><span class="dot ${cls}" title="${word}" aria-label="${word}">${mark}</span></div>`;
 }
 
 async function openPub(id) {
@@ -191,28 +258,26 @@ async function openPub(id) {
   const p = await res.json();
   const dist = state.pubs.find((x) => x.id === id)?.distance_km;
 
-  document.querySelectorAll(".results li").forEach((li) => li.classList.toggle("active", Number(li.dataset.id) === id));
+  document.querySelectorAll(".row").forEach((r) => r.classList.toggle("active", Number(r.dataset.id) === id));
   map.panTo([p.lat, p.lng]);
 
+  const where = [p.address, p.postcode].filter(Boolean).join(", ");
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lng}`;
   openDrawer(`
-    <h2>${esc(p.name)}</h2>
-    ${p.claimed ? '<span class="badge">✓ Details from the landlord</span>' : ""}
-    <p class="muted">${esc([p.address, p.postcode].filter(Boolean).join(", "))}${dist != null ? ` · ${formatKm(dist)} away` : ""}</p>
+    ${sheetHead(p.name, `⌖ ${esc(where || "Halifax")}${dist != null ? ` · ${formatKm(dist)} away` : ""}`,
+      p.claimed ? '<span class="badge">✓ Details from the landlord</span>' : "")}
+    <div class="hero" aria-hidden="true"><i class="sun"></i><i class="roof"></i><i class="front"></i><i class="awning"></i><i class="door"></i><i class="win wl"></i><i class="win wr"></i></div>
     <div class="actions">
-      <a href="${directions}" target="_blank" rel="noopener">Directions (Google Maps)</a>
-      ${p.phone ? `<a class="secondary" href="tel:${esc(p.phone)}">Call</a>` : ""}
-      ${p.website ? `<a class="secondary" href="${esc(p.website)}" target="_blank" rel="noopener">Website</a>` : ""}
+      <a class="act primary" href="${directions}" target="_blank" rel="noopener">↗ Directions</a>
+      ${p.phone ? `<a class="act" href="tel:${esc(p.phone)}">☎ Call</a>` : ""}
+      ${p.website ? `<a class="act" href="${esc(p.website)}" target="_blank" rel="noopener">Website</a>` : ""}
     </div>
-
-    <h3>Facilities</h3>
-    <div class="flag-grid">${Object.entries(FACILITIES).map(([k, [icon, label]]) => flagRow(p.facilities[k], `${icon} ${label}`)).join("")}</div>
-
-    <h3>Drinks</h3>
-    <div class="flag-grid">${Object.entries(DRINKS).map(([k, label]) => flagRow(p.drinks[k], label)).join("")}</div>
-
-    <p class="muted">✓ yes · ✗ no · ? not known yet</p>
-    <button id="suggest-btn">Something wrong or missing? Suggest an edit</button>
+    <p class="sec">Facilities <span>Yes / No / Not known</span></p>
+    <div class="status">${Object.entries(FACILITIES).map(([k, label]) => statusTile(p.facilities[k], label)).join("")}</div>
+    <p class="sec">Drinks available <span>Not a drinks menu</span></p>
+    <div class="status">${Object.entries(DRINKS).map(([k, label]) => statusTile(p.drinks[k], label)).join("")}</div>
+    <p class="updated">Last updated ${esc(p.updated_at.slice(0, 10))}</p>
+    <button type="button" class="linkbtn" id="suggest-btn">Something not quite right? Suggest an edit</button>
   `);
   $("suggest-btn").addEventListener("click", () => openSuggestForm(p));
 }
@@ -221,90 +286,89 @@ async function openPub(id) {
 
 function triSelect(key, label, current) {
   const opt = (v, text) => `<option value="${v}" ${String(current) === v ? "selected" : ""}>${text}</option>`;
-  return `<label class="tri"><span>${label}</span>
-    <select name="${key}">${opt("null", "Don't know")}${opt("true", "Yes")}${opt("false", "No")}</select></label>`;
+  return `<label class="tri" for="f-${key}"><span>${label}</span>
+    <select id="f-${key}" name="${key}">${opt("null", "Don't know")}${opt("true", "Yes")}${opt("false", "No")}</select></label>`;
 }
 
-function suggestionFields(pub) {
+function suggestionFields(pub, submitLabel) {
   return `
-    <h3>Facilities</h3>
-    ${Object.entries(FACILITIES).map(([k, [icon, label]]) => triSelect(k, `${icon} ${label}`, pub?.facilities[k] ?? null)).join("")}
-    <h3>Drinks available</h3>
+    <p class="sec">Facilities</p>
+    ${Object.entries(FACILITIES).map(([k, label]) => triSelect(k, label, pub?.facilities[k] ?? null)).join("")}
+    <p class="sec">Drinks available</p>
     ${Object.entries(DRINKS).map(([k, label]) => triSelect(k, label, pub?.drinks[k] ?? null)).join("")}
-    <label>Anything else? <textarea name="note" rows="2" maxlength="500"></textarea></label>
-    <button type="submit" class="primary">Send for approval</button>
+    <label class="field" for="f-note">Anything else? (optional)<textarea id="f-note" name="note" rows="2" maxlength="500"></textarea></label>
+    <button type="submit" class="btn">${submitLabel}</button>
     <div id="form-msg"></div>`;
 }
 
 function readFlags(form, pub) {
+  const current = pub ? flagsOf(pub) : {};
   const flags = {};
   for (const key of [...Object.keys(FACILITIES), ...Object.keys(DRINKS)]) {
     const v = form.elements[key].value;
     if (v === "null") continue;
-    const current = pub ? { ...pub.facilities, ...pub.drinks }[key] : null;
-    if (v !== String(current)) flags[key] = v === "true";
+    if (v !== String(current[key] ?? null)) flags[key] = v === "true";
   }
   return flags;
 }
 
-async function submitSuggestion(url, body) {
-  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+async function submitSuggestion(form, url, body) {
   const msg = $("form-msg");
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
   if (res.ok) {
-    msg.className = "notice";
-    msg.textContent = "Thanks! Your suggestion will appear once it's been checked.";
-    $("drawer-body").querySelector("button[type=submit]").disabled = true;
+    form.outerHTML = `<div class="toast"><strong>✓ Thanks!</strong> Your suggestion will show up once it's been checked.</div>`;
   } else {
     const err = await res.json().catch(() => ({}));
-    msg.className = "error";
-    msg.textContent = typeof err.detail === "string" ? err.detail : "Sorry, that didn't work. Please check the form.";
+    msg.className = "toast error";
+    msg.textContent = res.status === 400 && err.detail === "Nothing to change"
+      ? "You haven't changed anything yet. Pick Yes or No for something that's different."
+      : typeof err.detail === "string" ? err.detail : "That didn't send. Check the form and try again.";
   }
 }
 
 function openSuggestForm(pub) {
   openDrawer(`
-    <h2>Suggest an edit</h2>
-    <p class="muted">${esc(pub.name)} · only change what you know. Edits are checked before they go live.</p>
-    <form id="suggest-form" class="form-grid">${suggestionFields(pub)}</form>`);
+    ${sheetHead("Suggest an edit", `${esc(pub.name)} · change only what you know. We check suggestions before they go live.`)}
+    <form id="suggest-form" class="form">${suggestionFields(pub, "Submit suggestion")}</form>`);
   $("suggest-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const form = e.target;
-    submitSuggestion(`/api/pubs/${pub.id}/suggestions`, { flags: readFlags(form, pub), note: form.elements.note.value || null });
+    submitSuggestion(form, `/api/pubs/${pub.id}/suggestions`, { flags: readFlags(form, pub), note: form.elements.note.value || null });
   });
 }
 
-// Adding a missing pub: drag a pin to where it is, then fill in what you know.
-let addPubMarker = null;
-function clearAddPubMarker() {
-  if (addPubMarker) addPubMarker.remove();
-  addPubMarker = null;
-}
-
+// Adding a missing pub: drag a pin on a small map to where it is, then fill in what you know.
 $("add-pub").addEventListener("click", () => {
-  clearAddPubMarker();
-  addPubMarker = L.marker(map.getCenter(), { draggable: true, icon: pubIcon }).addTo(map)
-    .bindTooltip("Drag me to the pub", { permanent: true, direction: "top" });
   openDrawer(`
-    <h2>Add a missing pub</h2>
-    <p class="muted">Drag the pin on the map to where the pub is.</p>
-    <form id="new-pub-form" class="form-grid">
-      <label>Pub name <input name="name" required maxlength="120"></label>
-      <label>Address <input name="address" maxlength="200"></label>
-      <label>Postcode <input name="postcode" maxlength="10"></label>
-      ${suggestionFields(null)}
+    ${sheetHead("Add a missing pub", "Drag the pin to the right spot, then fill in what you know.")}
+    <div id="pin-map" class="pin-map"></div>
+    <p class="hint">Drag the pin to where the pub is.</p>
+    <form id="new-pub-form" class="form">
+      <label class="field" for="f-name">Pub name<input id="f-name" name="name" required maxlength="120" placeholder="Name of the pub"></label>
+      <label class="field" for="f-address">Street or area<input id="f-address" name="address" maxlength="200" placeholder="Street address, Halifax"></label>
+      <label class="field" for="f-postcode">Postcode<input id="f-postcode" name="postcode" maxlength="10" placeholder="HX1 …"></label>
+      ${suggestionFields(null, "Suggest this pub")}
     </form>`);
+
+  const start = map.getCenter();
+  pinMap = L.map("pin-map", { zoomControl: false }).setView(start, 16);
+  L.tileLayer(TILES, { maxZoom: 19, attribution: TILE_CREDIT }).addTo(pinMap);
+  const pin = L.marker(start, { draggable: true, icon: pubIcon(true) }).addTo(pinMap);
+  pinMap.on("click", (e) => pin.setLatLng(e.latlng));
+
   $("new-pub-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const f = e.target.elements;
-    const { lat, lng } = addPubMarker.getLatLng();
-    submitSuggestion("/api/suggestions", {
+    const form = e.target;
+    const f = form.elements;
+    const { lat, lng } = pin.getLatLng();
+    submitSuggestion(form, "/api/suggestions", {
       name: f.name.value, address: f.address.value || null, postcode: f.postcode.value || null,
-      lat, lng, flags: readFlags(e.target, null), note: f.note.value || null,
+      lat, lng, flags: readFlags(form, null), note: f.note.value || null,
     });
   });
 });
 
 // ─── Start ────────────────────────────────────────────────────────────────────
 
-$("where-status").textContent = "Showing Halifax town centre. Use your location, a postcode, or tap the map.";
+$("where-status").textContent = "Showing Halifax town centre. Use Near me, a postcode, or tap the map.";
 search();
