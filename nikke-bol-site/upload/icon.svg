@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#3a0d2e"/>
+  <path d="M256 56 L456 256 L256 456 L56 256 Z" fill="#ff3d8b"/>
+  <path d="M256 96 L416 256 L256 416 L96 256 Z" fill="none" stroke="#ffb627" stroke-width="10" stroke-dasharray="18 14" stroke-linecap="round"/>
+  <text x="256" y="318" text-anchor="middle" font-family="Baloo Paaji 2, Mukta Mahee, Noto Sans Gurmukhi, sans-serif" font-weight="800" font-size="230" fill="#fff4e8">ੳ</text>
+</svg>

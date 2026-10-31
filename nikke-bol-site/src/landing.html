@@ -1,0 +1,854 @@
+<title>Nikke Bol</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Nikke Bol (ਨਿੱਕੇ ਬੋਲ) is a Punjabi learning app for babies, children and families: over 700 words, letters and sentences, all spoken in Punjabi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Baloo+Paaji+2:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: one embroidered cloth. A live phulkari hero where Gurmukhi letters float, speak and can be stirred
+   with a golden thread, then sections joined by running stitches, with Punjabi words that speak when tapped. */
+:root {
+  --ground: #3a0d2e;      /* phulkari base cloth, the app's own ground */
+  --ground-2: #4b1440;
+  --ground-3: #5f2a50;
+  --thread: #fff4e8;      /* cream silk: text on the ground */
+  --thread-dim: rgba(255, 244, 232, .76);
+  --stitch: rgba(255, 182, 39, .5);
+  --gold: #ffb627;
+  --magenta: #ff3d8b;
+  --teal: #16c2b0;
+  --card: #fff8ef;
+  --chip: #fde9d6;
+  --ink: #2b0a22;
+  --ink-soft: #74435f;
+  --display: "Baloo Paaji 2", "Mukta Mahee", "Noto Sans Gurmukhi", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Baloo Paaji 2", "Noto Sans Gurmukhi", system-ui, sans-serif;
+  --r: 28px;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--ground); color: var(--thread); font: 400 1.0625rem/1.6 var(--body); -webkit-font-smoothing: antialiased; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.05; margin: 0; text-wrap: balance; }
+p { margin: 0; }
+[lang="pa"] { font-family: var(--display); }
+a { color: var(--gold); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px dashed var(--gold); outline-offset: 4px; border-radius: 8px; }
+.wrap { width: 100%; max-width: 1180px; margin-inline: auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.eyebrow { font: 700 .8rem/1.2 var(--display); letter-spacing: .2em; text-transform: uppercase; color: var(--thread-dim); }
+
+/* A running stitch that slowly travels, used between bands */
+.stitchline { position: relative; }
+.stitchline::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px;
+  background: repeating-linear-gradient(90deg, var(--stitch) 0 14px, transparent 14px 24px); animation: march 3s linear infinite; }
+@keyframes march { to { background-position: 48px 0; } }
+
+/* ---------- Hero: the cloth ---------- */
+.hero { position: relative; overflow: hidden; isolation: isolate;
+  background: radial-gradient(ellipse 70% 60% at 72% 35%, #5d1748 0%, rgba(58, 13, 46, 0) 70%), var(--ground); }
+#cloth { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; touch-action: pan-y; }
+.hero::after { content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(58, 13, 46, .88) 0%, rgba(58, 13, 46, .5) 30%, rgba(58, 13, 46, 0) 47%); }
+/* The hero's content lets taps fall through to the 3D letters, except where there is something to read or press. */
+.hero > .wrap { position: relative; z-index: 1; padding-block: 20px 40px; display: flex; flex-direction: column; gap: 28px; pointer-events: none; }
+.top, .pitch, .stage-top, .caption, .chips { pointer-events: auto; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--thread); }
+.brand svg { flex: none; transition: transform .6s cubic-bezier(.3, 1.6, .5, 1); }
+.brand:hover svg { transform: rotate(90deg); }
+.brand b { font: 800 1.6rem/1 var(--display); color: var(--gold); }
+.brand small { display: block; font: 700 .72rem/1.2 var(--display); letter-spacing: .18em; text-transform: uppercase; color: var(--thread-dim); }
+.soon { display: inline-flex; align-items: center; gap: 10px; padding: 10px 18px; border: 2px dashed var(--stitch); border-radius: 999px; font: 700 .95rem/1.2 var(--display); color: var(--thread); background: rgba(58, 13, 46, .55); }
+.soon i { width: 9px; height: 9px; background: var(--teal); transform: rotate(45deg); flex: none; animation: blink 2.4s ease-in-out infinite; }
+@keyframes blink { 50% { transform: rotate(45deg) scale(1.6); box-shadow: 0 0 12px var(--teal); } }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 24px; align-items: stretch; }
+.pitch { display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-block: 24px; max-width: 36rem; }
+.pitch h1 { display: flex; flex-direction: column; gap: 10px; }
+.pitch h1 .pa { font-size: clamp(3.1rem, 7.4vw, 5.9rem); font-weight: 800; color: var(--gold); line-height: 1.12; }
+.pitch h1 .pa span { display: inline-block; animation: rise .9s cubic-bezier(.2, 1.4, .4, 1) both; }
+.pitch h1 .pa span:nth-child(2) { animation-delay: .12s; }
+.pitch h1 .pa span:nth-child(3) { animation-delay: .24s; }
+.pitch h1 .en { font-size: clamp(1.7rem, 3.4vw, 2.7rem); font-weight: 700; color: var(--thread); animation: rise .9s .4s cubic-bezier(.2, 1, .4, 1) both; }
+.lede { font-size: 1.15rem; color: var(--thread-dim); max-width: 34rem; animation: rise .9s .55s cubic-bezier(.2, 1, .4, 1) both; }
+.lede b { color: var(--thread); }
+@keyframes rise { from { transform: translateY(28px); opacity: .1; } }
+.stage { position: relative; min-height: 560px; display: flex; flex-direction: column; justify-content: space-between; gap: 12px; }
+.stage-top { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+.tally { display: flex; align-items: center; gap: 10px; font: 700 .95rem/1 var(--display); color: var(--thread-dim); }
+.tally .dots { display: flex; gap: 4px; }
+.tally .dots i { width: 10px; height: 10px; transform: rotate(45deg); border: 2px solid var(--stitch); transition: background .3s, transform .3s, border-color .3s; }
+.tally .dots i.on { background: var(--gold); border-color: var(--gold); transform: rotate(45deg) scale(1.15); }
+.tally.done .dots i { background: var(--magenta); border-color: var(--magenta); animation: blink 1.2s ease-in-out infinite; }
+.tally.done .dots i:nth-child(odd) { animation-delay: .3s; }
+.tap-hint { display: inline-flex; align-items: center; gap: 8px; font: 700 .95rem/1 var(--display); color: var(--thread-dim); }
+.tap-hint svg { flex: none; }
+.caption { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px;
+  padding: 14px 16px 14px 14px; border-radius: var(--r); background: var(--card); color: var(--ink); box-shadow: 0 8px 0 rgba(0, 0, 0, .28); }
+.caption.fresh { animation: bump .5s cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes bump { 40% { transform: scale(1.04) rotate(-.6deg); } }
+.cap-letter { width: 74px; height: 74px; border-radius: 22px; display: grid; place-items: center; font: 800 2.9rem/1 var(--display); color: var(--magenta); background: var(--chip); outline: 2px dashed #e8b98f; outline-offset: -7px; padding-top: 6px; }
+.cap-letter.sticker { background: radial-gradient(circle at 35% 30%, #fff 0 18%, var(--gold) 19% 100%); outline-color: var(--ink); font-size: 2.4rem; padding-top: 0; border-radius: 50%; }
+.cap-text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.cap-text b { font: 800 1.45rem/1.15 var(--display); }
+.cap-text .tr { color: var(--ink-soft); font-weight: 700; }
+.cap-word { color: var(--ink-soft); font-size: 1rem; }
+.cap-word [lang="pa"] { color: var(--ink); font-weight: 700; font-size: 1.15rem; }
+.cap-play { width: 52px; height: 52px; border: 0; border-radius: 50%; background: var(--gold); color: var(--ink); display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 0 rgba(0, 0, 0, .2); }
+.cap-play:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0, 0, 0, .2); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chips button { width: 52px; height: 52px; border-radius: 16px; border: 2px dashed var(--stitch); background: var(--card); color: var(--ground); font: 800 1.7rem/1 var(--display); padding-top: 4px; cursor: pointer; }
+.chips button[aria-pressed="true"] { background: var(--gold); border-color: var(--ink); }
+/* With the 3D letters running, the chips are the keyboard route: hidden until focused. */
+.live .chips:not(:focus-within) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.live .chips:focus-within { position: absolute; left: 0; right: 0; top: 48px; z-index: 2; padding: 12px; border-radius: var(--r); background: rgba(58, 13, 46, .94); }
+.hero:not(.live) .stage { min-height: 0; justify-content: center; }
+
+/* ---------- Speakable Punjabi words ---------- */
+.say { position: relative; cursor: pointer; border: 0; transition: transform .2s cubic-bezier(.3, 1.6, .5, 1); }
+.say:hover { transform: translateY(-3px) rotate(-2deg); }
+.say:active { transform: scale(.94); }
+.say.speaking { animation: talk .5s ease-in-out infinite alternate; }
+.say.speaking::after { content: ""; position: absolute; inset: -6px; border-radius: inherit; border: 2px dashed var(--magenta); animation: ring 1s linear infinite; pointer-events: none; }
+@keyframes talk { to { transform: translateY(-4px) scale(1.06); } }
+@keyframes ring { from { opacity: 1; } to { opacity: .2; inset: -12px; } }
+.say-note { display: inline-flex; align-items: center; gap: 8px; color: var(--gold); font-weight: 700; }
+
+/* ---------- Bands ---------- */
+.band { padding-block: clamp(56px, 8vw, 96px); }
+.band-head { display: flex; flex-direction: column; gap: 12px; max-width: 44rem; margin-bottom: 40px; }
+.band-head h2 { font-size: clamp(2.1rem, 4.4vw, 3.3rem); font-weight: 800; }
+.band-head h2 [lang="pa"] { color: var(--gold); }
+.band-head p { color: var(--thread-dim); font-size: 1.12rem; }
+
+/* What's inside */
+.inside { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+.phones { position: relative; height: 560px; max-width: 100%; perspective: 1100px; }
+.phone { position: absolute; width: 230px; max-width: 58%; transition: transform .25s ease-out; }
+.phone .screen { border: 9px solid #1f0618; border-radius: 38px; overflow: hidden; background: #1f0618; box-shadow: 0 24px 48px rgba(0, 0, 0, .45); animation: float 6s ease-in-out infinite; }
+.phone.two .screen { animation-delay: -3s; }
+.phone img { display: block; width: 100%; height: auto; }
+.phone.one { left: 4%; top: 30px; transform: rotate(-6deg) rotateY(calc(var(--ry, 0) * 1deg)) rotateX(calc(var(--rx, 0) * 1deg)); }
+.phone.two { right: 4%; top: 64px; transform: rotate(5deg) rotateY(calc(var(--ry, 0) * 1.4deg)) rotateX(calc(var(--rx, 0) * 1.4deg)); }
+@keyframes float { 50% { transform: translateY(-14px); } }
+.feats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.feat { display: flex; flex-direction: column; gap: 10px; padding: 22px 22px 24px; border-radius: var(--r); background: var(--card); color: var(--ink); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), box-shadow .3s; }
+.feat:hover { transform: translateY(-6px) rotate(-.5deg); box-shadow: 0 14px 0 rgba(0, 0, 0, .22); }
+.feat h3 { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.feat h3 [lang="pa"] { font-size: 2rem; font-weight: 800; color: var(--magenta); line-height: 1.2; }
+.feat h3 span:last-child { font-size: 1.15rem; font-weight: 700; }
+.feat p { color: var(--ink-soft); font-size: 1rem; line-height: 1.5; }
+.feat p [lang="pa"] { color: var(--ink); font-weight: 700; }
+.feat .say.inline { display: inline; padding: 0 6px; border-radius: 10px; background: var(--chip); color: var(--ink); font: 700 1.05rem/1.5 var(--display); }
+.strip { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; padding-top: 6px; }
+.strip .say { min-width: 2.3em; padding: 6px 8px 3px; border-radius: 12px; text-align: center; font: 700 1.25rem/1.2 var(--display); background: var(--chip); color: var(--ink); }
+.strip.swatches .say { min-width: 0; font-size: 1.05rem; padding-inline: 12px; color: var(--sw-ink, var(--ink)); background: var(--sw); }
+
+/* The path: a needle runs along the stitch and each unit hops as it passes */
+.path { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 12px; position: relative; }
+.path::before { content: ""; position: absolute; left: 6%; right: 6%; top: 44px; border-top: 4px dotted rgba(255, 182, 39, .6); z-index: 0; }
+.path::after { content: ""; position: absolute; top: 37px; left: 6%; width: 18px; height: 18px; margin-left: -9px; z-index: 2; background: var(--thread); transform: rotate(45deg); box-shadow: 0 0 14px var(--gold), 0 0 4px #fff; animation: needle 8s linear infinite; pointer-events: none; }
+@keyframes needle { 0% { left: 6%; opacity: 0; } 4% { opacity: 1; } 96% { opacity: 1; } 100% { left: 94%; opacity: 0; } }
+.path li { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
+.node { width: 88px; height: 88px; border-radius: 50%; display: grid; place-items: center; font: 800 2.3rem/1 var(--display); background: var(--gold); color: var(--ink); box-shadow: 0 7px 0 rgba(0, 0, 0, .28); animation: hop 8s linear infinite; }
+@keyframes hop { 0% { transform: translateY(-10px) scale(1.12); } 5%, 100% { transform: none; } }
+.path li:nth-child(1) .node { animation-delay: .02s; }
+.path li:nth-child(2) .node { animation-delay: 1.16s; }
+.path li:nth-child(3) .node { animation-delay: 2.3s; }
+.path li:nth-child(4) .node { animation-delay: 3.43s; }
+.path li:nth-child(5) .node { animation-delay: 4.57s; }
+.path li:nth-child(6) .node { animation-delay: 5.7s; }
+.path li:nth-child(7) .node { animation-delay: 6.84s; background: var(--magenta); color: #fff; outline: 4px dashed rgba(255, 244, 232, .7); outline-offset: 5px; }
+.path li:nth-child(8) .node { animation-delay: 7.98s; }
+.path li.more .node { background: var(--ground-3); color: var(--thread); font-size: 1.3rem; }
+.path b { font: 800 1.15rem/1.15 var(--display); }
+.path small { font-size: .9rem; color: var(--thread-dim); }
+.stars { color: var(--gold); letter-spacing: .1em; font-size: .9rem; }
+.stars i { font-style: normal; color: rgba(255, 244, 232, .25); }
+.habits { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 48px; }
+.habit { display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; border-radius: 22px; border: 2px dashed var(--stitch); transition: border-color .3s, transform .3s; }
+.habit:hover { border-color: var(--gold); transform: translateY(-4px); }
+.habit b { font: 800 1.2rem/1.2 var(--display); color: var(--thread); }
+.habit span { color: var(--thread-dim); font-size: .98rem; }
+.ring-demo { width: 34px; height: 34px; margin-bottom: 4px; }
+.ring-demo circle { fill: none; stroke-width: 5; }
+.ring-demo .bg { stroke: rgba(255, 244, 232, .15); }
+.ring-demo .fg { stroke: var(--gold); stroke-linecap: round; stroke-dasharray: 101; stroke-dashoffset: 101; transform: rotate(-90deg); transform-origin: center; animation: fill 4s ease-in-out infinite; }
+@keyframes fill { 60%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 101; } }
+
+/* Levels */
+.levels { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.level { display: flex; flex-direction: column; gap: 8px; padding: 24px; border-radius: var(--r); background: var(--ground-2); border: 2px solid var(--ground-3); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), border-color .3s; }
+.level:hover { transform: translateY(-6px); border-color: var(--gold); }
+.level [lang="pa"] { font: 800 2.6rem/1.15 var(--display); color: var(--gold); }
+.level b { font: 700 1.25rem/1.2 var(--display); }
+.level p { color: var(--thread-dim); }
+.level .who { margin-top: auto; padding-top: 8px; font-size: .9rem; color: var(--teal); font-weight: 700; letter-spacing: .04em; }
+
+/* Free to start */
+.price { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: stretch; }
+.plan { display: flex; flex-direction: column; gap: 14px; padding: 28px; border-radius: var(--r); }
+.plan.free { border: 2px dashed var(--stitch); }
+.plan.full { position: relative; overflow: hidden; background: var(--gold); color: var(--ink); box-shadow: 0 8px 0 rgba(0, 0, 0, .25); }
+.plan.full::after { content: ""; position: absolute; inset: -40%; background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, .45) 50%, transparent 60%); animation: shine 5s ease-in-out infinite; pointer-events: none; }
+@keyframes shine { 0%, 55% { transform: translateX(-60%); } 100% { transform: translateX(60%); } }
+.plan h3 { font-size: 1.9rem; font-weight: 800; }
+.plan .note { font-weight: 700; }
+.plan.free .note { color: var(--thread-dim); }
+.plan ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.plan li { position: relative; padding-left: 26px; }
+.plan li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 9px; height: 9px; transform: rotate(45deg); background: var(--teal); }
+.plan.full li::before { background: var(--magenta); }
+
+/* Promises + foot */
+.promises { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.promise { display: flex; flex-direction: column; gap: 4px; }
+.promise b { display: flex; align-items: center; gap: 10px; font: 800 1.25rem/1.2 var(--display); }
+.promise b::before { content: ""; width: 12px; height: 12px; flex: none; transform: rotate(45deg); background: var(--gold); outline: 2px solid var(--magenta); outline-offset: 2px; }
+.promise span { color: var(--thread-dim); }
+.foot { padding-block: clamp(64px, 9vw, 110px) 40px; text-align: center; }
+.foot .wrap { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+.foot .proverb { font: 800 clamp(2.2rem, 6vw, 4.4rem)/1.2 var(--display); color: var(--gold); }
+.foot .proverb span { display: inline-block; transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), color .3s; }
+.foot .proverb span:hover { transform: translateY(-8px) rotate(-4deg); color: var(--magenta); }
+.foot .proverb-en { font-size: 1.25rem; color: var(--thread); }
+.foot small { color: var(--thread-dim); font-size: .9rem; margin-top: 24px; }
+
+/* ---------- Narrow screens ---------- */
+@media (max-width: 900px) {
+  .hero-grid, .inside, .price { grid-template-columns: minmax(0, 1fr); }
+  .hero::after { background: linear-gradient(180deg, rgba(58, 13, 46, .7) 0%, rgba(58, 13, 46, 0) 45%); }
+  .top .soon { font-size: .85rem; padding: 8px 14px; }
+  .pitch { padding-block: 8px 0; }
+  .stage { min-height: 500px; }
+  .phones { height: 470px; max-width: 520px; width: 100%; margin-inline: auto; }
+  .feats { grid-template-columns: minmax(0, 1fr); }
+  .path { grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 28px; }
+  .path::before, .path::after { display: none; }
+  .node { animation: none; }
+  .habits, .promises { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .levels { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 520px) {
+  .node { width: 68px; height: 68px; font-size: 1.8rem; }
+  .path b { font-size: 1rem; }
+  .habits, .promises { grid-template-columns: minmax(0, 1fr); }
+  .phone { width: 190px; }
+  .phones { height: 420px; }
+  .cap-letter { width: 62px; height: 62px; font-size: 2.4rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .path::after { display: none; }
+}
+</style>
+
+<section class="hero" id="hero">
+  <canvas id="cloth" aria-hidden="true"></canvas>
+  <div class="wrap">
+    <header class="top">
+      <a class="brand" href="#hero" aria-label="Nikke Bol">
+        <svg width="46" height="46" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="112" fill="#2a0921"/><path d="M256 56 L456 256 L256 456 L56 256 Z" fill="#ff3d8b"/><path d="M256 96 L416 256 L256 416 L96 256 Z" fill="none" stroke="#ffb627" stroke-width="12" stroke-dasharray="18 14" stroke-linecap="round"/><text x="256" y="322" text-anchor="middle" font-family="Baloo Paaji 2, sans-serif" font-weight="800" font-size="230" fill="#fff4e8">ੳ</text></svg>
+        <span><b lang="pa">ਨਿੱਕੇ ਬੋਲ</b><small>Nikke Bol · little words</small></span>
+      </a>
+      <span class="soon"><i></i>Coming soon to the App Store and Google Play</span>
+    </header>
+
+    <div class="hero-grid">
+      <div class="pitch">
+        <p class="eyebrow">A Punjabi app for families</p>
+        <h1><span class="pa" lang="pa"><span>ਆਓ</span> <span>ਪੰਜਾਬੀ</span> <span>ਸਿੱਖੀਏ</span></span><span class="en">Let’s learn Punjabi together</span></h1>
+        <p class="lede">For babies, children and the grown-ups who love them. <b>Over 700 words, letters and sentences, all spoken in Punjabi</b>, from a baby’s first words to reading and writing Gurmukhi.</p>
+      </div>
+
+      <div class="stage" id="stage">
+        <div class="stage-top" id="stageTop">
+          <p class="tally" id="tally"><span class="dots" aria-hidden="true"></span><span id="tallyText">Hear all 12 letters</span></p>
+          <p class="tap-hint"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg><span id="hintText">Tap a letter to hear it</span></p>
+        </div>
+        <div class="chips" id="chips" role="group" aria-label="Hear a letter of the ਪੈਂਤੀ"></div>
+        <div class="caption" id="caption" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band stitchline" aria-labelledby="inside-h">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">What’s inside</p>
+      <h2 id="inside-h">Hear it, read it, write it, <span lang="pa">ਬੋਲੋ</span></h2>
+      <p>Short, playful lessons that build on each other. Every word has a real Punjabi voice, so children hear it the way it should sound.</p>
+      <p class="say-note"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/></svg>Tap the Punjabi words below to hear them, just like in the app.</p>
+    </div>
+    <div class="inside">
+      <div class="phones" id="phones">
+        <div class="phone one"><div class="screen"><img src="__SHOT_PATH__" alt="The Nikke Bol learning path, with the word of the day and the first units: Hello, Family and Colours" width="460" height="997"></div></div>
+        <div class="phone two"><div class="screen"><img src="__SHOT_WORD__" alt="A word card in Nikke Bol: ਪੀਲਾ, peela, yellow, with a chick" width="460" height="997"></div></div>
+      </div>
+      <div class="feats">
+        <article class="feat">
+          <h3><span lang="pa">ਸੁਣੋ</span><span>Hear every word</span></h3>
+          <p>Colours, numbers, family, food, animals, days and months. Tap a card and it speaks. No setup and no internet needed.</p>
+          <div class="strip swatches" lang="pa">
+            <button class="say" type="button" data-say="ਲਾਲ" style="--sw:#e8333a;--sw-ink:#fff" aria-label="Hear ਲਾਲ, red">ਲਾਲ</button>
+            <button class="say" type="button" data-say="ਨੀਲਾ" style="--sw:#2f6fdf;--sw-ink:#fff" aria-label="Hear ਨੀਲਾ, blue">ਨੀਲਾ</button>
+            <button class="say" type="button" data-say="ਪੀਲਾ" style="--sw:#ffd21f" aria-label="Hear ਪੀਲਾ, yellow">ਪੀਲਾ</button>
+            <button class="say" type="button" data-say="ਹਰਾ" style="--sw:#3bb54a;--sw-ink:#fff" aria-label="Hear ਹਰਾ, green">ਹਰਾ</button>
+          </div>
+        </article>
+        <article class="feat">
+          <h3><span lang="pa">ਪੜ੍ਹੋ</span><span>Read Gurmukhi</span></h3>
+          <p>The 35 letters of the <span lang="pa">ਪੈਂਤੀ</span>, then one vowel sign at a time, up to the full <span lang="pa">ਬਾਰਾਂਖੜੀ</span> sound chart.</p>
+          <div class="strip" lang="pa" id="chart"></div>
+        </article>
+        <article class="feat">
+          <h3><span lang="pa">ਲਿਖੋ</span><span>Write with a finger</span></h3>
+          <p>Trace each letter on the screen. The app checks how much of the letter you covered and cheers when it’s done.</p>
+          <div class="strip" lang="pa" id="firstLetters"></div>
+        </article>
+        <article class="feat">
+          <h3><span lang="pa">ਬੋਲੋ</span><span>Speak and make sentences</span></h3>
+          <p>Build <button class="say inline" type="button" data-say="ਇਹ ਨੀਲੀ ਗੱਡੀ ਹੈ" lang="pa" aria-label="Hear ਇਹ ਨੀਲੀ ਗੱਡੀ ਹੈ, this is a blue car">ਇਹ ਨੀਲੀ ਗੱਡੀ ਹੈ</button> and see why <span lang="pa">ਨੀਲਾ</span> becomes <span lang="pa">ਨੀਲੀ</span>. Record yourself and compare with the app’s voice. Nani and Dadi can record words too.</p>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band stitchline" aria-labelledby="path-h">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">The learning path</p>
+      <h2 id="path-h">38 short units, one step at a time</h2>
+      <p>Each unit teaches a handful of cards, then a quick quiz. Answers right first time earn up to three stars and open the next unit.</p>
+    </div>
+    <ol class="path">
+      <li><button class="node say" type="button" data-say="ਸਤ ਸ੍ਰੀ ਅਕਾਲ" aria-label="Hear ਸਤ ਸ੍ਰੀ ਅਕਾਲ, hello">👋</button><b lang="pa">ਸਤ ਸ੍ਰੀ ਅਕਾਲ</b><small>Hello</small><span class="stars" aria-label="3 stars">★★★</span></li>
+      <li><button class="node say" type="button" data-say="ਪਰਿਵਾਰ" aria-label="Hear ਪਰਿਵਾਰ, family">👨‍👩‍👧</button><b lang="pa">ਪਰਿਵਾਰ</b><small>Family</small><span class="stars" aria-label="3 stars">★★★</span></li>
+      <li><button class="node say" type="button" data-say="ਰੰਗ" aria-label="Hear ਰੰਗ, colours">🎨</button><b lang="pa">ਰੰਗ</b><small>Colours</small><span class="stars" aria-label="2 stars">★★<i>★</i></span></li>
+      <li><button class="node say" type="button" data-say="ਪੈਂਤੀ" lang="pa" aria-label="Hear ਪੈਂਤੀ, the alphabet">ੳ</button><b lang="pa">ਪੈਂਤੀ ੧</b><small>First letters</small><span class="stars" aria-label="3 stars">★★★</span></li>
+      <li><button class="node say" type="button" data-say="ਇੱਕ ਤੋਂ ਪੰਜ" aria-label="Hear ਇੱਕ ਤੋਂ ਪੰਜ, one to five">🔢</button><b lang="pa">੧ ਤੋਂ ੫</b><small>Numbers 1–5</small><span class="stars" aria-label="2 stars">★★<i>★</i></span></li>
+      <li><button class="node say" type="button" data-say="ਜਾਨਵਰ" aria-label="Hear ਜਾਨਵਰ, animals">🐄</button><b lang="pa">ਜਾਨਵਰ</b><small>Animals</small><span class="stars" aria-label="3 stars">★★★</span></li>
+      <li><button class="node say" type="button" data-say="ਮੁਕਤਾ" lang="pa" aria-label="Hear ਮੁਕਤਾ, the first reading lesson">ਘਰ</button><b lang="pa">ਮੁਕਤਾ</b><small>Reading · a</small><span class="stars">Up next</span></li>
+      <li class="more"><span class="node" aria-hidden="true">+31</span><b>And more</b><small>Food, body, days, months, every vowel sign</small></li>
+    </ol>
+    <div class="habits">
+      <div class="habit"><svg class="ring-demo" viewBox="0 0 40 40" aria-hidden="true"><circle class="bg" cx="20" cy="20" r="16"/><circle class="fg" cx="20" cy="20" r="16"/></svg><b>A daily goal</b><span>5 to 20 minutes. A ring fills as you play.</span></div>
+      <div class="habit"><b>Streaks with a rest day</b><span>Miss one day a week and the streak keeps going.</span></div>
+      <div class="habit"><b>22 stickers</b><span>From “First word” to a 30-day streak.</span></div>
+      <div class="habit"><b>A gentle reminder</b><span>With a Punjabi word of the day, only on days you haven’t played.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="band stitchline" aria-labelledby="levels-h">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">Three levels</p>
+      <h2 id="levels-h">One app for the whole family</h2>
+      <p>Each learner gets their own profile, path and streak. Brothers, sisters, cousins and grown-ups can all learn on one phone.</p>
+    </div>
+    <div class="levels">
+      <div class="level"><span lang="pa">ਨਿੱਕੇ</span><b>Baby</b><p>Big pictures and sounds. Tap, listen, repeat.</p><span class="who">Babies and toddlers</span></div>
+      <div class="level"><span lang="pa">ਬੱਚੇ</span><b>Child</b><p>The learning path, reading and writing Gurmukhi, games and review.</p><span class="who">Ages 3 to 8</span></div>
+      <div class="level"><span lang="pa">ਵੱਡੇ</span><b>Grown-up</b><p>Everything, plus tones, grammar notes and harder quizzes.</p><span class="who">Parents learning alongside</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="band stitchline" aria-labelledby="price-h">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">Free to start</p>
+      <h2 id="price-h">Try it free. Unlock it once.</h2>
+      <p>No subscription and no ads. One payment unlocks everything for every learner on the phone.</p>
+    </div>
+    <div class="price">
+      <div class="plan free">
+        <h3>Free</h3>
+        <p class="note">Yours as soon as you download</p>
+        <ul>
+          <li>All the word cards and the find-it game</li>
+          <li>The first 7 units of the learning path</li>
+          <li>The vowel letters and the first reading lesson</li>
+          <li>Stickers, streaks, the calendar and word of the day</li>
+          <li>Family voice recordings</li>
+        </ul>
+      </div>
+      <div class="plan full">
+        <h3>The full app</h3>
+        <p class="note">One payment, kept forever</p>
+        <ul>
+          <li>The whole 38-unit learning path</li>
+          <li>Every reading lesson and the <span lang="pa">ਬਾਰਾਂਖੜੀ</span> sound chart</li>
+          <li>Writing, sentences, listen &amp; say it, and review</li>
+          <li>Tones for grown-up learners</li>
+          <li>More learners on one phone</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band stitchline" aria-labelledby="safe-h">
+  <div class="wrap">
+    <div class="band-head">
+      <p class="eyebrow">Made for children</p>
+      <h2 id="safe-h">Safe by design</h2>
+    </div>
+    <div class="promises">
+      <div class="promise"><b>Works offline</b><span>Every recording is inside the app. Learn on a plane or at Nani’s.</span></div>
+      <div class="promise"><b>No ads</b><span>Nothing to tap that takes a child out of the app.</span></div>
+      <div class="promise"><b>Nothing collected</b><span>No accounts and no tracking. Progress stays on your phone.</span></div>
+      <div class="promise"><b>Grown-ups check</b><span>Settings and the purchase sit behind a sum only grown-ups can do.</span></div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot stitchline">
+  <div class="wrap">
+    <p class="proverb" lang="pa"><span>ਮਾਂ-ਬੋਲੀ</span> <span>ਘਰ</span> <span>ਤੋਂ</span> <span>ਸ਼ੁਰੂ</span> <span>ਹੁੰਦੀ</span> <span>ਹੈ</span></p>
+    <p class="proverb-en">Our mother tongue begins at home.</p>
+    <span class="soon"><i></i>Coming soon to the App Store and Google Play</span>
+    <small>© 2026 Nikke Bol</small>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(() => {
+  const LETTERS = __LETTERS__;
+  const SAY = __SAY__;
+  const $ = s => document.querySelector(s);
+  const hero = $("#hero"), canvas = $("#cloth"), stage = $("#stage"), cap = $("#caption"), chips = $("#chips");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const SPEAKER = '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4V5z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18.5 5.5a9 9 0 0 1 0 13"/></svg>';
+
+  /* ---- Sound: the app's own recordings, one clip after another ---- */
+  let audio = null, token = 0, talking = null;
+  const play = src => new Promise(done => {
+    const a = new Audio(src); audio = a;
+    a.onended = done; a.onerror = done;
+    a.play().catch(done);
+  });
+  async function speak(clips, el) {
+    const mine = ++token;
+    if (audio) audio.pause();
+    if (talking) talking.classList.remove("speaking");
+    talking = el || null;
+    if (el) el.classList.add("speaking");
+    for (let i = 0; i < clips.length; i++) {
+      if (i) await new Promise(r => setTimeout(r, 240));
+      if (mine !== token) return;
+      await play(clips[i]);
+    }
+    if (mine === token && el) { el.classList.remove("speaking"); talking = null; }
+  }
+
+  /* ---- Speakable words on the page ---- */
+  $("#chart").innerHTML = ["ਕ", "ਕਾ", "ਕਿ", "ਕੀ", "ਕੁ", "ਕੂ", "ਕੇ", "ਕੈ", "ਕੋ", "ਕੌ"].map(s => `<button class="say" type="button" data-say="${s}" aria-label="Hear ${s}">${s}</button>`).join("");
+  $("#firstLetters").innerHTML = LETTERS.slice(0, 5).map((L, i) => `<button class="say" type="button" data-letter="${i}" aria-label="Hear ${L.l}, ${L.nameTr}">${L.l}</button>`).join("");
+  document.addEventListener("click", e => {
+    const b = e.target.closest(".say"); if (!b) return;
+    if (b.dataset.say && SAY[b.dataset.say]) speak([SAY[b.dataset.say]], b);
+    else if (b.dataset.letter) speak([LETTERS[+b.dataset.letter].a1], b);
+  });
+
+  /* ---- Phones lean towards the pointer ---- */
+  const phones = $("#phones");
+  if (!reduce) {
+    phones.addEventListener("pointermove", e => {
+      const r = phones.getBoundingClientRect();
+      phones.style.setProperty("--ry", (((e.clientX - r.left) / r.width - .5) * 22).toFixed(2));
+      phones.style.setProperty("--rx", (-((e.clientY - r.top) / r.height - .5) * 14).toFixed(2));
+    });
+    phones.addEventListener("pointerleave", () => { phones.style.setProperty("--ry", 0); phones.style.setProperty("--rx", 0); });
+  }
+
+  /* ---- Hero letters: caption, tally and the keyboard chips ---- */
+  const heard = new Set();
+  let celebrated = false;
+  $("#tally .dots").innerHTML = LETTERS.map(() => "<i></i>").join("");
+  function renderTally() {
+    $("#tally .dots").querySelectorAll("i").forEach((d, k) => d.classList.toggle("on", heard.has(k)));
+    $("#tallyText").textContent = heard.size === LETTERS.length ? "All 12 heard!" : heard.size ? `${heard.size} of 12 heard` : "Hear all 12 letters";
+    $("#tally").classList.toggle("done", heard.size === LETTERS.length);
+  }
+  function freshen() { cap.classList.remove("fresh"); void cap.offsetWidth; cap.classList.add("fresh"); }
+  function showCaption(i, intro) {
+    const L = LETTERS[i];
+    cap.innerHTML = `<div class="cap-letter" lang="pa">${L.l}</div>
+      <div class="cap-text">${intro
+        ? `<b><span lang="pa">${L.name}</span> <span class="tr">${L.nameTr}</span></b><span class="cap-word">The first letter of the <span lang="pa">ਪੈਂਤੀ</span>, the 35-letter Gurmukhi alphabet.</span>`
+        : `<b><span lang="pa">${L.name}</span> <span class="tr">${L.nameTr}</span></b><span class="cap-word">${L.e} <span lang="pa">${L.word}</span> ${L.wordTr} · ${L.en}</span>`}</div>
+      <button class="cap-play" type="button" aria-label="Hear ${L.nameTr} and ${L.wordTr}">${SPEAKER}</button>`;
+    cap.querySelector(".cap-play").onclick = () => choose(i);
+    if (!intro) freshen();
+  }
+  function showSticker() {
+    cap.innerHTML = `<div class="cap-letter sticker" aria-hidden="true">🏅</div>
+      <div class="cap-text"><b><span lang="pa">ਸ਼ਾਬਾਸ਼!</span> <span class="tr">shabaash</span></b><span class="cap-word">You heard all 12 letters. The app has the other 23 of the <span lang="pa">ਪੈਂਤੀ</span>, and a sticker for learning them all.</span></div>
+      <button class="cap-play" type="button" aria-label="Hear shabaash">${SPEAKER}</button>`;
+    cap.querySelector(".cap-play").onclick = () => { speak([SAY["ਸ਼ਾਬਾਸ਼"]]); if (scene) scene.party(); };
+    freshen();
+  }
+  chips.innerHTML = LETTERS.map((L, i) => `<button type="button" lang="pa" data-i="${i}" aria-pressed="false" aria-label="${L.l}, ${L.nameTr}">${L.l}</button>`).join("");
+  chips.addEventListener("click", e => { const b = e.target.closest("button"); if (b) choose(+b.dataset.i); });
+  function choose(i) {
+    const first = heard.size < LETTERS.length;
+    heard.add(i); renderTally();
+    chips.querySelectorAll("button").forEach((b, k) => b.setAttribute("aria-pressed", String(k === i)));
+    const L = LETTERS[i], all = first && heard.size === LETTERS.length && !celebrated;
+    showCaption(i, false);
+    speak(all ? [L.a1, L.a2, SAY["ਸ਼ਾਬਾਸ਼"]] : [L.a1, L.a2]);
+    if (scene) scene.pulse(i);
+    if (all) { celebrated = true; setTimeout(() => { showSticker(); if (scene) scene.party(); }, 1900); }
+  }
+  showCaption(0, true);
+  renderTally();
+
+  /* ---- The cloth: a phulkari of stitched diamonds, letters above it, a golden thread to stir them ---- */
+  let scene = null;
+  try { if (window.THREE) scene = makeScene(); } catch (e) { scene = null; }
+  if (scene) { hero.classList.add("live"); if (matchMedia("(pointer: fine)").matches) $("#hintText").textContent = "Tap a letter, or drag one around"; }
+
+  function makeScene() {
+    const T = THREE;
+    const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: "low-power" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    const sc = new T.Scene();
+    sc.fog = new T.Fog(0x3a0d2e, 11, 27);
+    const FOV = 40, DIST = 14;
+    const cam = new T.PerspectiveCamera(FOV, 1, 0.1, 80);
+    cam.position.set(0, 0, DIST);
+    const col = { cream: new T.Color("#fff4e8"), gold: new T.Color("#ffb627"), mag: new T.Color("#ff3d8b"), teal: new T.Color("#16c2b0"), dim: new T.Color("#6e2458"), deep: new T.Color("#541a45") };
+    const dummy = new T.Object3D();
+    const easeOut = p => 1 - Math.pow(1 - p, 3);
+    const easeBack = p => { const c = 1.9; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); };
+    const clamp01 = v => Math.max(0, Math.min(1, v));
+
+    // The cloth: each instance is one stitch, coloured in the concentric diamonds of a bagh.
+    const COLS = 76, ROWS = 32, GAP = 0.58, N = COLS * ROWS;
+    const stitchGeo = new T.BufferGeometry();
+    stitchGeo.setAttribute("position", new T.Float32BufferAttribute([0, .17, 0, -.12, 0, 0, 0, -.17, 0, .12, 0, 0], 3));
+    stitchGeo.setIndex([0, 1, 2, 0, 2, 3]);
+    const cloth = new T.InstancedMesh(stitchGeo, new T.MeshBasicMaterial({ side: T.DoubleSide }), N);
+    const local = new Float32Array(N * 3); // x, y, and distance from the centre for the weave-in
+    for (let j = 0, n = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++, n++) {
+      const x = (i - (COLS - 1) / 2) * GAP, y = (j - (ROWS - 1) / 2) * GAP;
+      local[n * 3] = x; local[n * 3 + 1] = y; local[n * 3 + 2] = Math.hypot(x * .7, y);
+      const mi = (i % 10) - 5, mj = ((j + 5) % 10) - 5, d = Math.abs(mi) + Math.abs(mj);
+      cloth.setColorAt(n, d === 0 ? col.cream : d === 1 ? col.mag : d === 2 ? col.gold : d === 3 ? col.mag : d === 4 ? col.gold : d === 5 ? col.teal : (i + j) % 2 ? col.dim : col.deep);
+    }
+    cloth.rotation.x = -1.18;
+    sc.add(cloth);
+
+    // Letters: cream discs with a gold stitched ring, drawn once the Gurmukhi font is ready.
+    const plane = new T.PlaneGeometry(1, 1);
+    const letters = LETTERS.map((L, k) => {
+      const mesh = new T.Mesh(plane, new T.MeshBasicMaterial({ transparent: true, depthWrite: false, fog: false }));
+      mesh.userData.k = k; mesh.renderOrder = 2; sc.add(mesh);
+      return { mesh, base: new T.Vector3(), size: 1, phase: k * 1.7, hover: 0, pulse: 0, spin: 1, ox: 0, oy: 0, vx: 0, vy: 0, lift: 0 };
+    });
+    function drawLetter(L) {
+      const c = document.createElement("canvas"); c.width = c.height = 256;
+      const x = c.getContext("2d");
+      x.shadowColor = "rgba(20, 2, 14, .45)"; x.shadowBlur = 16; x.shadowOffsetY = 9;
+      x.beginPath(); x.arc(128, 122, 108, 0, Math.PI * 2); x.fillStyle = "#fff8ef"; x.fill();
+      x.shadowColor = "transparent";
+      x.setLineDash([15, 11]); x.lineWidth = 6; x.strokeStyle = "#ffb627";
+      x.beginPath(); x.arc(128, 122, 90, 0, Math.PI * 2); x.stroke();
+      x.fillStyle = "#3a0d2e"; x.textAlign = "center"; x.textBaseline = "middle";
+      x.font = '800 128px "Baloo Paaji 2", "Mukta Mahee", "Noto Sans Gurmukhi", sans-serif';
+      x.fillText(L.l, 128, 136);
+      const t = new T.CanvasTexture(c); t.anisotropy = 4;
+      return t;
+    }
+    const paint = () => letters.forEach((o, k) => { if (o.mesh.material.map) o.mesh.material.map.dispose(); o.mesh.material.map = drawLetter(LETTERS[k]); o.mesh.material.needsUpdate = true; });
+    paint();
+    const fontReady = document.fonts && document.fonts.load ? document.fonts.load('800 128px "Baloo Paaji 2"', "ੳਅੲ") : Promise.resolve();
+    Promise.race([fontReady, new Promise(r => setTimeout(r, 2500))]).then(() => { paint(); kick(); });
+
+    // A soft diamond, used for sparks, motes and the needle.
+    const diamondTex = (() => {
+      const c = document.createElement("canvas"); c.width = c.height = 64; const x = c.getContext("2d");
+      const g = x.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.45, "rgba(255,255,255,.9)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      x.translate(32, 32); x.rotate(Math.PI / 4); x.fillStyle = g; x.fillRect(-20, -20, 40, 40);
+      return new T.CanvasTexture(c);
+    })();
+
+    // Sparks: a burst of stitches when a letter is tapped.
+    const bursts = [];
+    function burst(at, n = 46, power = 1) {
+      const pos = new Float32Array(n * 3), colr = new Float32Array(n * 3), vel = [];
+      const palette = [col.gold, col.mag, col.cream, col.teal];
+      for (let i = 0; i < n; i++) {
+        pos.set([at.x, at.y, at.z + .2], i * 3);
+        const a = Math.random() * Math.PI * 2, s = (2.2 + Math.random() * 3.2) * power;
+        vel.push([Math.cos(a) * s, Math.sin(a) * s + 1.2, (Math.random() - .5) * 2]);
+        const c = palette[i % 4]; colr.set([c.r, c.g, c.b], i * 3);
+      }
+      const g = new T.BufferGeometry();
+      g.setAttribute("position", new T.BufferAttribute(pos, 3));
+      g.setAttribute("color", new T.BufferAttribute(colr, 3));
+      const pts = new T.Points(g, new T.PointsMaterial({ size: .26, map: diamondTex, vertexColors: true, transparent: true, depthWrite: false, fog: false }));
+      pts.renderOrder = 3; sc.add(pts);
+      bursts.push({ pts, vel, age: 0 });
+    }
+
+    // Motes: gold specks of thread drifting up through the air.
+    const MOTES = reduce ? 0 : 150, motePos = new Float32Array(Math.max(1, MOTES) * 3), moteSpd = new Float32Array(Math.max(1, MOTES));
+    const motes = new T.Points(new T.BufferGeometry(), new T.PointsMaterial({ size: .12, map: diamondTex, color: 0xffd27a, transparent: true, opacity: .75, depthWrite: false }));
+    motes.geometry.setAttribute("position", new T.BufferAttribute(motePos, 3));
+    motes.visible = MOTES > 0;
+    sc.add(motes);
+
+    // The golden thread: running stitches laid along the pointer's path, shrinking away as they age.
+    const MAXT = 220, threadAt = [];
+    const thread = new T.InstancedMesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ fog: false, transparent: true, depthWrite: false }), MAXT);
+    thread.renderOrder = 4; thread.frustumCulled = false;
+    for (let i = 0; i < MAXT; i++) { thread.setColorAt(i, i % 5 === 4 ? col.mag : i % 2 ? col.gold : col.cream); dummy.scale.set(0, 0, 0); dummy.updateMatrix(); thread.setMatrixAt(i, dummy.matrix); threadAt.push(null); }
+    sc.add(thread);
+    const needle = new T.Mesh(new T.PlaneGeometry(1, 1), new T.MeshBasicMaterial({ map: diamondTex, transparent: true, depthWrite: false, fog: false, color: 0xfff4e8 }));
+    needle.renderOrder = 5; needle.scale.setScalar(0); sc.add(needle);
+    const THREAD_Z = 1.6, STEP = .3, LEN = .21;
+    let nextT = 0, lastStitch = null;
+    function sew(p) {
+      if (!lastStitch || p.distanceTo(lastStitch) > 3) { lastStitch = p.clone(); return; } // first point, or a jump: start a new thread
+      const dir = p.clone().sub(lastStitch);
+      while (dir.length() >= STEP) {
+        dir.setLength(STEP);
+        const a = lastStitch, mid = a.clone().add(dir.clone().setLength(LEN / 2));
+        threadAt[nextT] = { x: mid.x, y: mid.y, ang: Math.atan2(dir.y, dir.x), born: now };
+        nextT = (nextT + 1) % MAXT;
+        lastStitch.add(dir);
+        dir.copy(p).sub(lastStitch);
+      }
+    }
+
+    // Layout: letters sit in the stage's box, the cloth fills the lower part of the hero.
+    let W = 1, H = 1, visH = 1, visW = 1, clothY = 0;
+    const rnd = k => { const s = Math.sin(k * 12.9898) * 43758.5453; return s - Math.floor(s); };
+    function layout() {
+      const hr = hero.getBoundingClientRect();
+      W = Math.max(1, hr.width); H = Math.max(1, hr.height);
+      renderer.setSize(W, H, false);
+      cam.aspect = W / H; cam.updateProjectionMatrix();
+      visH = 2 * Math.tan(FOV * Math.PI / 360) * DIST; visW = visH * cam.aspect;
+      const sr = stage.getBoundingClientRect(), cr = cap.getBoundingClientRect(), tr = $("#stageTop").getBoundingClientRect();
+      const left = sr.left - hr.left, top = tr.bottom - hr.top + 16, width = sr.width;
+      const height = Math.max(160, cr.top - hr.top - 14 - top);
+      const cols = width >= 470 ? 4 : 3, rows = Math.ceil(LETTERS.length / cols);
+      const cw = width / cols, ch = height / rows, px = Math.min(cw, ch) * .84;
+      const size = px / H * visH;
+      letters.forEach((o, k) => {
+        const c = k % cols, r = Math.floor(k / cols);
+        const x = left + cw * (c + .5) + (rnd(k) - .5) * cw * .2 + (r % 2 ? cw * .12 : -cw * .12);
+        const y = top + ch * (r + .5) + (rnd(k + 9) - .5) * ch * .14;
+        o.base.set((x / W - .5) * visW, -(y / H - .5) * visH, 0);
+        o.size = size;
+      });
+      clothY = -visH * .36;
+      for (let i = 0; i < MOTES; i++) {
+        motePos[i * 3] = (Math.random() - .5) * (visW + 6); motePos[i * 3 + 1] = (Math.random() - .5) * visH; motePos[i * 3 + 2] = -7 + Math.random() * 9;
+        moteSpd[i] = .25 + Math.random() * .55;
+      }
+      motes.geometry.attributes.position.needsUpdate = true;
+      kick();
+    }
+
+    // Pointer: parallax, hover lift, the thread, the cloth swelling underneath, and letters you can drag.
+    const ray = new T.Raycaster(), ndc = new T.Vector2();
+    const ptr = { on: false, t: 0, wx: 0, wy: 0, vx: 0, vy: 0, lx: 0, ly: 0, swell: 0, tx: 0, ty: 0, x: 0, y: 0 };
+    const zPlane = new T.Plane(new T.Vector3(0, 0, 1), 0), clothPlane = new T.Plane(), hitV = new T.Vector3(), up = new T.Vector3();
+    let hovered = -1, drag = null, now = 0;
+    function aim(clientX, clientY) {
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, cam);
+    }
+    function worldAt(clientX, clientY, z) { aim(clientX, clientY); zPlane.constant = -z; return ray.ray.intersectPlane(zPlane, new T.Vector3()); }
+    function pick(clientX, clientY) {
+      aim(clientX, clientY);
+      const hit = ray.intersectObjects(letters.map(o => o.mesh))[0];
+      if (!hit || !hit.uv || Math.hypot(hit.uv.x - .5, hit.uv.y - .52) > .45) return -1;
+      return hit.object.userData.k;
+    }
+    hero.addEventListener("pointermove", e => {
+      const r = hero.getBoundingClientRect();
+      ptr.tx = (e.clientX - r.left) / r.width - .5; ptr.ty = (e.clientY - r.top) / r.height - .5;
+      if (reduce) return;
+      const w = worldAt(e.clientX, e.clientY, 0), t = performance.now() / 1000;
+      if (w) {
+        if (ptr.on) { const dt = Math.max(.008, t - ptr.t); ptr.vx = ptr.vx * .6 + ((w.x - ptr.wx) / dt) * .4; ptr.vy = ptr.vy * .6 + ((w.y - ptr.wy) / dt) * .4; }
+        ptr.wx = w.x; ptr.wy = w.y; ptr.t = t; ptr.on = true;
+      }
+      const tp = worldAt(e.clientX, e.clientY, THREAD_Z);
+      if (tp) { sew(tp); needle.position.copy(tp); }
+      // where the pointer meets the cloth (the same ray, against the tilted cloth)
+      cloth.updateMatrixWorld();
+      up.set(0, 0, 1).applyQuaternion(cloth.quaternion);
+      clothPlane.setFromNormalAndCoplanarPoint(up, cloth.position);
+      if (ray.ray.intersectPlane(clothPlane, hitV)) { const l = cloth.worldToLocal(hitV.clone()); ptr.lx = l.x; ptr.ly = l.y; }
+      kick();
+    });
+    hero.addEventListener("pointerleave", () => { ptr.on = false; lastStitch = null; ptr.tx = 0; ptr.ty = 0; });
+
+    canvas.addEventListener("pointerdown", e => {
+      const k = pick(e.clientX, e.clientY); if (k < 0) return;
+      drag = { k, id: e.pointerId, x0: e.clientX, y0: e.clientY, moved: false, touch: e.pointerType === "touch", last: null, t: performance.now() };
+      if (!drag.touch) { try { canvas.setPointerCapture(e.pointerId); } catch (_) {} e.preventDefault(); }
+    });
+    canvas.addEventListener("pointermove", e => {
+      if (drag && e.pointerId === drag.id) {
+        if (Math.hypot(e.clientX - drag.x0, e.clientY - drag.y0) > 7) drag.moved = true;
+        if (!drag.touch && drag.moved && !reduce) {
+          const o = letters[drag.k], w = worldAt(e.clientX, e.clientY, 0), t = performance.now();
+          if (w) {
+            if (drag.last) { const dt = Math.max(8, t - drag.t) / 1000; o.vx = (w.x - drag.last.x) / dt; o.vy = (w.y - drag.last.y) / dt; }
+            o.ox = w.x - o.base.x; o.oy = w.y - o.base.y; drag.last = w; drag.t = t;
+          }
+          canvas.style.cursor = "grabbing";
+        }
+        return;
+      }
+      const k = pick(e.clientX, e.clientY);
+      if (k !== hovered) { hovered = k; canvas.style.cursor = k >= 0 ? "grab" : ""; kick(); }
+    });
+    const release = e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const d = drag; drag = null;
+      canvas.style.cursor = hovered >= 0 ? "grab" : "";
+      if (e.type === "pointercancel") return;
+      if (!d.moved) choose(d.k);
+      else { const o = letters[d.k], s = Math.hypot(o.vx, o.vy); if (s > 30) { o.vx *= 30 / s; o.vy *= 30 / s; } o.spin = 0; kick(); }
+    };
+    canvas.addEventListener("pointerup", release);
+    canvas.addEventListener("pointercancel", release);
+    canvas.addEventListener("pointerleave", () => { if (!drag) { hovered = -1; canvas.style.cursor = ""; } });
+
+    // Ripples through the cloth (several at once for the celebration).
+    const ripples = [];
+    function pulse(k) {
+      const o = letters[k];
+      o.pulse = 1; o.spin = reduce ? 1 : 0;
+      if (!reduce) { burst(o.mesh.position); ripples.push({ x: o.base.x + o.ox, y: 4.5, t0: clock, amp: .55 }); }
+      kick();
+    }
+    function party() {
+      if (reduce) { letters.forEach(o => { o.pulse = 1; }); kick(); return; }
+      letters.forEach((o, k) => setTimeout(() => { o.pulse = 1; o.spin = 0; burst(o.mesh.position, 30, 1.2); kick(); }, k * 90));
+      [0, .5, 1].forEach(dl => ripples.push({ x: 0, y: 2, t0: clock + dl, amp: .8 }));
+      partyUntil = now + 2.5;
+      kick();
+    }
+
+    // Animation loop: runs only while the hero is on screen; with reduced motion, only briefly after a tap.
+    let clock = 0, last = 0, raf = 0, onScreen = true, start = 0, wakeUntil = 0, partyUntil = 0;
+    function frame(ms) {
+      now = ms / 1000;
+      if (!start) start = now;
+      const dt = last ? Math.min(.05, now - last) : .016; last = now;
+      if (!reduce) clock += dt;
+      const intro = reduce ? 9 : now - start;
+
+      // scroll: as the hero leaves the screen, the letters drift up and the cloth lies flatter
+      const hr = hero.getBoundingClientRect(), sp = reduce ? 0 : clamp01(-hr.top / Math.max(1, hr.height));
+      ptr.x += (ptr.tx - ptr.x) * .05; ptr.y += (ptr.ty - ptr.y) * .05;
+      ptr.vx *= Math.exp(-dt * 6); ptr.vy *= Math.exp(-dt * 6);
+      cam.position.set(reduce ? 0 : ptr.x * 1.4, reduce ? 0 : -ptr.y * .9, DIST + sp * 2);
+      cam.lookAt(0, 0, 0);
+
+      cloth.rotation.x = -1.18 + sp * .3;
+      cloth.position.set(0, clothY - sp * 1.5, -4.5);
+      ptr.swell += ((ptr.on ? 1 : 0) - ptr.swell) * Math.min(1, dt * 3);
+      for (let r = ripples.length - 1; r >= 0; r--) if (clock - ripples[r].t0 > 4) ripples.splice(r, 1);
+      for (let n = 0; n < N; n++) {
+        const x = local[n * 3], y = local[n * 3 + 1];
+        let z = .24 * Math.sin(x * .5 + clock * 1.1) + .2 * Math.sin(y * .62 - clock * .85) + .08 * Math.sin((x + y) * 1.3 + clock * 1.7);
+        for (const rp of ripples) { const k = clock - rp.t0; if (k < 0) continue; const rr = Math.hypot(x - rp.x, y - rp.y); z += rp.amp * Math.exp(-k * 1.1) * Math.exp(-Math.pow(rr - k * 6.5, 2) / .9); }
+        let s = 1;
+        if (ptr.swell > .01) { const g = Math.exp(-((x - ptr.lx) ** 2 + (y - ptr.ly) ** 2) / 3.2) * ptr.swell; z += g * .9; s += g * 1.1; }
+        if (intro < 3) s *= easeOut(clamp01((intro * 9 - local[n * 3 + 2]) / 2.5));
+        dummy.position.set(x, y, z); dummy.rotation.set(0, 0, 0); dummy.scale.setScalar(s); dummy.updateMatrix();
+        cloth.setMatrixAt(n, dummy.matrix);
+      }
+      cloth.instanceMatrix.needsUpdate = true;
+
+      // letters: drop in, bob, lean, and spring back when stirred or flung
+      letters.forEach((o, k) => {
+        o.hover += ((hovered === k && !drag ? 1 : 0) - o.hover) * Math.min(1, dt * 12);
+        if (o.pulse > 0) o.pulse = Math.max(0, o.pulse - dt * 1.6);
+        if (o.spin < 1) o.spin = Math.min(1, o.spin + dt * 1.25);
+        const held = drag && drag.k === k && drag.moved && !drag.touch;
+        if (!held && !reduce) {
+          if (ptr.on && hovered !== k) { // a quick swipe nearby pushes the letter along
+            const dx = o.base.x + o.ox - ptr.wx, dy = o.base.y + o.oy - ptr.wy, R = o.size * 1.3, d = Math.hypot(dx, dy);
+            if (d < R) { const w = (1 - d / R) * dt * 2.6; o.vx += ptr.vx * w; o.vy += ptr.vy * w; }
+          }
+          o.vx += (-34 * o.ox - 4.2 * o.vx) * dt; o.vy += (-34 * o.oy - 4.2 * o.vy) * dt;
+          o.ox += o.vx * dt; o.oy += o.vy * dt;
+        }
+        o.lift += ((held ? 1 : 0) - o.lift) * Math.min(1, dt * 10);
+        const enter = clamp01((intro - .3 - k * .07) / .9);
+        const drop = (1 - easeBack(enter)) * visH * .7;
+        const bob = Math.sin(clock * .9 + o.phase) * .16;
+        const pop = o.pulse > 0 ? Math.sin((1 - o.pulse) * Math.PI) * .32 : 0;
+        o.mesh.position.set(o.base.x + o.ox, o.base.y + o.oy + bob + o.hover * .12 + drop + sp * visH * (.25 + (k % 3) * .08), o.hover * .6 + pop * 1.2 + o.lift * 1.5);
+        o.mesh.rotation.set(reduce ? 0 : -ptr.y * .3, Math.sin(clock * .5 + o.phase) * .28 + (reduce ? 0 : ptr.x * .5) + easeOut(o.spin) * Math.PI * 2, Math.sin(clock * .6 + o.phase) * .07 - o.vx * .03);
+        o.mesh.scale.setScalar(o.size * (1 + o.hover * .12 + pop + o.lift * .15) * (.4 + .6 * clamp01(enter * 1.5)));
+      });
+
+      // sparks
+      for (let b = bursts.length - 1; b >= 0; b--) {
+        const s = bursts[b]; s.age += dt;
+        const p = s.pts.geometry.attributes.position;
+        s.vel.forEach((v, i) => { v[1] -= 4.2 * dt; p.array[i * 3] += v[0] * dt; p.array[i * 3 + 1] += v[1] * dt; p.array[i * 3 + 2] += v[2] * dt; });
+        p.needsUpdate = true;
+        s.pts.material.opacity = Math.max(0, 1 - s.age / 1.2);
+        if (s.age > 1.2) { sc.remove(s.pts); s.pts.geometry.dispose(); s.pts.material.dispose(); bursts.splice(b, 1); }
+      }
+
+      // motes rise (faster during a celebration) and wrap round
+      if (MOTES) {
+        const boost = now < partyUntil ? 5 : 1;
+        for (let i = 0; i < MOTES; i++) {
+          motePos[i * 3 + 1] += moteSpd[i] * dt * boost;
+          motePos[i * 3] += Math.sin(clock * .7 + i) * dt * .15;
+          if (motePos[i * 3 + 1] > visH * .6) motePos[i * 3 + 1] = -visH * .6;
+        }
+        motes.geometry.attributes.position.needsUpdate = true;
+      }
+
+      // the thread: each stitch shrinks away over a second and a half
+      for (let i = 0; i < MAXT; i++) {
+        const st = threadAt[i];
+        if (!st) continue;
+        const f = 1 - (now - st.born) / 1.5;
+        if (f <= 0) { threadAt[i] = null; dummy.scale.set(0, 0, 0); }
+        else { dummy.position.set(st.x, st.y, THREAD_Z); dummy.rotation.set(0, 0, st.ang); dummy.scale.set(LEN * (.4 + .6 * f), .11 * f + .03, 1); }
+        dummy.updateMatrix(); thread.setMatrixAt(i, dummy.matrix);
+      }
+      thread.instanceMatrix.needsUpdate = true;
+      needle.scale.setScalar(ptr.on ? .46 + Math.sin(clock * 8) * .06 : needle.scale.x * .85);
+      needle.rotation.z = clock * 2;
+
+      renderer.render(sc, cam);
+      const keep = onScreen && (!reduce || now < wakeUntil || bursts.length > 0 || !!drag);
+      raf = keep ? requestAnimationFrame(frame) : 0;
+      if (!raf) last = 0;
+    }
+    function kick() {
+      wakeUntil = performance.now() / 1000 + .8;
+      if (!raf && onScreen) raf = requestAnimationFrame(frame);
+    }
+
+    new ResizeObserver(layout).observe(hero);
+    new IntersectionObserver(([e]) => { onScreen = e.isIntersecting && !document.hidden; kick(); }).observe(hero);
+    document.addEventListener("visibilitychange", () => { onScreen = !document.hidden; kick(); });
+    layout();
+    return { pulse, party };
+  }
+})();
+</script>
