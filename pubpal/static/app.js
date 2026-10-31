@@ -44,10 +44,10 @@ const youMarker = L.circleMarker([HALIFAX.lat, HALIFAX.lng], {
   radius: 8, color: "#fff", weight: 3, fillColor: "#1e88e5", fillOpacity: 1,
 }).addTo(map).bindTooltip("Search centre");
 const radiusCircle = L.circle([HALIFAX.lat, HALIFAX.lng], {
-  radius: state.radiusKm * 1000, color: "#0f6b4f", weight: 1, fillOpacity: 0.06,
+  radius: state.radiusKm * 1000, color: "#f96363", weight: 2, dashArray: "6 6", fillOpacity: 0.07,
 }).addTo(map);
 
-const pubIcon = L.divIcon({ className: "", html: '<div style="font-size:24px;line-height:24px">🍺</div>', iconSize: [24, 24], iconAnchor: [12, 12] });
+const pubIcon = L.divIcon({ className: "", html: '<div style="width:16px;height:16px;border-radius:50%;background:#d7383f;border:3px solid #fff;box-shadow:0 2px 6px rgba(25,48,73,.35)"></div>', iconSize: [22, 22], iconAnchor: [11, 11] });
 
 // Tap anywhere on the map to search from there.
 map.on("click", (e) => {
@@ -286,7 +286,7 @@ $("add-pub").addEventListener("click", () => {
     .bindTooltip("Drag me to the pub", { permanent: true, direction: "top" });
   openDrawer(`
     <h2>Add a missing pub</h2>
-    <p class="muted">Drag the 🍺 pin on the map to where the pub is.</p>
+    <p class="muted">Drag the pin on the map to where the pub is.</p>
     <form id="new-pub-form" class="form-grid">
       <label>Pub name <input name="name" required maxlength="120"></label>
       <label>Address <input name="address" maxlength="200"></label>

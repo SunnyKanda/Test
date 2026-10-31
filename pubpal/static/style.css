@@ -1,23 +1,39 @@
+/* Brightside: coral, butter and mint on white, navy ink. */
 :root {
-  --bg: #f3f7f4;
+  --coral: #f96363;
+  --accent: #d7383f;        /* deeper coral: readable white text on buttons */
+  --accent-ink: #ffffff;
+  --accent-soft: #fff1f0;
+  --butter: #f9db8e;
+  --mint: #b2e3c6;
+  --bg: #ffffff;
   --panel: #ffffff;
-  --ink: #14241d;
-  --muted: #5d6f66;
-  --head: #0f3d2e;
-  --accent: #f5b700;
-  --accent-ink: #14241d;
-  --accent-soft: #fff4cc;
-  --link: #0f6b4f;
-  --line: #d9e4dd;
-  --yes: #16834f;
-  --no: #c2410c;
-  --unknown: #8a9a92;
+  --surface: #f4f7f7;
+  --ink: #193049;
+  --muted: #5b6f81;
+  --head: #ffffff;
+  --link: #d7383f;
+  --line: #e2e9e9;
+  --yes: #15744c;
+  --no: #b54054;
+  --unknown: #596779;
+  --font-head: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: "DM Sans", system-ui, -apple-system, Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --accent: #e5484d; --accent-soft: #454051;
+    --bg: #1d2637; --panel: #1d2637; --surface: #2a3448; --head: #1d2637;
+    --ink: #f8f8ff; --muted: #b5bfd0; --link: #ff8a8a; --line: #3f4b62;
+    --yes: #7ee2b0; --no: #ff9aa8; --unknown: #c3cbe0;
+    color-scheme: dark;
+  }
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; }
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--ink);
   display: flex;
@@ -25,15 +41,16 @@ body {
 }
 
 .topbar {
-  display: flex; align-items: baseline; gap: .75rem;
-  padding: .6rem 1rem;
-  background: var(--head); color: #fff;
+  display: flex; align-items: center; gap: .75rem;
+  padding: .7rem 1rem;
+  background: var(--head); color: var(--ink); border-bottom: 1px solid var(--line);
 }
-.topbar h1 { margin: 0; font-size: 1.3rem; }
-.tagline { opacity: .75; font-size: .9rem; }
+.topbar h1 { margin: 0; font-family: var(--font-head); font-weight: 800; font-size: 1.35rem; letter-spacing: -.04em; display: flex; align-items: center; gap: .5rem; }
+.topbar h1 img { width: 34px; height: 34px; transform: rotate(-5deg); }
+.tagline { color: var(--muted); font-size: .9rem; margin-left: auto; }
 
 .banner {
-  background: #fff3cd; border-bottom: 1px solid #f0d98a;
+  background: var(--accent-soft); border-bottom: 1px solid var(--coral);
   padding: .5rem 1rem; font-size: .9rem;
 }
 
@@ -47,13 +64,13 @@ body {
 
 button {
   font: inherit; cursor: pointer;
-  border: 1px solid var(--line); background: #fff; color: var(--ink);
-  border-radius: 8px; padding: .45rem .8rem;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  border-radius: 12px; padding: .5rem .85rem; font-weight: 600;
 }
-button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; padding: .65rem; font-weight: 600; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); width: 100%; padding: .7rem; font-family: var(--font-head); font-weight: 800; }
 button.link { border: 0; background: none; color: var(--link); padding: .5rem 0; text-decoration: underline; }
 input, select, textarea {
-  font: inherit; padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 8px; width: 100%;
+  font: inherit; padding: .55rem .7rem; border: 1px solid var(--line); border-radius: 11px; width: 100%; background: var(--surface); color: var(--ink);
 }
 
 .where { display: grid; gap: .5rem; }
@@ -87,7 +104,8 @@ input, select, textarea {
   overflow-y: auto; padding: 1.25rem; z-index: 1000;
 }
 .drawer .close { position: absolute; top: .75rem; right: .75rem; }
-.drawer h2 { margin: 0 2rem .25rem 0; }
+.drawer h2 { margin: 0 2rem .25rem 0; font-family: var(--font-head); font-weight: 800; letter-spacing: -.03em; }
+.result-head { font-family: var(--font-head); }
 .drawer h3 { margin: 1.25rem 0 .5rem; font-size: 1rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
 .actions { display: flex; gap: .5rem; flex-wrap: wrap; margin: .75rem 0; }
 .actions a {

@@ -4,11 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>PubPal admin – suggestions</title>
+  <link rel="icon" href="logo.svg">
   <link rel="stylesheet" href="style.css">
   <style>
     body { display: block; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 1rem; }
-    .card { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 1rem; margin-bottom: .75rem; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; margin-bottom: .75rem; }
     .card table { border-collapse: collapse; margin: .5rem 0; }
     .card td { padding: .15rem .75rem .15rem 0; }
     .row { display: flex; gap: .5rem; }
@@ -17,7 +18,7 @@
   </style>
 </head>
 <body>
-  <header class="topbar"><h1>🍺 PubPal admin</h1><span class="tagline">Pending suggestions</span></header>
+  <header class="topbar"><h1><img src="logo.svg" alt="">PubPal admin</h1><span class="tagline">Pending suggestions</span></header>
   <div class="wrap">
     <form id="token-form" class="row">
       <input id="token" type="password" placeholder="Admin token">
