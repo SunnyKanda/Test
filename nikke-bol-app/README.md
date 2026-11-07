@@ -7,7 +7,7 @@ This folder wraps the web app in `../nikke-bol` as native iOS and Android apps w
 | | iPhone / iPad | Android |
 |---|---|---|
 | Developer account | [Apple Developer Program](https://developer.apple.com/programs/), $99 a year | [Google Play Console](https://play.google.com/console), $25 once |
-| Minimum version | iOS 15 (StoreKit 2) | Android 6 (API 23) |
+| Minimum version | iOS 15 (StoreKit 2) | Android 7 (API 24), required by Play automatic protection |
 | To build | A Mac with Xcode 16+ and CocoaPods (`brew install cocoapods`), or a cloud Mac service such as Codemagic | Android Studio (any OS) |
 | Node.js | 20 or newer | 20 or newer |
 
