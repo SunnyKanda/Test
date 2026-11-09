@@ -55,7 +55,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 ## Categories and age
 
 - **App Store:** Primary *Education*, secondary *Kids*. Kids Category age band: **Ages 5 and Under** (or 6–8; the path suits 5–8, the baby level suits under 5). Age rating questionnaire: all “None” → **4+**.
-- **Google Play:** Category *Education*. Target audience: **Ages 5 and under, 6–8, and 13+ (parents)**. Join *Designed for Families*. Content rating questionnaire (IARC): Education, no violence, no user interaction, no data sharing → **Everyone / PEGI 3**.
+- **Google Play:** Category *Education*. Target audience: **Ages 5 and under, 6–8, and 18 and over (parents learning alongside)**. Join *Designed for Families*. Content rating questionnaire (IARC): Education, no violence, no user interaction, no data sharing → **Everyone / PEGI 3**.
 
 ## Privacy answers
 
@@ -66,6 +66,13 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 - **Notifications:** local reminders scheduled on the device, only if a grown-up switches them on. No push server.
 - **Ratings:** the app asks grown-ups for a rating only behind the grown-ups check, using the system review prompt (Apple guideline 1.3 for the Kids category).
 - **Purchases:** the payment is handled by Apple or Google. The app only asks the store what the account owns and keeps the answer on the device, so the answers above stay "Data Not Collected" and "No data collected". Re-check these if you ever add a server or a purchases service.
+
+## Google Play graphics
+
+- App icon (512 × 512, 32-bit PNG): `store/play-icon-512.png`
+- Feature graphic (1024 × 500, 24-bit PNG): `store/play-feature-graphic-1024x500.png`
+
+Regenerate with `node scripts/play-graphics.cjs`.
 
 ## Screenshots
 
