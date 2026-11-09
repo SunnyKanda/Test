@@ -42,8 +42,8 @@ You're taking over helping me (Sunny) publish my Android app on Google Play. I'm
 3. **Grow users → Store presence → Main store listing.**
    - **App name:** Nikke Bol: Learn Punjabi
    - **Short description:** Learn Punjabi with a real voice: words, reading Gurmukhi, writing and games.
-   - **Full description:** from [store/LISTING.md](https://github.com/SunnyKanda/Test/blob/claude/multi-model-ai-team-ZGC0T/nikke-bol-app/store/LISTING.md) (open it while I'm logged in to GitHub).
-   - **Graphics** (in the same `store/` folder on GitHub; I'll download them and you tell me which goes where):
+   - **Full description:** from [store/LISTING.md](https://github.com/SunnyKanda/Test/blob/ccr-32122064-gefoo2/nikke-bol-app/store/LISTING.md) (open it while I'm logged in to GitHub).
+   - **Graphics**, in the [store folder](https://github.com/SunnyKanda/Test/tree/ccr-32122064-gefoo2/nikke-bol-app/store) on GitHub. I'll download them and you tell me which goes where:
      - App icon 512 × 512: `play-icon-512.png`
      - Feature graphic 1024 × 500: `play-feature-graphic-1024x500.png`
      - Phone screenshots 1080 × 2400: `screenshots/android-phone-1-welcome.png` to `android-phone-8-stickers.png`
