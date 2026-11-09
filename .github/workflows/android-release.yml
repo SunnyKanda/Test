@@ -1,12 +1,12 @@
 # Builds a signed Android App Bundle (.aab) for Google Play.
-# Run it from the Actions tab ("Run workflow") or by pushing a tag like v1.0.
+# Run it from the Actions tab ("Run workflow"), or push a tag: v1.0 (also starts the iOS build) or android-v5 (Android only).
 # Needs repo secrets: ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS, ANDROID_KEY_PASSWORD
 name: Android release (Google Play)
 
 on:
   workflow_dispatch:
   push:
-    tags: ["v*"]
+    tags: ["v*", "android-v*"]
 
 jobs:
   build:
