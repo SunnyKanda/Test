@@ -16,7 +16,23 @@ const Unlock = {
   plugin() { const c = window.Capacitor; return c && c.isNativePlatform && c.isNativePlatform() && c.Plugins.NativePurchases || null; },
   platform() { const c = window.Capacitor; return c && c.getPlatform ? c.getPlatform() : "web"; },
   /* The web version is a taster unless a build marks it as the full preview. */
-  has() { return this.plugin() ? this.rec.owned : !!window.NB_FULL_WEB; },
+  has() { return (this.plugin() ? this.rec.owned : !!window.NB_FULL_WEB) || this.reviewOn(); },
+
+  /* Review code: lets Google's and Apple's reviewers see the paid part without paying (they can't
+     buy). Only the code's SHA-256 ships in the app, and it stops working after `until`. To change it,
+     put the new code's hash here (dashes left out, capitals) and give the new code in the store forms. */
+  reviewKey: { hash: "34abf2a453691aa9ce8a207bf361cb1686279d12d0a1569fb8ee01cb45ef8836", until: "2027-05-31" },
+  reviewOn() { return store.get("nikke-bol:review", 0) > Date.now(); },
+  async tryCode(raw) {
+    const code = String(raw).toUpperCase().replace(/[^A-Z0-9]/g, ""), until = Date.parse(this.reviewKey.until + "T23:59:59Z");
+    if (!code || Date.now() > until || !(window.crypto && crypto.subtle)) return false;
+    const hash = [...new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(code)))].map(b => b.toString(16).padStart(2, "0")).join("");
+    if (hash !== this.reviewKey.hash) return false;
+    const was = this.has();
+    store.set("nikke-bol:review", until);
+    if (!was) this.changed(true);
+    return true;
+  },
   unitOpen(u) { return this.has() || PATH.indexOf(u) < FREE_UNITS; },
   lessonOpen(m) { return this.has() || FREE_LESSONS.has(m.id); },
 
@@ -138,9 +154,16 @@ function openUnlock(then = goHome, back = goHome) {
           U.rec.pending ? "Check again" : U.product ? `Unlock everything · ${esc(price)}` : U.productErr ? "Try again" : "Loading…"}</button></div>
         <div class="row2"><button class="cta ghost" id="pwRestore" ${U.busy ? "disabled" : ""}>Restore purchase</button></div>
         <p class="pw-msg" role="status">${esc(U.msg)}</p>
-        <p class="small pw-small">No subscription and no ads. ${store_} takes the payment; Nikke Bol never sees your card details and collects nothing.${U.product && U.product.isFamilyShareable ? " Shared with your family through Family Sharing." : ""} Bought it before? Restore it with the same ${U.platform() === "ios" ? "Apple ID" : "Google account"}.</p>`
+        <p class="small pw-small">No subscription and no ads. ${store_} takes the payment; Nikke Bol never sees your card details and collects nothing.${U.product && U.product.isFamilyShareable ? " Shared with your family through Family Sharing." : ""} Bought it before? Restore it with the same ${U.platform() === "ios" ? "Apple ID" : "Google account"}.</p>
+        <details class="pw-code"><summary>Have a review code?</summary>
+          <form id="pwCodeForm" class="row2"><input id="pwCode" aria-label="Review code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX"><button class="cta ghost" type="submit">Use code</button></form>
+          <p class="pw-msg" id="pwCodeMsg" role="status"></p></details>`
       : `<p class="pw-note">Search <b>“Nikke Bol”</b> on the App Store or Google Play to get the full app.</p>`}`;
     if (!p) return;
+    $("pwCodeForm").onsubmit = async e => {
+      e.preventDefault();
+      if (!(await U.tryCode($("pwCode").value)) && $("pwCodeMsg")) $("pwCodeMsg").textContent = "That code didn't work. Check it and try again.";
+    };
     $("pwBuy").onclick = () => {
       pop();
       if (U.rec.pending) return U.checkAgain();

@@ -576,3 +576,6 @@ input.nope { animation: nope .5s; border-color: var(--magenta) !important; }
 .pw-msg { margin: 0; min-height: 1.4em; text-align: center; font-weight: 600; color: var(--gold); }
 .pw-msg:empty { display: none; }
 .pw-small { margin: 0 auto; max-width: 56ch; text-align: center; font-size: .9rem; line-height: 1.45; color: rgba(255, 244, 232, .7); }
+.pw-code { align-self: center; display: flex; flex-direction: column; gap: 10px; text-align: center; color: rgba(255, 244, 232, .7); font-size: .9rem; }
+.pw-code summary { cursor: pointer; text-decoration: underline; }
+.pw-code input { min-width: 0; width: 12em; padding: 10px 12px; border-radius: 14px; border: 2px solid rgba(255, 244, 232, .35); background: var(--ground-2); color: var(--thread); font: 700 1.05rem/1.2 var(--font); letter-spacing: .08em; text-align: center; text-transform: uppercase; }

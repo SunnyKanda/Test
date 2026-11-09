@@ -150,6 +150,27 @@ async function newLearner(p, level = 'child') {
   await p5.addInitScript(fakeStore); await p5.goto(URL_); await until(p5, () => Unlock.rec.checked > 0);
   check('android: pending payment stays locked and is remembered', await p5.evaluate(() => !Unlock.has() && Unlock.rec.pending));
 
+  // --- Review code for app reviewers (a test code, not the real one) ---
+  const testHash = require('crypto').createHash('sha256').update('TESTCODE2345').digest('hex');
+  const ctx8 = await b.newContext({ viewport: { width: 400, height: 860 } }); const p8 = await ctx8.newPage();
+  p8.on('pageerror', e => errs.push('p8 pageerror: ' + e.message));
+  await p8.addInitScript(fakeStore); await p8.goto(URL_); await until(p8, () => Unlock.rec.checked > 0); await newLearner(p8);
+  await p8.evaluate(h => { Unlock.reviewKey = { hash: h, until: '2099-12-31' }; }, testHash);
+  await p8.click('#tabs [data-t="practice"]'); await p8.click('.tile[data-s="write"]'); await gate(p8);
+  await until(p8, () => $('pwCodeForm'));
+  await p8.click('.pw-code summary'); await p8.fill('#pwCode', 'nope-nope-nope'); await p8.click('#pwCodeForm button');
+  await until(p8, () => $('pwCodeMsg').textContent);
+  check('review code: a wrong code is refused', (await p8.textContent('#pwCodeMsg')).includes("didn't work") && !(await p8.evaluate(() => Unlock.has())));
+  await p8.fill('#pwCode', 'test-code-2345'); await p8.click('#pwCodeForm button');
+  await until(p8, () => $('pwGo'));
+  check('review code: the right code unlocks (dashes and lower case are fine)', await p8.evaluate(() => Unlock.has()) && !!(await p8.$('#pwGo')));
+  await p8.reload(); await until(p8, () => Unlock.rec.checked > Date.now() - 5000);
+  check('review code: still unlocked after a restart, though the store says not bought', await p8.evaluate(() => Unlock.has() && !Unlock.rec.owned));
+  await p8.evaluate(() => store.set('nikke-bol:review', Date.now() - 1000));
+  check('review code: locks again once it expires', !(await p8.evaluate(() => Unlock.has())));
+  await p8.evaluate(h => { Unlock.reviewKey = { hash: h, until: '2020-01-01' }; }, testHash);
+  check('review code: an expired code is refused', !(await p8.evaluate(() => Unlock.tryCode('TESTCODE2345'))));
+
   // --- Web: taster, and the full preview build ---
   const ctx6 = await b.newContext({ viewport: { width: 400, height: 860 } }); const p6 = await ctx6.newPage();
   p6.on('pageerror', e => errs.push('p6 pageerror: ' + e.message));

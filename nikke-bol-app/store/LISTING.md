@@ -55,7 +55,7 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 ## Categories and age
 
 - **App Store:** Primary *Education*, secondary *Kids*. Kids Category age band: **Ages 5 and Under** (or 6–8; the path suits 5–8, the baby level suits under 5). Age rating questionnaire: all “None” → **4+**.
-- **Google Play:** Category *Education*. Target audience: **Ages 5 and under, 6–8, and 13+ (parents)**. Join *Designed for Families*. Content rating questionnaire (IARC): Education, no violence, no user interaction, no data sharing → **Everyone / PEGI 3**.
+- **Google Play:** Category *Education*. Target audience: **Ages 5 and under, 6–8, and 18 and over (parents learning alongside)**. Join *Designed for Families*. Content rating questionnaire (IARC): Education, no violence, no user interaction, no data sharing → **Everyone / PEGI 3**.
 
 ## Privacy answers
 
@@ -66,6 +66,13 @@ Copy-ready text and answers for App Store Connect and the Google Play Console.
 - **Notifications:** local reminders scheduled on the device, only if a grown-up switches them on. No push server.
 - **Ratings:** the app asks grown-ups for a rating only behind the grown-ups check, using the system review prompt (Apple guideline 1.3 for the Kids category).
 - **Purchases:** the payment is handled by Apple or Google. The app only asks the store what the account owns and keeps the answer on the device, so the answers above stay "Data Not Collected" and "No data collected". Re-check these if you ever add a server or a purchases service.
+
+## Google Play graphics
+
+- App icon (512 × 512, 32-bit PNG): `store/play-icon-512.png`
+- Feature graphic (1024 × 500, 24-bit PNG): `store/play-feature-graphic-1024x500.png`
+
+Regenerate with `node scripts/play-graphics.cjs`.
 
 ## Screenshots
 
@@ -83,4 +90,4 @@ Order: welcome, learning path (with word of the day), word card, reading lesson,
 
 > Nikke Bol is a Punjabi learning app for children and families. It works fully offline: all audio is bundled. There are no accounts, ads, analytics or network requests of our own. The grown-ups area (settings, backups, deleting learners) and the rating request are behind a multiplication question as a parental gate. Reminders are local notifications that a grown-up turns on. The microphone is used only when a user taps a record button, and recordings stay on the device.
 >
-> One non-consumable in-app purchase (nikkebol.unlock) unlocks the rest of the learning path, reading, writing and more learners. To see it: on the home screen tap Practice, then any tile with a padlock (for example Writing), answer the multiplication question, and the purchase screen opens. It is also under the 🔒 Grown-ups button → Full app, which has Restore purchase.
+> One non-consumable in-app purchase (nikkebol.unlock) unlocks the rest of the learning path, reading, writing and more learners. To see it: on the home screen tap Practice, then any tile with a padlock (for example Writing), answer the multiplication question, and the purchase screen opens. It is also under the 🔒 Grown-ups button → Full app, which has Restore purchase. Reviewers can unlock everything without paying: on the purchase screen tap "Have a review code?" and enter the code given in the sign-in details (App access) form. The code is not kept in this repository.
