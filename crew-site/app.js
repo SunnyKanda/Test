@@ -2,8 +2,9 @@
 /* Crew: chat, planner, to-do, goals and jobs. Plain JavaScript, no build step. */
 
 const S = {
-  data: null, version: 0, cursor: "", seen: new Set(), tab: "chat",
+  data: null, version: 0, seen: new Set(), tab: "chat",
   plan: "day", day: "", unread: 0, lastDay: "", waitingUntil: 0, stale: false, refocus: "",
+  cursor: 0, jobsView: "tracker", working: {}, focus: null,
 };
 const TABS = [
   ["chat", "Crew", "M4 5h16v11H9l-5 4z"],
@@ -11,6 +12,7 @@ const TABS = [
   ["todo", "To-do", "M4 6.5l1.8 1.8L9 5M4 12.5l1.8 1.8L9 11M4 18.5l1.8 1.8L9 17M12.5 7H20M12.5 13H20M12.5 19H20"],
   ["goals", "Goals", "M6 21V4M6 5h11l-2.5 4L17 13H6"],
   ["jobs", "Jobs", "M4 8h16v11H4zM9 8V5h6v3M4 13h16"],
+  ["scouts", "Scouts", "M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM15.5 15.5L20 20"],
 ];
 const ICON = {
   gear: "M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6zM19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2-1.2L14.2 3h-4l-.4 2.6a7 7 0 0 0-2 1.2l-2.3-.9-2 3.4 2 1.5a7 7 0 0 0 0 2.4l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2 1.2l.4 2.6h4l.4-2.6a7 7 0 0 0 2-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2z",
@@ -53,11 +55,13 @@ function icon(path) {
   return svg;
 }
 async function api(method, path, body) {
-  const res = await fetch(path, {
-    method, headers: body ? { "Content-Type": "application/json" } : {},
-    body: body ? JSON.stringify(body) : undefined,
+  // Everything goes through api.php as GET or POST, which every host allows.
+  const [route, query] = path.replace(/^\/api\//, "").split("?");
+  const url = `api.php?r=${encodeURIComponent(route)}${query ? "&" + query : ""}${method === "GET" || method === "POST" ? "" : "&_m=" + method}`;
+  const res = await fetch(url, method === "GET" ? {} : {
+    method: "POST", headers: { "Content-Type": "application/json", "X-Crew": "1" }, body: JSON.stringify(body || {}),
   });
-  if (res.status === 401) { showGate(); throw new Error("Sign in first."); }
+  if (res.status === 401 && route !== "login") { showGate(); throw new Error("Sign in first."); }
   const out = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(out.detail || "Something went wrong. Try again.");
   return out;
@@ -88,26 +92,21 @@ const agent = (id) => S.data.agents.find((a) => a.id === id);
 
 /* ── sign-in ───────────────────────────────────────────────────────────── */
 async function showGate() {
-  const state = await fetch("/api/auth").then((r) => r.json());
+  const state = await fetch("api.php?r=auth").then((r) => r.json());
   if (state.ok) return false;
   const gate = $("#gate");
   $("#app").hidden = true; gate.hidden = false; gate.replaceChildren();
-  if (state.locked_out) {
-    gate.append(h("div", {}, h("h1", {}, "Crew is locked"),
-      h("p", {}, "No password has been set, so the app only opens on the computer it runs on. Set APP_PASSWORD on the host and restart to use it from here.")));
-    return true;
-  }
   const err = h("p", { class: "err", role: "alert" });
-  const pw = h("input", { type: "password", "aria-label": "Password", placeholder: "Password", autocomplete: "current-password" });
+  const pw = h("input", { type: "password", "aria-label": "Password", placeholder: state.setup ? "Choose a password (8 or more characters)" : "Password", autocomplete: state.setup ? "new-password" : "current-password" });
   gate.append(h("form", {
     onsubmit: async (e) => {
       e.preventDefault();
-      const res = await fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password: pw.value }) });
-      if (res.ok) location.reload();
-      else err.textContent = (await res.json()).detail || "That didn't work.";
+      try { await api("POST", state.setup ? "setup" : "login", { password: pw.value }); location.reload(); }
+      catch (ex) { err.textContent = ex.message; }
     },
-  }, h("h1", {}, "Crew"), h("p", { class: "hint" }, "Your crew is waiting. Enter your password to come aboard."), pw,
-    h("button", { class: "btn" }, "Sign in"), err));
+  }, h("h1", {}, "Crew"),
+    h("p", { class: "hint" }, state.setup ? "First time here. Choose the password that will keep your crew private. Write it down somewhere safe." : "Your crew is waiting. Enter your password to come aboard."),
+    pw, h("button", { class: "btn" }, state.setup ? "Set password and start" : "Sign in"), err));
   pw.focus();
   return true;
 }
@@ -117,20 +116,31 @@ let pollTimer;
 async function poll() {
   clearTimeout(pollTimer);
   try {
-    const r = await api("GET", `/api/poll?after=${encodeURIComponent(S.cursor)}&version=${S.version}`);
+    const r = await api("GET", `/api/poll?after=${S.cursor}&version=${S.version}`);
     if (r.data) { S.data = r.data; S.version = r.version; onData(); }
     if (r.messages.length) addMessages(r.messages);
     setTyping(r.typing);
-    if (r.typing) S.waitingUntil = Date.now() + 20000;
+    if (r.typing || r.pending.chat || r.pending.scout) S.waitingUntil = Date.now() + 20000;
+    S.pending = r.pending;
+    work("chat"); work("scout");
   } catch (err) { console.error(err); /* offline or signed out; keep trying */ }
   const busy = Date.now() < S.waitingUntil;
   pollTimer = setTimeout(poll, document.hidden ? 30000 : busy ? 1200 : 5000);
 }
 const refresh = () => poll();
+/* The server does one piece of waiting work per request; this keeps asking while there is some. */
+async function work(lane) {
+  if (S.working[lane] || !S.pending || !S.pending[lane]) return;
+  S.working[lane] = true;
+  let state = "";
+  try { state = (await api("POST", `/api/work?lane=${lane}`)).state; } catch (err) { /* cron or the next poll picks it up */ }
+  S.working[lane] = false;
+  if (state === "done") poll();
+}
 document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); if (S.tab === "chat") clearUnread(); } });
 
 function onData() {
-  renderRoster();
+  renderRoster(); if (S.booted) renderTabs();
   $("#title").textContent = S.tab === "chat" ? `${S.data.settings.name}'s crew` : TABS.find((t) => t[0] === S.tab)[1];
   if (S.tab === "chat") return;
   const active = document.activeElement;
@@ -147,7 +157,8 @@ function renderRoster() {
 function renderTabs() {
   $("#tabs").replaceChildren(...TABS.map(([id, label, path]) =>
     h("button", { "aria-current": S.tab === id ? "page" : null, onclick: () => go(id) }, icon(path), label,
-      id === "chat" && S.unread ? h("span", { class: "badge" }, String(S.unread)) : null)));
+      id === "chat" && S.unread ? h("span", { class: "badge" }, String(S.unread)) : null,
+      id === "scouts" && unseenReports() ? h("span", { class: "badge" }, String(unseenReports())) : null)));
   document.title = S.unread ? `(${S.unread}) Crew` : "Crew";
 }
 function go(tab) {
@@ -158,6 +169,7 @@ function go(tab) {
   else { S.day = S.day || today(); $("#view").scrollTop = 0; }
   renderTabs(); onData();
 }
+const unseenReports = () => (S.data ? S.data.reports.filter((r) => r.status === "done" && !r.seen).length : 0);
 function clearUnread() { S.unread = 0; renderTabs(); }
 
 /* ── chat ──────────────────────────────────────────────────────────────── */
@@ -178,7 +190,7 @@ function addMessages(list) {
   for (const m of list) {
     if (S.seen.has(m.id)) continue;
     S.seen.add(m.id);
-    if (m.created_at > S.cursor) S.cursor = m.created_at;
+    if (m.seq > S.cursor) S.cursor = m.seq;
     const when = new Date(m.created_at + "Z");
     const day = when.toLocaleDateString("en-CA");
     if (day !== S.lastDay) {
@@ -194,9 +206,14 @@ function addMessages(list) {
       thread.append(h("div", { class: "msg mine" }, h("div", { class: "bubble" }, h("div", { class: "text" }, rich(m.text)), time)));
     } else {
       const a = agent(m.sender) || { name: m.sender, role: "" };
-      const added = (m.meta.actions || []).map((act) => act.type === "task"
-        ? h("div", { class: "added" }, h("b", {}, "Added to to-do"), act.title + (act.due ? ` (${dayLabel(act.due)})` : ""))
-        : h("div", { class: "added" }, h("b", {}, "Noted"), act.text));
+      const added = (m.meta.actions || []).map((act) => h("div", { class: "added" }, ...({
+        task: () => [h("b", {}, "Added to to-do"), act.title + (act.due ? ` (${dayLabel(act.due)})` : "")],
+        remember: () => [h("b", {}, "Noted"), act.text],
+        scout: () => [h("b", {}, "Scout sent"), act.text],
+        job: () => [h("b", {}, "Added to Jobs"), act.title + (act.company ? `, ${act.company}` : "")],
+        paper: () => [h("b", {}, "Saved to papers"), act.title],
+      }[act.type] || (() => []))()));
+      if (m.meta.report_id) added.push(h("button", { class: "btn quiet small", style: "margin-top:8px", onclick: () => { go("scouts"); openReport(m.meta.report_id); } }, "Read the full report"));
       thread.append(h("div", { class: `msg who-${m.sender}` },
         h("span", { class: `face who-${m.sender}` }, a.name[0]),
         h("div", { class: "bubble" }, h("div", { class: "who" }, a.name, h("span", {}, a.role)), h("div", { class: "text" }, rich(m.text)), added, time)));
@@ -328,6 +345,27 @@ function navRow(label, step, isNow) {
     isNow ? null : h("button", { class: "btn quiet small", onclick: () => { S.day = today(); renderView(); } }, "Today"),
     h("button", { class: "icon-btn", "aria-label": "Later", onclick: () => { S.day = step(1); renderView(); } }, icon(ICON.right)));
 }
+function focusBar(next) {
+  const box = h("div", { class: "focus" });
+  const draw = () => {
+    const left = S.focus ? Math.max(0, Math.round((S.focus.until - Date.now()) / 1000)) : 0;
+    if (S.focus && left === 0) {
+      S.focus = null; clearInterval(focusTimer);
+      if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+      toast("Time's up. Tick it off, or take five and go again.");
+    }
+    if (!document.body.contains(box) && box.childNodes.length) { return; }
+    box.replaceChildren(...(S.focus
+      ? [h("div", {}, h("strong", {}, `${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`), h("span", {}, S.focus.title ? `Just this: ${S.focus.title}` : "Just one thing until the timer ends.")),
+         h("button", { class: "btn quiet small", onclick: () => { S.focus = null; clearInterval(focusTimer); draw(); } }, "Stop")]
+      : [h("div", {}, h("span", {}, next ? `Next up: ${next.title}` : "Pick one thing and give it fifteen minutes.")),
+         h("button", { class: "btn quiet small", onclick: () => { S.focus = { until: Date.now() + 15 * 60000, title: next ? next.title : "" }; clearInterval(focusTimer); focusTimer = setInterval(() => { const b = $(".focus"); if (b && b.redraw) b.redraw(); else if (S.focus && Date.now() >= S.focus.until) draw(); }, 1000); draw(); } }, "Focus for 15 minutes")]));
+  };
+  box.redraw = draw;
+  draw();
+  return box;
+}
+let focusTimer;
 function renderPlan(view) {
   view.append(h("div", { class: "seg", role: "group", "aria-label": "Planner view" },
     [["day", "Day"], ["week", "Week"], ["month", "Month"]].map(([id, label]) =>
@@ -345,6 +383,13 @@ function planDay(view) {
     : left === 0 ? ["All done", `${done} ticked off. That counts.`]
     : [`${done} of ${items.length} done`, left === 1 ? "One to go." : `${left} to go. One at a time.`];
   view.append(h("div", { class: "horizon" }, horizon(done, items.length), h("div", {}, h("strong", {}, line[0]), h("span", {}, line[1]))));
+  if (isToday) {
+    const energy = S.data.settings.energy;
+    view.append(h("div", { class: "energy" }, h("span", {}, "Energy today"),
+      h("div", { class: "seg", role: "group", "aria-label": "Energy today" }, [["low", "Low"], ["okay", "Okay"], ["good", "Good"]].map(([id, label]) =>
+        h("button", { "aria-pressed": String(energy === id), onclick: guard(async () => { await api("POST", "/api/energy", { level: energy === id ? "" : id }); await refresh(); }) }, label)))));
+    view.append(focusBar(items.find((t) => !t.done)));
+  }
 
   const title = h("input", { type: "text", id: "add-day", placeholder: isToday ? "Add something for today" : "Add something for this day", "aria-label": "New to-do" });
   const time = h("input", { type: "time", "aria-label": "Time (optional)" });
@@ -480,6 +525,10 @@ function editGoal(g) {
 
 /* ── Jobs ──────────────────────────────────────────────────────────────── */
 function renderJobs(view) {
+  view.append(h("div", { class: "seg", role: "group", "aria-label": "Jobs view", style: "margin-bottom:16px" },
+    [["tracker", "Tracker"], ["papers", `Papers${S.data.papers.length ? ` (${S.data.papers.length})` : ""}`]].map(([id, label]) =>
+      h("button", { "aria-pressed": String(S.jobsView === id), onclick: () => { S.jobsView = id; renderView(); } }, label))));
+  if (S.jobsView === "papers") return renderPapers(view);
   const weekStart = mondayOf(today());
   const applied = S.data.jobs.filter((j) => j.applied_day && j.applied_day >= weekStart).length;
   view.append(h("div", { class: "wins" },
@@ -505,7 +554,8 @@ function jobCard(j) {
   return h("div", { class: "card" },
     h("div", { class: "job-top" }, h("div", {}, h("h3", {}, j.title), j.company ? h("p", { class: "why" }, j.company) : null), status),
     j.next_step ? h("p", { class: "job-next" }, "Next: ", j.next_step, j.next_date ? [", by ", h("span", { class: late ? "late" : "" }, dayLabel(j.next_date))] : null) : null,
-    j.link ? h("p", { class: "job-next" }, h("a", { href: j.link, target: "_blank", rel: "noopener noreferrer" }, "Open the advert")) : null,
+    j.link ? h("p", { class: "job-next" }, h("a", { href: j.link, target: "_blank", rel: "noopener noreferrer" }, "Open the advert"),
+      agent(j.added_by) ? h("span", { class: "hint" }, ` found by ${agent(j.added_by).name}'s scout. Check it's real, and never pay to apply.`) : null) : null,
     h("div", { class: "actions" },
       h("button", { class: "btn quiet small", onclick: () => ask(`@gpt help me with the ${j.title} job${j.company ? ` at ${j.company}` : ""}. It's at the “${j.status}” stage. What should I do next?`) }, "Ask GPT for help"),
       h("button", { class: "btn quiet small", onclick: () => editJob(j) }, "Edit")));
@@ -526,11 +576,105 @@ function editJob(j) {
       h("button", { class: "btn danger", type: "button", onclick: guard(async () => { await api("DELETE", `/api/jobs/${j.id}`); closeSheet(); await refresh(); }) }, "Delete"))));
 }
 
+function renderPapers(view) {
+  const title = h("input", { type: "text", id: "add-paper", placeholder: "Name, like “CV”", "aria-label": "Paper name" });
+  view.append(h("p", { class: "hint" }, "Your CV, cover letters and other drafts. The crew can read these and save new versions here."),
+    h("form", { class: "row-form", onsubmit: guard(async (e) => {
+      e.preventDefault(); if (!title.value.trim()) return;
+      const p = await api("POST", "/api/papers", { title: title.value, body: "" }); title.value = ""; await refresh(); editPaper(S.data.papers.find((x) => x.id === p.id));
+    }) }, title, h("button", { class: "btn" }, "New paper")));
+  if (!S.data.papers.length) view.append(h("p", { class: "empty", style: "margin-top:16px" }, "Nothing saved yet. Paste your CV into a new paper, or ",
+    h("button", { class: "btn quiet small", onclick: () => ask("@gpt I need a CV. Ask me what you need to know, then save a draft to my papers.") }, "ask GPT to write one with you")));
+  for (const p of S.data.papers) view.append(h("div", { class: "card" },
+    h("h3", {}, p.title), h("p", { class: "why paper-peek" }, p.body.slice(0, 160) || "Empty"),
+    h("div", { class: "actions" }, h("button", { class: "btn quiet small", onclick: () => editPaper(p) }, "Open"),
+      h("button", { class: "btn quiet small", onclick: () => ask(`@gpt look at my paper “${p.title}” and tell me the three changes that would help most.`) }, "Ask GPT to improve it"))));
+}
+function editPaper(p) {
+  const title = h("input", { type: "text", value: p.title });
+  const body = h("textarea", { class: "field paper" }); body.value = p.body;
+  sheet("Paper", h("form", { onsubmit: guard(async (e) => { e.preventDefault(); await api("PATCH", `/api/papers/${p.id}`, { title: title.value, body: body.value }); closeSheet(); await refresh(); toast("Saved"); }) },
+    h("label", { class: "f" }, "Name", title), h("label", { class: "f" }, "Text", body),
+    h("div", { class: "sheet-actions" }, h("button", { class: "btn" }, "Save changes"),
+      h("button", { class: "btn quiet", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(body.value); toast("Copied"); } catch (e) { body.select(); toast("Select all and copy"); } } }, "Copy"),
+      h("button", { class: "btn danger", type: "button", onclick: guard(async () => { await api("DELETE", `/api/papers/${p.id}`); closeSheet(); await refresh(); }) }, "Delete"))));
+}
+
+/* ── Scouts ────────────────────────────────────────────────────────────── */
+const ago = (stamp) => {
+  const mins = Math.max(0, Math.round((Date.now() - new Date(stamp + "Z")) / 60000));
+  return mins < 1 ? "just now" : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : dayLabel(new Date(stamp + "Z").toLocaleDateString("en-CA"));
+};
+const whoSelect = (value) => h("select", { "aria-label": "Whose scout" }, S.data.agents.map((a) => h("option", { value: a.id, selected: a.id === value }, `${a.scout} (${a.name})`)));
+function renderScouts(view) {
+  const brief = h("textarea", { class: "field", id: "add-scout", placeholder: "What should a scout go and find? For example: evening cleaning jobs within 5 miles of me", "aria-label": "What to look for" });
+  const who = whoSelect("claude");
+  view.append(h("p", { class: "hint" }, "Scouts are the crew's helpers. They search the live internet and bring back a short report, usually within a few minutes."),
+    h("form", { onsubmit: guard(async (e) => {
+      e.preventDefault(); if (!brief.value.trim()) return;
+      await api("POST", "/api/scout", { brief: brief.value, agent: who.value }); brief.value = ""; S.waitingUntil = Date.now() + 240000; await refresh(); toast("Scout sent. The report will appear here and in the chat.");
+    }) }, brief, h("div", { class: "row-form", style: "margin-top:8px" }, who, h("button", { class: "btn" }, "Send scout"))));
+  if (!S.data.settings.location) view.append(h("p", { class: "note", style: "margin:14px 0 0" }, "Scouts search better when they know your area. ",
+    h("button", { class: "btn quiet small", onclick: openSettings }, "Add your town in Settings")));
+
+  const out = S.data.reports.filter((r) => r.status === "queued" || r.status === "running");
+  if (out.length) view.append(h("h2", {}, "Out now"), h("ul", { class: "tasks" }, out.map((r) => h("li", {}, h("div", { class: "task-main", style: "padding-left:14px" },
+    h("span", { class: "t" }, r.title), h("span", { class: "m" }, `${agent(r.agent).name}'s scout, ${r.status === "running" ? "searching now" : "waiting to set off"}`))))));
+
+  view.append(h("h2", {}, "Regular scouts", h("small", {}, `set off at ${S.data.settings.time_scouts}`)));
+  for (const sc of S.data.scouts) view.append(h("div", { class: "card" },
+    h("div", { class: "job-top" }, h("div", {}, h("h3", {}, sc.title), h("p", { class: "why" }, `${agent(sc.agent).name} sends it ${sc.cadence === "daily" ? "every day" : "once a week"}`)),
+      h("label", { class: "switch" }, h("input", { type: "checkbox", checked: !!sc.enabled, "aria-label": `Run ${sc.title} regularly`, onchange: guard(async (e) => { await api("PATCH", `/api/scouts/${sc.id}`, { enabled: e.target.checked }); await refresh(); }) }), sc.enabled ? "On" : "Off")),
+    h("p", { class: "job-next" }, sc.brief.replace("{name}", S.data.settings.name)),
+    h("div", { class: "actions" },
+      h("button", { class: "btn quiet small", onclick: guard(async () => { await api("POST", `/api/scouts/${sc.id}/run`); S.waitingUntil = Date.now() + 240000; await refresh(); toast("Scout sent"); }) }, "Send now"),
+      h("button", { class: "btn quiet small", onclick: () => editScout(sc) }, "Edit"))));
+  view.append(h("button", { class: "btn quiet small", onclick: () => editScout(null) }, "Add a regular scout"));
+  view.append(h("p", { class: "hint", style: "margin-top:8px" }, "Each run uses one web-search request on that crew member's account, so regular scouts start switched off."));
+
+  const back = S.data.reports.filter((r) => r.status === "done" || r.status === "failed");
+  view.append(h("h2", {}, "Reports"));
+  if (!back.length) return view.append(h("p", { class: "empty" }, "No reports yet. Send a scout above, or ask in the chat: “@gpt find me warehouse jobs nearby”."));
+  view.append(h("ul", { class: "tasks" }, back.map((r) => h("li", {}, h("button", { class: "task-main", style: "padding-left:14px", onclick: () => openReport(r.id) },
+    h("span", { class: "t" }, !r.seen && r.status === "done" ? h("b", { class: "dot", "aria-label": "New" }) : null, r.title),
+    h("span", { class: "m" }, r.status === "failed" ? h("span", { class: "late" }, "Came back empty-handed") : `${agent(r.agent).name}'s scout, ${ago(r.created_at)}`))))));
+}
+function openReport(id) {
+  const r = S.data.reports.find((x) => x.id === id);
+  if (!r) return;
+  if (!r.seen) api("PATCH", `/api/reports/${id}`, { seen: true }).then(refresh).catch(() => {});
+  sheet(r.title, [
+    h("p", { class: "hint" }, `Asked: ${r.brief.replace("{name}", S.data.settings.name)}`),
+    h("div", { class: "report" }, rich(r.body || "The scout is still out.")),
+    r.sources.length ? [h("h3", {}, "Where this came from"), h("ul", { class: "sources" }, r.sources.map((src) => h("li", {}, h("a", { href: src.url, target: "_blank", rel: "noopener noreferrer" }, src.title))))] : null,
+    h("p", { class: "hint", style: "margin-top:14px" }, "Scouts can misread a page. Open the link and check before you rely on anything here."),
+    h("div", { class: "sheet-actions" },
+      h("button", { class: "btn quiet", onclick: () => { closeSheet(); ask(`About the scout report “${r.title}”: what should I do first?`); } }, "Ask the crew what to do with this"),
+      h("button", { class: "btn danger", onclick: guard(async () => { await api("DELETE", `/api/reports/${id}`); closeSheet(); await refresh(); }) }, "Delete")),
+  ]);
+}
+function editScout(sc) {
+  const title = h("input", { type: "text", value: sc ? sc.title : "" });
+  const brief = h("textarea", { class: "field" }); brief.value = sc ? sc.brief : "";
+  const who = whoSelect(sc ? sc.agent : "claude");
+  const cadence = h("select", {}, h("option", { value: "daily", selected: !sc || sc.cadence === "daily" }, "Every day"), h("option", { value: "weekly", selected: sc && sc.cadence === "weekly" }, "Once a week"));
+  sheet(sc ? "Edit scout" : "New regular scout", h("form", { onsubmit: guard(async (e) => {
+    e.preventDefault();
+    const fields = { title: title.value, brief: brief.value, agent: who.value, cadence: cadence.value };
+    if (sc) await api("PATCH", `/api/scouts/${sc.id}`, fields); else await api("POST", "/api/scouts", { ...fields, enabled: true });
+    closeSheet(); await refresh();
+  }) },
+    h("label", { class: "f" }, "Name", title), h("label", { class: "f" }, "What to look for", brief),
+    h("div", { class: "two" }, h("label", { class: "f" }, "Whose scout", who), h("label", { class: "f" }, "How often", cadence)),
+    h("div", { class: "sheet-actions" }, h("button", { class: "btn" }, sc ? "Save changes" : "Add scout"),
+      sc ? h("button", { class: "btn danger", type: "button", onclick: guard(async () => { await api("DELETE", `/api/scouts/${sc.id}`); closeSheet(); await refresh(); }) }, "Delete") : null)));
+}
+
 function renderView() {
   S.stale = false;
   const view = $("#view"), keep = view.scrollTop;
   view.replaceChildren();
-  ({ plan: renderPlan, todo: renderTodo, goals: renderGoals, jobs: renderJobs })[S.tab](view);
+  ({ plan: renderPlan, todo: renderTodo, goals: renderGoals, jobs: renderJobs, scouts: renderScouts })[S.tab](view);
   view.scrollTop = keep;
   if (S.refocus) { const el = $(S.refocus, view); if (el) el.focus({ preventScroll: true }); S.refocus = ""; }
 }
@@ -571,11 +715,18 @@ function memberCard(id) {
     result.className = `result${r.ok ? "" : " bad"}`;
     result.textContent = r.ok ? `${a.name} replied: “${r.reply}” (model: ${r.model})` : r.error;
   });
+  const testWeb = guard(async () => {
+    result.className = "result"; result.textContent = `Sending ${a.name}'s scout to the web. This can take a minute…`;
+    const r = await api("POST", `/api/agents/${id}/test-web`);
+    await refresh();
+    result.className = `result${r.ok ? "" : " bad"}`;
+    result.textContent = r.ok ? `Web search works. It said: “${r.reply}” (${r.sources} sources)` : `Web search didn't work: ${r.error}`;
+  });
   return h("div", { class: "member", id: `member-${id}` },
     h("div", { class: "member-head" }, h("span", { class: `face who-${id}${a.ready ? "" : " off"}` }, a.name[0]),
       h("div", {}, h("b", {}, a.name), h("span", {}, `${a.role}: ${a.does.replace("Sunny", S.data.settings.name)}`)),
       h("span", { class: `state${a.ready ? " ok" : ""}` }, a.ready ? "On the crew" : a.has_key ? "Switched off" : "Needs a key")),
-    a.key_source === "host" ? h("p", { class: "hint" }, "The key for this one is set on the host.") : h("form", { class: "row-form", style: "margin-top:10px", onsubmit: guard(async (e) => {
+    h("form", { class: "row-form", style: "margin-top:10px", onsubmit: guard(async (e) => {
       e.preventDefault(); if (!key.value.trim()) return;
       await api("PUT", `/api/agents/${id}`, { key: key.value }); await refresh(); redraw(); toast(`${a.name}'s key saved`);
     }) }, key, h("button", { class: "btn" }, "Save key")),
@@ -585,6 +736,7 @@ function memberCard(id) {
       h("label", { class: "f" }, "Model", model),
       h("div", { class: "sheet-actions", style: "margin-top:10px" },
         h("button", { class: "btn quiet", type: "button", onclick: test }, `Test ${a.name}`),
+        h("button", { class: "btn quiet", type: "button", onclick: testWeb }, "Test web search"),
         h("label", { class: "switch" }, h("input", { type: "checkbox", checked: a.enabled, onchange: guard(async (e) => { await api("PUT", `/api/agents/${id}`, { enabled: e.target.checked }); await refresh(); redraw(); }) }), "On the crew")),
       result] : null);
 }
@@ -604,6 +756,7 @@ function openSettings() {
 
     h("h3", {}, "About you"),
     h("div", { class: "two" }, h("label", { class: "f" }, "What the crew calls you", text("name")), h("label", { class: "f" }, "Timezone", text("timezone", { placeholder: "Europe/London" }))),
+    h("label", { class: "f" }, "Where you live (town or area, so scouts search nearby)", text("location", { placeholder: "For example: Leicester, UK" })),
     h("p", { class: "hint", style: "margin-top:14px" }, "What the crew remembers about you. They add to this as you talk; remove anything that's wrong."),
     memory(),
     h("form", { class: "row-form", onsubmit: guard(async (e) => { e.preventDefault(); if (!note.value.trim()) return; await api("POST", "/api/memory", { text: note.value }); note.value = ""; await refresh(); $("#memory-list").replaceWith(memory()); }) }, note, h("button", { class: "btn quiet" }, "Add note")),
@@ -612,6 +765,13 @@ function openSettings() {
     h("label", { class: "switch" }, h("input", { type: "checkbox", checked: s.checkins, onchange: (e) => saveSetting({ checkins: e.target.checked }) }), "The crew messages you on a schedule"),
     h("div", { class: "times" }, checkRow("morning", "Morning plan"), checkRow("nudge", "Afternoon nudge, only if nothing's ticked off"), checkRow("evening", "Evening wrap-up"), checkRow("weekly", "Sunday review from everyone")),
     h("div", { class: "sheet-actions" }, h("button", { class: "btn quiet", type: "button", onclick: guard(async () => { await api("POST", "/api/checkin/morning"); closeSheet(); go("chat"); S.waitingUntil = Date.now() + 90000; poll(); }) }, "Send a morning plan now")),
+    h("label", { class: "f" }, "Regular scouts set off at", h("input", { type: "time", value: s.time_scouts, onchange: (e) => e.target.value && saveSetting({ time_scouts: e.target.value }) })),
+    h("h3", {}, "Keeping the crew working when the app is closed"),
+    h("p", { class: "hint" }, s.last_cron ? `The background job last ran ${ago(new Date(s.last_cron * 1000).toISOString().slice(0, 19))}.` : "The background job has not run yet. Until it's set up, check-ins and scouts only happen while you have the app open."),
+    h("p", { class: "hint" }, "In your hosting control panel, add a cron job that runs every 30 minutes (or as often as it allows) with this command:"),
+    h("textarea", { class: "field code", readonly: true, rows: "2", "aria-label": "Cron command", onfocus: (e) => e.target.select() }, s.cron_command),
+    h("details", {}, h("summary", { class: "hint" }, "No cron jobs on your host?"), h("p", { class: "hint" }, "Have a free web pinger open this private address every 30 minutes instead:"),
+      h("textarea", { class: "field code", readonly: true, rows: "2", "aria-label": "Cron address", onfocus: (e) => e.target.select() }, s.cron_url)),
     h("label", { class: "f" }, "Phone alerts (optional)", text("ntfy_topic", { placeholder: "a-private-topic-name" })),
     h("p", { class: "hint" }, "Install the free ntfy app, subscribe to a topic name only you would guess, and type the same name here. An alert only ever says “Your crew left you a message”."),
 
@@ -622,17 +782,16 @@ function openSettings() {
     h("p", { class: "hint" }, "Every reply costs a little on that company's bill. Set a monthly spending limit on each account too."),
 
     h("h3", {}, "Good to know"),
-    h("p", { class: "hint" }, "What you write here is sent to the companies behind the crew (Anthropic, OpenAI, Google and xAI) so they can answer. The crew can't browse the internet, so check any facts they give you."),
+    h("p", { class: "hint" }, "What you write here is sent to the companies behind the crew (Anthropic, OpenAI, Google and xAI) so they can answer. Scouts read live web pages but can misread them, so open the link and check before relying on anything."),
     h("p", { class: "hint" }, "If things get too heavy, talk to a person: Samaritans, 116 123, free at any hour in the UK and Ireland."),
-    S.needsPassword ? h("div", { class: "sheet-actions" }, h("button", { class: "btn quiet", onclick: async () => { await fetch("/api/logout", { method: "POST" }); location.reload(); } }, "Sign out")) : null,
+    h("div", { class: "sheet-actions" }, h("button", { class: "btn quiet", onclick: async () => { await api("POST", "logout"); location.reload(); } }, "Sign out")),
   ]);
 }
 
 /* ── start ─────────────────────────────────────────────────────────────── */
 (async function start() {
-  const state = await fetch("/api/auth").then((r) => r.json()).catch(() => ({ ok: false }));
-  S.needsPassword = state.needs_password;
-  if (!state.ok) { await showGate(); return; }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if (await showGate()) return;
   $("#app").hidden = false;
   setupChat();
   await poll();

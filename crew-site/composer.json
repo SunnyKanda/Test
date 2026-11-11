@@ -1,0 +1,7 @@
+{
+    "name": "crew/site",
+    "require": {
+        "anthropic-ai/sdk": "^1.8",
+        "guzzlehttp/guzzle": "^8.3"
+    }
+}

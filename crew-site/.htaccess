@@ -1,0 +1,10 @@
+# Keep private files private.
+<FilesMatch "^(composer\.(json|lock)|.*\.sqlite.*|secret\.php)$">
+  Require all denied
+</FilesMatch>
+RedirectMatch 404 ^.*/(lib|vendor|data)/.*$
+<IfModule mod_headers.c>
+  <FilesMatch "\.(html|js|css|webmanifest)$">
+    Header set Cache-Control "no-cache"
+  </FilesMatch>
+</IfModule>
