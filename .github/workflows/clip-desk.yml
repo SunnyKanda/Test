@@ -1,0 +1,76 @@
+name: Clip desk (make vertical clips)
+
+# Runs only when you press "Run workflow" on the Actions tab. Never on a schedule, never on push.
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "Stream or video link (Twitch works best; YouTube may block cloud servers)"
+        required: true
+      clips:
+        description: "How many clips (1-5)"
+        default: "3"
+      layout:
+        description: "Layout"
+        type: choice
+        options: [blur, fill, facecam, react]
+        default: blur
+      hook:
+        description: "Hook / title text on the clip (optional)"
+        required: false
+      captions:
+        description: "Captions"
+        type: choice
+        options: [word, bubble, none]
+        default: word
+      max_minutes:
+        description: "Only look at the first N minutes of the video (5-120)"
+        default: "30"
+
+permissions:
+  contents: read   # the job can read this repo and nothing else; it cannot push or change anything
+
+concurrency:
+  group: clip-desk
+  cancel-in-progress: false
+
+jobs:
+  clips:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -q && sudo apt-get install -y -q ffmpeg fonts-liberation
+
+      - name: Install the exact, checksum-verified Python packages
+        # --require-hashes: pip refuses any package whose file does not match the lockfile.
+        # Nothing is upgraded automatically; change versions only by editing clip-desk/requirements.txt.
+        run: python -m pip install --require-hashes --no-deps -r clip-desk/requirements.txt
+
+      - name: Make the clips
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+          CLIPS: ${{ inputs.clips }}
+          LAYOUT: ${{ inputs.layout }}
+          HOOK: ${{ inputs.hook }}
+          CAPTIONS: ${{ inputs.captions }}
+          MAX_MINUTES: ${{ inputs.max_minutes }}
+          CLIP_DESK_HOME: ${{ runner.temp }}/clipdesk
+          CLIP_DESK_OUT: ${{ runner.temp }}/clipdesk-out
+        run: python clip-desk/scripts/run_job.py
+
+      - name: Save the clips for download
+        uses: actions/upload-artifact@v4
+        with:
+          name: clips
+          path: ${{ runner.temp }}/clipdesk-out
+          retention-days: 3
+          if-no-files-found: error
